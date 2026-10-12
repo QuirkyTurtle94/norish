@@ -7,6 +7,8 @@ import sharp from "sharp";
 import { SERVER_CONFIG } from "@norish/config/env-config-server";
 import { resolveExistingWorkspacePath } from "@norish/shared-server/lib/workspace-paths";
 
+import { cutOutBackground } from "./cut-out";
+
 /**
  * Ingredient Icons as files: the picture a person uploads or AI draws, made
  * into a small square WebP that stands on nothing, so it sits cleanly on any
@@ -26,15 +28,6 @@ export const ICON_SIZE = 64;
 const FOOD_SIZE = 58;
 /** The size the cut-out reads a picture at: plenty for a 64px icon, cheap to flood. */
 const WORK_SIZE = 512;
-/**
- * How far a pixel's colour may stray from the background's and still be
- * background, as a distance in RGB. Loose enough for a camera's noise and a
- * drawn background's faint falloff, tight enough that a pale food's outline
- * stops the flood. The sample sheet is where this gets tuned.
- */
-const TOLERANCE = 32;
-/** How much of the border must be one colour for a picture to have a background to remove. */
-const FLAT_BORDER = 0.9;
 /** An alpha at or below this is see-through. */
 const CLEAR = 16;
 
@@ -70,59 +63,6 @@ function hasTransparency(pixels: Buffer): boolean {
   }
 
   return false;
-}
-
-/**
- * Make the flat background touching the picture's edges see-through, by a
- * flood from the border: a pixel goes when it is the background's colour and
- * joins the border through pixels that are too, so a patch of that colour
- * inside the food stays. A border that is not one colour has no background
- * to remove, and the picture is left alone. Says whether it cut.
- */
-function cutOutBackground(pixels: Buffer, width: number, height: number): boolean {
-  const border: number[] = [];
-
-  for (let x = 0; x < width; x++) border.push(x, (height - 1) * width + x);
-  for (let y = 1; y < height - 1; y++) border.push(y * width, y * width + width - 1);
-
-  const median = (channel: number) => {
-    const values = border.map((pixel) => pixels[pixel * 4 + channel]!).sort((a, b) => a - b);
-
-    return values[values.length >> 1]!;
-  };
-  const background = [median(0), median(1), median(2)] as const;
-  const isBackground = (pixel: number) => {
-    const at = pixel * 4;
-    const dr = pixels[at]! - background[0];
-    const dg = pixels[at + 1]! - background[1];
-    const db = pixels[at + 2]! - background[2];
-
-    return dr * dr + dg * dg + db * db <= TOLERANCE * TOLERANCE;
-  };
-
-  if (border.filter(isBackground).length < border.length * FLAT_BORDER) return false;
-
-  const seen = new Uint8Array(width * height);
-  const stack: number[] = [];
-  const visit = (pixel: number) => {
-    if (seen[pixel] || !isBackground(pixel)) return;
-    seen[pixel] = 1;
-    stack.push(pixel);
-  };
-
-  border.forEach(visit);
-  while (stack.length > 0) {
-    const pixel = stack.pop()!;
-    const x = pixel % width;
-
-    pixels[pixel * 4 + 3] = 0;
-    if (x > 0) visit(pixel - 1);
-    if (x < width - 1) visit(pixel + 1);
-    if (pixel >= width) visit(pixel - width);
-    if (pixel < width * (height - 1)) visit(pixel + width);
-  }
-
-  return true;
 }
 
 /** The smallest box around every pixel that is not see-through, or null when there is none. */

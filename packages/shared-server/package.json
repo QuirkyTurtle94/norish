@@ -14,6 +14,7 @@
     "./media/dish-color": "./src/media/dish-color.ts",
     "./media/generated-image": "./src/media/generated-image.ts",
     "./media/ingredient-icon": "./src/media/ingredient-icon.ts",
+    "./media/cut-out": "./src/media/cut-out.ts",
     "./recipes/measurement-conversion": "./src/recipes/measurement-conversion.ts",
     "./recipes/randomizer": "./src/recipes/randomizer.ts",
     "./config/defaults": "./src/config/defaults.ts",
