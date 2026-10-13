@@ -5,7 +5,8 @@ Thank you for your interest in contributing to Norish! This guide will help you 
 ## Prerequisites
 
 - **Node.js** 26 (see `.nvmrc`)
-- **pnpm** 10.x or later
+- **pnpm** 12.x
+- **uv** 0.13 or later (installs the recipe parser's Python 3.15)
 - **Docker** (for PostgreSQL, Redis, and Obscura)
 - **Git**
 
