@@ -314,7 +314,10 @@ function createBetterAuth() {
             const isFirstUser = userCount === 0;
 
             if (!registrationEnabled && !isFirstUser) {
+              // The OAuth callback sends an error to the auth-error page only
+              // when it carries a code; without one the browser gets bare JSON.
               throw new APIError("FORBIDDEN", {
+                code: "REGISTRATION_IS_CURRENTLY_DISABLED",
                 message: "Registration is currently disabled",
               });
             }

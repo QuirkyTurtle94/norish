@@ -326,6 +326,17 @@ describe("OIDC sign-in", () => {
     expect(response.headers.get("location")).toContain("error=unable_to_get_user_info");
     expect(store.user).toHaveLength(0);
   });
+
+  it("sends a new user to the error page while registration is closed", async () => {
+    registration.enabled = false;
+
+    const { response } = await signInWithOIDC(ADA);
+
+    expect(response.headers.get("location")).toContain(
+      "/auth-error?error=REGISTRATION_IS_CURRENTLY_DISABLED"
+    );
+    expect(store.user).toHaveLength(0);
+  });
 });
 
 describe("account linking", () => {
