@@ -322,6 +322,7 @@ const SwipeableRow = forwardRef<SwipeableRowRef, Props>(
           e.preventDefault();
           const action = actions[focusedActionIndex];
 
+          if (!action) return;
           if (action.primary) {
             commitDelete(action);
           } else {

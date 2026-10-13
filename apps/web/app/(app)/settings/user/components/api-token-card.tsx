@@ -117,8 +117,8 @@ export default function ApiKeyCard() {
                           <div className="flex gap-1">
                             <Button
                               isIconOnly
+                              aria-label={key.enabled ? t("disableKey") : t("enableKey")}
                               size="sm"
-                              title={key.enabled ? t("disableKey") : t("enableKey")}
                               onPress={() => toggleApiKey(key.id, !key.enabled)}
                               variant="tertiary"
                             >
@@ -130,8 +130,8 @@ export default function ApiKeyCard() {
                             </Button>
                             <Button
                               isIconOnly
+                              aria-label={t("deleteKey")}
                               size="sm"
-                              title={t("deleteKey")}
                               onPress={() => {
                                 setKeyToDelete(key.id);
                                 setShowDeleteModal(true);
@@ -171,7 +171,7 @@ export default function ApiKeyCard() {
                   <div className="flex gap-2">
                     <Input
                       variant="secondary"
-                      isReadOnly
+                      readOnly
                       className="font-mono text-xs"
                       value={generatedKey || ""}
                     />

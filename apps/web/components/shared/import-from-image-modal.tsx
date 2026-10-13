@@ -211,7 +211,11 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
                     <DropZone.Label>{t("dropzone")}</DropZone.Label>
                     <DropZone.Description>{t("formats")}</DropZone.Description>
                     <DropZone.Description className="flex items-center justify-center gap-1.5">
-                      <Kbd keys={["ctrl"]}>V</Kbd> {t("paste")}
+                      <Kbd>
+                        <Kbd.Abbr keyValue="ctrl" />
+                        <Kbd.Content>V</Kbd.Content>
+                      </Kbd>{" "}
+                      {t("paste")}
                     </DropZone.Description>
                     <DropZone.Trigger>{t("library")}</DropZone.Trigger>
                   </DropZone.Area>

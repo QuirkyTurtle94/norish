@@ -56,7 +56,7 @@ describe("useFavoritesMutation", () => {
       });
 
       // Get the onMutate callback that was passed to mutationOptions
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       await act(async () => {
         await mutationOpts.onMutate({ recipeId: "recipe-1", isFavorite: true });
@@ -81,7 +81,7 @@ describe("useFavoritesMutation", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       await act(async () => {
         await mutationOpts.onMutate({ recipeId: "recipe-1", isFavorite: false });
@@ -107,7 +107,7 @@ describe("useFavoritesMutation", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       let context: { previousData: unknown };
 
@@ -150,7 +150,7 @@ describe("useFavoritesMutation", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       let context: { previousData: unknown };
 
@@ -183,7 +183,7 @@ describe("useFavoritesMutation", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       await act(async () => {
         await mutationOpts.onMutate({ recipeId: "recipe-1", isFavorite: true });

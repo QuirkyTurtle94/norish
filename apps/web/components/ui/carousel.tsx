@@ -155,8 +155,12 @@ function CarouselItem({ children, className, ...props }: ComponentPropsWithoutRe
   );
 }
 
-interface CarouselNavProps extends Omit<ComponentPropsWithoutRef<typeof Button>, "children"> {
+interface CarouselNavProps extends Omit<
+  ComponentPropsWithoutRef<typeof Button>,
+  "children" | "className"
+> {
   children?: ReactNode;
+  className?: string;
   icon?: ReactNode;
 }
 

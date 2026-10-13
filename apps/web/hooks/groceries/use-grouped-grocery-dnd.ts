@@ -137,7 +137,7 @@ export function useGroupedGroceryDnd({
       }
 
       // Find which container has this group
-      return Object.keys(groupItems).find((key) => groupItems[key].includes(id));
+      return Object.keys(groupItems).find((key) => groupItems[key]?.includes(id));
     },
     [groupItems]
   );
@@ -178,6 +178,11 @@ export function useGroupedGroceryDnd({
         setGroupItems((prevItems) => {
           const activeItems = prevItems[activeContainer];
           const overItems = prevItems[overContainer];
+
+          if (!activeItems || !overItems) {
+            return prevItems;
+          }
+
           const overIndex = overItems.indexOf(overId as string);
           const activeIndex = activeItems.indexOf(active.id as string);
           const movingItem = activeItems[activeIndex];
@@ -204,7 +209,7 @@ export function useGroupedGroceryDnd({
 
           return {
             ...prevItems,
-            [activeContainer]: prevItems[activeContainer].filter((key) => key !== active.id),
+            [activeContainer]: activeItems.filter((key) => key !== active.id),
             [overContainer]: [
               ...overItems.slice(0, newIndex),
               movingItem,

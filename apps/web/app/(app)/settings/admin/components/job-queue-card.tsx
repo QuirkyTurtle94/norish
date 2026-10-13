@@ -136,15 +136,15 @@ export default function JobQueueCard() {
     state: Exclude<StateFilter, null>,
     color: "accent" | "warning" | "danger" | "default"
   ) => (
-    <Chip
+    <Chip<"button">
       aria-pressed={stateFilter === state}
-      as="button"
       className={
         state === "active"
           ? "chip--info cursor-pointer px-1 py-0.5 transition-all"
           : "cursor-pointer px-1 py-0.5 transition-all"
       }
       color={color}
+      render={(props) => <button {...props} />}
       size="sm"
       type="button"
       variant={stateFilter === state ? "primary" : "soft"}
@@ -209,7 +209,6 @@ export default function JobQueueCard() {
             aria-label={t("filters.queue")}
             className="w-full sm:w-56"
             selectedKey={queueFilter}
-            size="sm"
             variant="secondary"
             onSelectionChange={(key) => {
               if (typeof key === "string") {

@@ -70,7 +70,7 @@ describe("useRatingsMutation", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       await act(async () => {
         await mutationOpts.onMutate({ recipeId: testRecipeId, rating: 5 });
@@ -93,7 +93,7 @@ describe("useRatingsMutation", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       await act(async () => {
         await mutationOpts.onMutate({ recipeId: testRecipeId, rating: 5 });
@@ -117,7 +117,7 @@ describe("useRatingsMutation", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockMutationOptions.mock.calls[0][0];
+      const mutationOpts = mockMutationOptions.mock.calls[0]![0];
 
       let context:
         | {

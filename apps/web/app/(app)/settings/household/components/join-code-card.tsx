@@ -97,7 +97,7 @@ export default function JoinCodeCard() {
           <div className="flex gap-2">
             <Input
               variant="secondary"
-              isReadOnly
+              readOnly
               className="font-mono text-lg tracking-wider"
               value={adminHousehold.joinCode || ""}
             />

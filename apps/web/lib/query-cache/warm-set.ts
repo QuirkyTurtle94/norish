@@ -178,7 +178,7 @@ export function createWarmSet({
 
     async inspect() {
       const owner = cacheManager.owner();
-      const desktopRange = calendarRanges()[0];
+      const desktopRange = calendarRange("desktop");
       const recipePath = [trpc.recipes.get.queryKey({ id: "" })[0]];
       const recipes = queryClient
         .getQueryCache()
@@ -229,12 +229,14 @@ function libraryListInput() {
   };
 }
 
-function calendarRanges(): CalendarRange[] {
-  return (["desktop", "mobile"] as const).map((mode) => {
-    const { start, end } = getInitialDateRange(mode);
+function calendarRange(mode: "desktop" | "mobile"): CalendarRange {
+  const { start, end } = getInitialDateRange(mode);
 
-    return { startISO: dateKey(start), endISO: dateKey(end) };
-  });
+  return { startISO: dateKey(start), endISO: dateKey(end) };
+}
+
+function calendarRanges(): CalendarRange[] {
+  return (["desktop", "mobile"] as const).map(calendarRange);
 }
 
 function withWarmGcTime<T extends object>(options: T): T {
@@ -246,8 +248,11 @@ function promote(queryClient: QueryClient, queryKey: readonly unknown[]): void {
   const query = queryClient.getQueryCache().find({ queryKey });
 
   if (query) {
-    query.updateGcTime(CACHE_MAX_AGE_MS);
-    query.scheduleGc();
+    // query-core keeps these `protected` and has no public way to lengthen one
+    // cached query's gcTime and re-arm its timer; bracket access is TypeScript's
+    // sanctioned way past that modifier, so the dependency on internals stays visible.
+    query["updateGcTime"](CACHE_MAX_AGE_MS);
+    query["scheduleGc"]();
   }
 }
 

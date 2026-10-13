@@ -115,7 +115,6 @@ export default function GeneralCard() {
       {/* Registration Toggle */}
       <SwitchRow description={t("registrationDescription")} title={t("allowRegistration")}>
         <SettingsSwitch
-          color="success"
           isDisabled={isLoading}
           isSelected={registrationEnabled ?? false}
           onValueChange={handleRegistrationToggle}
@@ -135,7 +134,6 @@ export default function GeneralCard() {
           className="w-full"
           isDisabled={isLoading || isSaving}
           placeholder={t("locales")}
-          selectedKeys={new Set(enabledLocales)}
           value={enabledLocales}
           selectionMode="multiple"
           variant="secondary"

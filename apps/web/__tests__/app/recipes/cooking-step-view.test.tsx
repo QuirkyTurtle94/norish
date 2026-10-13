@@ -156,7 +156,7 @@ describe("CookingStepView discrete scroll layout", () => {
 
     // Find the active step's scrollable container
     const scrollables = document.querySelectorAll(".can-scroll-natively");
-    const activeScrollable = scrollables[0]; // the only one rendered with this class is the active step
+    const activeScrollable = scrollables[0]!; // the only one rendered with this class is the active step
 
     // Mock the layout geometry of the scrollable container
     Object.defineProperty(activeScrollable, "scrollTop", { value: 50, configurable: true });

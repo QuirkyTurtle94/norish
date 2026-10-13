@@ -5,7 +5,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const expirationMetadata = vi.hoisted(() => ({
-  updateTimestamp: vi.fn(async () => {}),
+  updateTimestamp: vi.fn(async (_url: string) => {}),
   expireEntries: vi.fn(async () => {}),
 }));
 

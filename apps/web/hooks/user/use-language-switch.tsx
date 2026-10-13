@@ -63,6 +63,8 @@ export function useLanguageSwitch() {
     const nextIndex = (currentLocaleIndex + 1) % enabledLocaleCodes.length;
     const nextLocale = enabledLocaleCodes[nextIndex];
 
+    if (!nextLocale) return;
+
     setCurrentLocaleIndex(nextIndex);
     changeLocale(nextLocale);
   };

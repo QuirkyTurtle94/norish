@@ -94,8 +94,12 @@ function DropZoneDescription({ children, className, ...props }: ComponentPropsWi
   );
 }
 
-interface DropZoneTriggerProps extends Omit<ComponentPropsWithoutRef<typeof Button>, "children"> {
+interface DropZoneTriggerProps extends Omit<
+  ComponentPropsWithoutRef<typeof Button>,
+  "children" | "className"
+> {
   children?: ReactNode;
+  className?: string;
 }
 
 function DropZoneTrigger({ children, className, ...props }: DropZoneTriggerProps) {

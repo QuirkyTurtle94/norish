@@ -201,7 +201,7 @@ describe("useRecipesMutations", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockImportFromUrlMutationOptions.mock.calls[0][0] as {
+      const mutationOpts = mockImportFromUrlMutationOptions.mock.calls[0]![0] as {
         onMutate: () => { optimisticPendingId: string };
         onError: (
           error: unknown,
@@ -247,7 +247,7 @@ describe("useRecipesMutations", () => {
 
       renderHook(() => useRecipesMutations(), { wrapper: createTestWrapper(queryClient) });
 
-      return mockImportFromUrlMutationOptions.mock.calls[0][0] as ImportMutationOpts;
+      return mockImportFromUrlMutationOptions.mock.calls[0]![0] as ImportMutationOpts;
     }
 
     it("toasts the queued-offline message, not an error, when the import was captured", async () => {
@@ -343,7 +343,7 @@ describe("useRecipesMutations", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockCreateMutationOptions.mock.calls[0][0] as {
+      const mutationOpts = mockCreateMutationOptions.mock.calls[0]![0] as {
         onMutate: (input: {
           id: string;
           name: string;
@@ -433,7 +433,7 @@ describe("useRecipesMutations", () => {
           wrapper: createTestWrapper(queryClient),
         });
 
-        const mutationOpts = mockCreateMutationOptions.mock.calls[0][0] as {
+        const mutationOpts = mockCreateMutationOptions.mock.calls[0]![0] as {
           onMutate: (input: {
             id: string;
             name: string;
@@ -479,7 +479,7 @@ describe("useRecipesMutations", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const pasteMutationOptions = mockImportFromPasteMutationOptions.mock.calls[0][0] as {
+      const pasteMutationOptions = mockImportFromPasteMutationOptions.mock.calls[0]![0] as {
         onMutate: () => { optimisticPendingId: string };
         onSuccess: (
           result: { recipeIds: string[] },
@@ -520,7 +520,7 @@ describe("useRecipesMutations", () => {
 
       renderHook(() => useRecipesMutations(), { wrapper: createTestWrapper(queryClient) });
 
-      const options = mockImportFromUrlMutationOptions.mock.calls[0][0] as {
+      const options = mockImportFromUrlMutationOptions.mock.calls[0]![0] as {
         onMutate: () => { optimisticPendingId: string };
         onSuccess: (
           result: { recipeId: string; status: "queued" | "exists" },
@@ -621,7 +621,7 @@ describe("useRecipesMutations", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockUpdateMutationOptions.mock.calls[0][0] as {
+      const mutationOpts = mockUpdateMutationOptions.mock.calls[0]![0] as {
         onMutate: (variables: { id: string; data: Record<string, unknown> }) => Promise<unknown>;
       };
 
@@ -701,7 +701,7 @@ describe("useRecipesMutations", () => {
         wrapper: createTestWrapper(queryClient),
       });
 
-      const mutationOpts = mockImportFromUrlMutationOptions.mock.calls[0][0] as {
+      const mutationOpts = mockImportFromUrlMutationOptions.mock.calls[0]![0] as {
         onError: (error: unknown, variables: { url: string }, context?: unknown) => void;
       };
 

@@ -52,10 +52,10 @@ export function TimerChip({
 
   if (!timer) {
     return (
-      <Chip
-        as="button"
+      <Chip<"button">
         className="mx-1 translate-y-[1px] rounded-full pr-1.5 pl-2.5 align-baseline text-base"
         color="default"
+        render={(props) => <button {...props} />}
         type="button"
         variant="secondary"
         onClick={handleClick}
@@ -79,10 +79,10 @@ export function TimerChip({
   );
 
   return (
-    <Chip
-      as="button"
+    <Chip<"button">
       className="mx-1 translate-y-[1px] rounded-full pr-1.5 pl-2.5 align-baseline text-base"
       color={isCompleted ? "danger" : isRunning ? "accent" : "warning"}
+      render={(props) => <button {...props} />}
       size="md"
       type="button"
       variant="secondary"

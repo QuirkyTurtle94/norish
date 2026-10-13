@@ -230,7 +230,7 @@ export default function MediaCarousel({
   useEffect(() => {
     if (sortedItems.length !== 1) return;
 
-    const activeItem = sortedItems[0];
+    const activeItem = sortedItems[0]!;
 
     onActiveItemChange?.(activeItem, 0);
 
@@ -288,7 +288,7 @@ export default function MediaCarousel({
 
   // Case 1: Single item (no carousel controls)
   if (sortedItems.length === 1) {
-    const item = sortedItems[0];
+    const item = sortedItems[0]!;
 
     return (
       <>

@@ -148,7 +148,7 @@ export function TimerDock({
     <>
       <TimerTicker />
       <AnimatePresence>
-        {hasTimers && (
+        {topTimer && (
           <motion.div
             animate={{
               opacity: 1,
@@ -349,7 +349,6 @@ function TimerRow({
             isIconOnly
             aria-label={`Decrease time by ${formatTimerMs(smartIncrement)}`}
             size="sm"
-            title={`-${formatTimerMs(smartIncrement)}`}
             onPress={() => adjustTimer(timer.id, -smartIncrement)}
             variant="tertiary"
           >
@@ -360,7 +359,6 @@ function TimerRow({
             isIconOnly
             aria-label={`Increase time by ${formatTimerMs(smartIncrement)}`}
             size="sm"
-            title={`+${formatTimerMs(smartIncrement)}`}
             onPress={() => adjustTimer(timer.id, smartIncrement)}
             variant="tertiary"
           >

@@ -119,7 +119,7 @@ export function EditPlannedRecipePanel({
  * Its own component so the portal container is read from inside the Panel — a
  * hook called in the Panel's parent sees no panel at all.
  */
-function DateAndSlotFields({
+export function DateAndSlotFields({
   selectedDate,
   selectedSlot,
   onSelectDate,

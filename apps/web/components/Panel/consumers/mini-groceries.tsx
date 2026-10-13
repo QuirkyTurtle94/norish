@@ -432,12 +432,10 @@ export default function MiniGroceries({
         {isEditing ? (
           <Input
             className="min-w-0 flex-1 text-base"
-            size="sm"
             style={{
               fontSize: "16px",
             }}
             value={editValue}
-            variant="underlined"
             onBlur={handleEditSubmit}
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={(e) => {

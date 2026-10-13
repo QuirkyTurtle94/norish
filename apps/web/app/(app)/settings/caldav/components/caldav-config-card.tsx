@@ -30,8 +30,8 @@ export default function CalDavConfigCard() {
   const { config, saveConfig, testConnection } = useCalDavSettingsContext();
   const {
     isOpen: isEditModalOpen,
-    onOpen: onEditModalOpen,
-    onClose: onEditModalClose,
+    open: onEditModalOpen,
+    close: onEditModalClose,
   } = useOverlayState();
 
   // Initial setup form state (only used when no config exists)
@@ -156,24 +156,22 @@ export default function CalDavConfigCard() {
         <ul className="ml-4 list-disc space-y-1">
           <li>
             <Link
-              isExternal
               href="https://docs.nextcloud.com/server/latest/user_manual/en/groupware/calendar.html"
-              size="sm"
+              rel="noopener noreferrer"
               target="_blank"
             >
               Nextcloud Calendar
             </Link>
           </li>
           <li>
-            <Link isExternal href="https://radicale.org/" size="sm" target="_blank">
+            <Link href="https://radicale.org/" rel="noopener noreferrer" target="_blank">
               Radicale
             </Link>
           </li>
           <li>
             <Link
-              isExternal
               href="https://support.apple.com/guide/calendar/set-up-accounts-icl4308d6701/mac"
-              size="sm"
+              rel="noopener noreferrer"
               target="_blank"
             >
               Apple Calendar

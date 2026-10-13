@@ -74,7 +74,7 @@ const liveProbes = vi.hoisted(() => {
     },
   };
 });
-const createRecovery = vi.hoisted(() => vi.fn(() => recovery));
+const createRecovery = vi.hoisted(() => vi.fn((_deps: { owner: () => string | null }) => recovery));
 
 let user: { id: string } | null = null;
 let connectivity = { isLive: true, isOffline: false };
@@ -235,7 +235,7 @@ describe("OfflineCacheController", () => {
     renderController();
 
     await waitFor(() => expect(createRecovery).toHaveBeenCalled());
-    const resolver = createRecovery.mock.calls.at(-1)?.[0].owner as () => string | null;
+    const resolver = createRecovery.mock.lastCall![0].owner;
 
     expect(resolver()).toBe("u1");
   });

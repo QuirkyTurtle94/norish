@@ -51,6 +51,7 @@ const baseRecipe: FullRecipeDTO = {
   totalMinutes: 55,
   notes: "Cool fully before slicing",
   systemUsed: "metric",
+  originalSystem: null,
   calories: 420,
   fat: "12.5",
   carbs: "60",
@@ -59,6 +60,7 @@ const baseRecipe: FullRecipeDTO = {
   originCountryName: "Italia",
   originRegion: "Lazio",
   provenanceNote: "A Roman classic.",
+  dishColor: null,
   cuisines: [{ id: "id-italian", name: "Italian", version: 1 }],
   createdAt: new Date("2026-05-01T10:00:00.000Z"),
   updatedAt: new Date("2026-05-01T10:00:00.000Z"),
@@ -104,19 +106,24 @@ const baseRecipe: FullRecipeDTO = {
       stepIngredients: [],
     },
   ],
-  tags: [{ name: "dessert" }, { name: "baking" }],
+  tags: [
+    { name: "dessert", version: 1 },
+    { name: "baking", version: 1 },
+  ],
   author: undefined,
   images: [
     {
       id: "image-1",
       image: "/recipes/cake-primary.jpg",
       order: 0,
+      generated: false,
       version: 1,
     },
     {
       id: "image-2",
       image: "/recipes/cake-slice.jpg",
       order: 1,
+      generated: false,
       version: 1,
     },
   ],
@@ -322,7 +329,7 @@ describe("useRecipeFormDirtyState", () => {
     const { result } = renderDirtyState({
       current: {
         ...current,
-        media: [current.media[1], current.media[0], current.media[2]],
+        media: [current.media[1]!, current.media[0]!, current.media[2]!],
       },
       initialData: baseRecipe,
     });

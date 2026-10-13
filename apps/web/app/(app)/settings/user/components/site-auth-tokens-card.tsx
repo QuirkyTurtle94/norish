@@ -220,8 +220,8 @@ export default function SiteAuthTokensCard() {
                         <Table.Cell>
                           <Button
                             isIconOnly
+                            aria-label={t("deleteModal.confirmButton")}
                             size="sm"
-                            title={t("deleteModal.confirmButton")}
                             onPress={() => {
                               setTokenToDelete(token.id);
                               setShowDeleteModal(true);

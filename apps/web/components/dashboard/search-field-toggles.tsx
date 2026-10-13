@@ -35,12 +35,12 @@ export default function SearchFieldToggles({
         const isSelected = value.includes(field);
 
         return (
-          <Chip
+          <Chip<"button">
             key={field}
             aria-pressed={isSelected}
-            as="button"
             className={`shrink-0 cursor-pointer select-none ${itemClassName}`}
             color={isSelected ? "accent" : "default"}
+            render={(props) => <button {...props} />}
             size="sm"
             type="button"
             variant={isSelected ? "primary" : "tertiary"}

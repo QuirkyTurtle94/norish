@@ -601,12 +601,12 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
                 {ALL_CATEGORIES.map((category) => {
                   const active = categories.includes(category);
                   return (
-                    <Chip
+                    <Chip<"button">
                       key={category}
-                      as="button"
                       aria-pressed={active}
                       className="chip--on-ground h-8 cursor-pointer rounded-full px-3 text-sm"
                       color={active ? "accent" : "default"}
+                      render={(props) => <button {...props} />}
                       type="button"
                       variant={active ? "primary" : "tertiary"}
                       onClick={() => toggleCategory(category)}

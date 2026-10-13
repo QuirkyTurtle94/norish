@@ -258,12 +258,7 @@ export default function VideoProcessingForm({ onDirtyChange }: VideoProcessingFo
     <div className="flex flex-col gap-4">
       {/* Video Processing Section */}
       <SwitchRow description={t("enableVideoDescription")} title={t("enableVideo")}>
-        <SettingsSwitch
-          color="success"
-          isDisabled={!isAIEnabled}
-          isSelected={enabled}
-          onValueChange={setEnabled}
-        />
+        <SettingsSwitch isDisabled={!isAIEnabled} isSelected={enabled} onValueChange={setEnabled} />
       </SwitchRow>
 
       {showAiDisabledWarning && <Note status="warning">{t("aiDisabledWarning")}</Note>}

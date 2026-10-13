@@ -140,7 +140,7 @@ export default function TagInput({ value, onChange, placeholder, className = "" 
     if (!trimmed) return "";
     const words = trimmed.split(/\s+/);
 
-    return words[words.length - 1];
+    return words[words.length - 1] ?? "";
   }, [rawInput]);
 
   // Find exact match for current word (for auto-select on space)
@@ -251,7 +251,7 @@ export default function TagInput({ value, onChange, placeholder, className = "" 
         }
       } else if (e.key === "Backspace" && !rawInput && value.length > 0) {
         e.preventDefault();
-        handleRemoveTag(value[value.length - 1]);
+        handleRemoveTag(value[value.length - 1]!);
       }
     },
     [exactMatch, handleAddTag, rawInput, value, handleRemoveTag, currentWord]

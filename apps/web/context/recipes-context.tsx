@@ -62,19 +62,17 @@ const sharedRecipesContext = createRecipesContext({
 
     return {
       show: ({ severity, title, description, actionLabel, onActionPress }) => {
-        const variant = severity === "primary" || severity === "secondary" ? "accent" : severity;
-
         if (actionLabel) {
           showActionToast(title, {
             description,
-            variant,
+            variant: severity,
             action: { label: actionLabel, onPress: () => onActionPress?.() },
           });
 
           return;
         }
 
-        toast(title, { description, variant });
+        toast(title, { description, variant: severity });
       },
       translate: createScopedMessageTranslator({
         common: (messageKey) => tCommon(messageKey as Parameters<typeof tCommon>[0]),

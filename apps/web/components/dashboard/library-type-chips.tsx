@@ -37,10 +37,9 @@ export default function LibraryTypeChips() {
         const isSelected = filters.libraryType === type;
 
         return (
-          <Chip
+          <Chip<"button">
             key={type}
             aria-pressed={isSelected}
-            as="button"
             className={`chip--on-ground h-9 shrink-0 cursor-pointer rounded-full border px-4 transition-colors select-none ${
               isSelected
                 ? "border-accent shadow-surface"
@@ -48,6 +47,7 @@ export default function LibraryTypeChips() {
             }`}
             color={isSelected ? "accent" : "default"}
             data-library-type={type}
+            render={(props) => <button {...props} />}
             size="lg"
             type="button"
             // Switching the lens re-queries and re-sorts the whole Library.

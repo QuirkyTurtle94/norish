@@ -80,7 +80,7 @@ export function DeleteStoreModal({
                 <RadioGroup
                   className="gap-3"
                   value={deleteOption}
-                  onValueChange={(v) => setDeleteOption(v as "keep" | "delete")}
+                  onChange={(v) => setDeleteOption(v === "delete" ? "delete" : "keep")}
                 >
                   <Radio value="keep">
                     <Radio.Content>

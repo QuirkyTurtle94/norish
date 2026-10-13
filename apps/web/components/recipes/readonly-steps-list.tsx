@@ -83,7 +83,9 @@ export function ReadonlyStepsList({
   };
 
   const onKeyToggle = (e: React.KeyboardEvent, i: number) => {
-    if (!interactive) {
+    // A key pressed on a control inside the step (a timer, an image) is that
+    // control's to handle, not a toggle of the whole step.
+    if (!interactive || e.target !== e.currentTarget) {
       return;
     }
 

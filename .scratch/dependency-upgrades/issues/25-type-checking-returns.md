@@ -1,6 +1,6 @@
 # 25 — Type checking returns
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: None. It is the first code commit of the sweep.
 Target release: 0.26.0-beta
 
@@ -58,3 +58,4 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 
 - Filed 2026-10-12 with the spec as "Type checking comes back, then TypeScript 7" (needs-triage).
 - 2026-10-13 — The maintainer made it the first step of the sweep and held TypeScript 7 without a side-by-side install. Error counts measured the same day; logs were kept outside the repo.
+- 2026-10-13 — Done on `chore/dependency-upgrades`. Beyond the counts above it found: the optimistic recipe edit cached rows without ids and cuisine ids in place of entries; the store-delete "Delete items" option was unselectable; the note editor had no date field; the share panel's Open link was a dead button; several clickable chips were spans; `planned-recipe.d.ts` and `notes.d.ts` referenced deleted schemas, so `Slot` and the calendar item types were silently `any` (`.d.ts` + `skipLibCheck`). Those two files are gone and `Slot` comes from `slotSchema`. `apps/web/lib/auth/client.ts` was an unused copy and is deleted.

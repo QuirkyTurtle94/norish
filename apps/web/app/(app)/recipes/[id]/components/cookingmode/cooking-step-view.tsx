@@ -1,5 +1,6 @@
 "use client";
 
+import type { Transition } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SmartInstruction } from "@/components/recipe/smart-instruction";
 import { StepIngredientsRow } from "@/components/recipes/step-ingredients-row";
@@ -21,7 +22,7 @@ type CookingStepViewProps = Pick<
 };
 
 const REDUCED_MOTION_TRANSITION = { duration: 0.15, ease: "linear" };
-const PAGE_TRANSITION = { duration: 0.5, ease: [0.22, 1, 0.36, 1] };
+const PAGE_TRANSITION: Transition = { duration: 0.5, ease: [0.22, 1, 0.36, 1] };
 
 export function CookingStepView({
   activeStep,
@@ -128,7 +129,9 @@ export function CookingStepView({
   } | null>(null);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+
+    if (e.touches.length !== 1 || !touch) return;
 
     let isAtTop = true;
     let isAtBottom = true;
@@ -140,7 +143,7 @@ export function CookingStepView({
       isAtBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
     }
 
-    touchStartRef.current = { y: e.touches[0].clientY, isAtTop, isAtBottom };
+    touchStartRef.current = { y: touch.clientY, isAtTop, isAtBottom };
   }, []);
 
   const handleTouchEnd = useCallback(

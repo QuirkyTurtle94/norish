@@ -213,11 +213,11 @@ export function ReadonlyRecipeSummary({
             {recipe.name}
             {recipe.url && (
               <Link
+                aria-label={t("viewOriginal")}
                 className="ml-2 inline-block align-middle"
                 href={recipe.url}
                 rel="noopener noreferrer"
                 target="_blank"
-                title={t("viewOriginal")}
               >
                 <ArrowTopRightOnSquareIcon className="text-muted hover:text-accent inline h-4 w-4" />
               </Link>

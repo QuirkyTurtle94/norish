@@ -370,7 +370,7 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
   return (
     <div className="flex flex-col gap-4">
       <SwitchRow description={t("enableAIDescription")} title={t("enableAI")}>
-        <SettingsSwitch color="success" isSelected={enabled} onValueChange={setEnabled} />
+        <SettingsSwitch isSelected={enabled} onValueChange={setEnabled} />
       </SwitchRow>
 
       {showValidationWarning && <Note status="warning">{t("configureWarning")}</Note>}
@@ -552,7 +552,6 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
 
       <SwitchRow description={t("alwaysUseAIDescription")} title={t("alwaysUseAI")}>
         <SettingsSwitch
-          color="success"
           isDisabled={!enabled}
           isSelected={alwaysUseAI}
           onValueChange={setAlwaysUseAI}

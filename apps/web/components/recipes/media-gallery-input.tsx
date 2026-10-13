@@ -413,9 +413,9 @@ export default function MediaGalleryInput({
   };
 
   const { getOnPasteHandler } = useClipboardImagePaste({
-    onFiles: (files) => {
-      if (files.length > 0) {
-        handleUpload(files[0]);
+    onFiles: ([file]) => {
+      if (file) {
+        handleUpload(file);
       }
     },
   });

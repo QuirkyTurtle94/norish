@@ -94,11 +94,11 @@ export default function CalDavSyncStatusCard() {
       {/* Summary Badges - Clickable Filters */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
-          <Chip
+          <Chip<"button">
             aria-pressed={syncStatusFilter === "synced"}
-            as="button"
             className="cursor-pointer transition-all"
             color="success"
+            render={(props) => <button {...props} />}
             size="sm"
             type="button"
             variant={syncStatusFilter === "synced" ? "primary" : "soft"}
@@ -106,11 +106,11 @@ export default function CalDavSyncStatusCard() {
           >
             {t("statuses.synced")}: {syncStatusSummary.synced}
           </Chip>
-          <Chip
+          <Chip<"button">
             aria-pressed={syncStatusFilter === "pending"}
-            as="button"
             className="cursor-pointer transition-all"
             color="warning"
+            render={(props) => <button {...props} />}
             size="sm"
             type="button"
             variant={syncStatusFilter === "pending" ? "primary" : "soft"}
@@ -118,11 +118,11 @@ export default function CalDavSyncStatusCard() {
           >
             {t("statuses.pending")}: {syncStatusSummary.pending}
           </Chip>
-          <Chip
+          <Chip<"button">
             aria-pressed={syncStatusFilter === "failed"}
-            as="button"
             className="cursor-pointer transition-all"
             color="danger"
+            render={(props) => <button {...props} />}
             size="sm"
             type="button"
             variant={syncStatusFilter === "failed" ? "primary" : "soft"}
@@ -130,11 +130,11 @@ export default function CalDavSyncStatusCard() {
           >
             {t("statuses.failed")}: {syncStatusSummary.failed}
           </Chip>
-          <Chip
+          <Chip<"button">
             aria-pressed={syncStatusFilter === "removed"}
-            as="button"
             className="cursor-pointer transition-all"
             color="default"
+            render={(props) => <button {...props} />}
             size="sm"
             type="button"
             variant={syncStatusFilter === "removed" ? "primary" : "soft"}

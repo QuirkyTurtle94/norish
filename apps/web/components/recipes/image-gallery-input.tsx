@@ -255,9 +255,9 @@ export default function ImageGalleryInput({
   };
 
   const { getOnPasteHandler } = useClipboardImagePaste({
-    onFiles: (files) => {
-      if (files.length > 0 && images.length < maxImages) {
-        handleUpload(files[0]);
+    onFiles: ([file]) => {
+      if (file && images.length < maxImages) {
+        handleUpload(file);
       }
     },
   });

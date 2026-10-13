@@ -389,10 +389,13 @@ export default function FiltersPanel({ open, onOpenChange }: FiltersPanelProps) 
                 const active = workingCategories.includes(category);
 
                 return (
-                  <Chip
+                  <Chip<"button">
                     key={category}
+                    aria-pressed={active}
                     className="h-7 cursor-pointer px-2 text-[11px]"
                     color={active ? "accent" : "default"}
+                    render={(props) => <button {...props} />}
+                    type="button"
                     variant={active ? "primary" : "tertiary"}
                     onClick={() => toggleCategory(category)}
                   >
@@ -428,10 +431,13 @@ export default function FiltersPanel({ open, onOpenChange }: FiltersPanelProps) 
                     const active = workingTags.includes(tag);
 
                     return (
-                      <Chip
+                      <Chip<"button">
                         key={tag}
+                        aria-pressed={active}
                         className="h-7 cursor-pointer px-2 text-[11px]"
                         color={active ? "accent" : "default"}
+                        render={(props) => <button {...props} />}
+                        type="button"
                         variant={active ? "primary" : "tertiary"}
                         onClick={() => toggleTag(tag)}
                       >

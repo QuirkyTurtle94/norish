@@ -14,7 +14,17 @@ import {
   PlayIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { Button, Card, Input, Label, ListBox, Select, Spinner, toast } from "@heroui/react";
+import {
+  Button,
+  buttonVariants,
+  Card,
+  Input,
+  Label,
+  ListBox,
+  Select,
+  Spinner,
+  toast,
+} from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
@@ -135,21 +145,22 @@ export default function RecipeSharePanel({ open, onOpenChange }: Props) {
                       {<ClipboardDocumentIcon className="h-4 w-4" />}
                       {t("copyLink")}
                     </Button>
-                    <Button
-                      as="a"
+                    <a
+                      className={buttonVariants({
+                        size: "sm",
+                        variant: "tertiary",
+                        className: "min-w-16",
+                      })}
                       href={latestCreatedUrl}
                       rel="noopener noreferrer"
-                      size="sm"
                       target="_blank"
-                      variant="tertiary"
-                      className="min-w-16"
                     >
                       {<ArrowTopRightOnSquareIcon className="h-4 w-4" />}
                       {t("openLink")}
-                    </Button>
+                    </a>
                   </div>
                 </div>
-                <Input isReadOnly value={latestCreatedUrl} />
+                <Input readOnly value={latestCreatedUrl} />
               </div>
             )}
           </Card.Content>
@@ -191,7 +202,7 @@ export default function RecipeSharePanel({ open, onOpenChange }: Props) {
                           {share.lastAccessedAt && (
                             <p>
                               {t("lastAccessedAt", {
-                                value: formatDate(share.lastAccessedAt),
+                                value: formatDate(share.lastAccessedAt) ?? t("never"),
                               })}
                             </p>
                           )}

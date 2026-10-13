@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 
-import { CalendarItemViewDto, Slot } from "@norish/shared/contracts";
+import { PlannedItemFromQuery, Slot } from "@norish/shared/contracts";
 
 export type CalendarContainerId = string;
 export type CalendarItemsState = Record<CalendarContainerId, string[]>;
@@ -30,7 +30,7 @@ export function parseContainerId(id: string): { date: string; slot: Slot } | nul
 }
 
 function buildItemsState(
-  plannedItemsByDate: Record<string, CalendarItemViewDto[]>
+  plannedItemsByDate: Record<string, PlannedItemFromQuery[]>
 ): CalendarItemsState {
   const items: CalendarItemsState = {};
   const slots: Slot[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -53,7 +53,7 @@ function findContainerForItem(
   itemId: string,
   items: CalendarItemsState
 ): CalendarContainerId | undefined {
-  return Object.keys(items).find((key) => items[key].includes(itemId));
+  return Object.keys(items).find((key) => items[key]?.includes(itemId));
 }
 
 export function useCalendarDnd() {
@@ -68,7 +68,7 @@ export function useCalendarDnd() {
   const clonedItems = useRef<CalendarItemsState | null>(null);
 
   // Track previous plannedItemsByDate to detect external changes
-  const prevPlannedItemsRef = useRef<Record<string, CalendarItemViewDto[]>>(plannedItemsByDate);
+  const prevPlannedItemsRef = useRef<Record<string, PlannedItemFromQuery[]>>(plannedItemsByDate);
 
   // Sync with external data only when not actively dragging
   if (!activeId && plannedItemsByDate !== prevPlannedItemsRef.current) {
@@ -116,7 +116,7 @@ export function useCalendarDnd() {
       if (id in items) return id;
       if (parseContainerId(id)) return id;
 
-      return Object.keys(items).find((key) => items[key].includes(id));
+      return Object.keys(items).find((key) => items[key]?.includes(id));
     },
     [items]
   );
@@ -129,7 +129,7 @@ export function useCalendarDnd() {
   );
 
   const itemsById = useMemo(() => {
-    const map = new Map<string, CalendarItemViewDto>();
+    const map = new Map<string, PlannedItemFromQuery>();
 
     for (const dateItems of Object.values(plannedItemsByDate)) {
       for (const item of dateItems) {
@@ -141,7 +141,7 @@ export function useCalendarDnd() {
   }, [plannedItemsByDate]);
 
   const getItemById = useCallback(
-    (itemId: string): CalendarItemViewDto | undefined => {
+    (itemId: string): PlannedItemFromQuery | undefined => {
       return itemsById.get(itemId);
     },
     [itemsById]
@@ -281,7 +281,7 @@ export function useCalendarDnd() {
 
       const positionChanged =
         originalContainer !== currentContainer ||
-        originalItems[originalContainer].indexOf(activeIdStr) !== targetIndex;
+        originalItems[originalContainer]?.indexOf(activeIdStr) !== targetIndex;
 
       if (!positionChanged) {
         return;
