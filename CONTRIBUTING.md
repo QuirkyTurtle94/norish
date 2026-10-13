@@ -65,6 +65,7 @@ pnpm dev
 | `pnpm test:run`      | Alias for `pnpm test`                    |
 | `pnpm test:coverage` | Run tests with coverage report           |
 | `pnpm lint`          | Check for linting errors                 |
+| `pnpm typecheck`     | Type-check every workspace               |
 | `pnpm format`        | Check formatting with Prettier           |
 | `pnpm format:check`  | Check formatting without changes         |
 | `pnpm i18n:check`    | Check for missing locale keys            |
@@ -206,6 +207,7 @@ git checkout -b fix/your-bug-fix
 
 ```bash
 pnpm lint
+pnpm typecheck
 pnpm test:run
 pnpm i18n:check
 pnpm build
