@@ -43,11 +43,11 @@ Two linked changes.
 
 ## Acceptance criteria
 
-- [x] **Reproducible.** Two image builds of the same commit, a day apart, contain identical `node_modules` versions.
+- [ ] **Reproducible.** Two image builds of the same commit, a day apart, contain identical `node_modules` versions.
 - [x] **Matches the lockfile.** The deployed tree's lock matches `pnpm-lock.yaml` for production dependencies.
 - [x] **Size.** Image size before and after is recorded.
 - [x] **Exact Node.** Both `FROM` lines name an exact Node version.
-- [x] **pnpm 12 everywhere.** `pnpm install --frozen-lockfile` passes on pnpm 12 in CI, the devcontainer and Docker.
+- [ ] **pnpm 12 everywhere.** `pnpm install --frozen-lockfile` passes on pnpm 12 in CI, the devcontainer and Docker.
 - [x] **Gates and E2E.** The gates pass, and `pnpm test:e2e` passes against the image build.
 
 ## Comments
@@ -69,4 +69,5 @@ Two linked changes.
   - **Gates.** lint, typecheck, test:run, i18n:check, build, format:check and deps:cycles pass on pnpm 12. `pnpm test:e2e`: 167 passed, 1 load-only flake (`calendar-planning.e2e.ts:62`) that passes alone.
   - **Release age.** pnpm 12's default `minimumReleaseAge` (one day) also checks the lockfile. Entries the earlier 0.26 commits locked today fail a frozen install until they are a day old, so CI rejects this branch until 2026-10-14 about 12:00 CEST (the newest is testcontainers 12.2.1, published 09:51 UTC today). Local runs today used `PNPM_CONFIG_MINIMUM_RELEASE_AGE=0`.
   - **Not verified here:** the devcontainer build and CI's `pnpm/action-setup`; both read the pinned version. Reproducibility a day apart follows from deploying from the lockfile and was not re-measured.
-
+- 2026-10-13 (review) — Reproducible unticked: two builds a day apart were not compared; the claim rests on the deploy reading the lockfile.
+- 2026-10-13 (review) — pnpm 12 everywhere unticked: verified locally and in Docker; CI and the devcontainer have not run it yet.

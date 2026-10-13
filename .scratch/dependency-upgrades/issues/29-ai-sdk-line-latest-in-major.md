@@ -40,7 +40,7 @@ On 2026-10-12 (take the newest when the work starts; `ai` was 7.0.138 on 2026-10
   - structured output, including the plain-JSON degrade for OpenAI-compatible endpoints (#538);
   - image generation;
   - transcription.
-- [ ] **E2E.** The E2E AI project passes.
+- [x] **E2E.** The E2E AI project passes.
 - [ ] **Real-key smoke** (manual): one hosted provider plus the OpenAI-compatible or Ollama path.
 - [x] **AI boundary.** An `rg` check shows that no feature file imports `ai` or an `@ai-sdk/*` package.
 
@@ -52,4 +52,4 @@ On 2026-10-12 (take the newest when the work starts; `ai` was 7.0.138 on 2026-10
   - **Tests:** the 346 AI tests pass (temperature fallback, structured output with the plain-JSON degrade, image generation, transcription), and `pnpm typecheck` passes.
   - **Boundary:** no file outside `ai/runtime/` imports `ai`, an `@ai-sdk/*` package, `ai-sdk-ollama` or `openai`.
   - **Not done here:** the real-key smoke.
-
+- 2026-10-13 (review) — The full `pnpm test:e2e` (ai, offline and realtime projects) passed 175 of 175 on this commit, and again on the parser commit after it.
