@@ -15,7 +15,7 @@ conventions and processes once your [development environment](./setup.md) is up.
 norish/
 ├── apps/             # App workspaces
 │   ├── web/          # Next.js app (App Router + server entry)
-│   ├── mobile/       # Expo app workspace (@norish/mobile)
+│   ├── mobile/       # Expo app (@norish/mobile), parked and outside the workspace
 │   ├── parser-api/   # Python recipe parser service
 │   ├── landing/      # Marketing site (norish.dev)
 │   └── docs/         # This documentation site (docs.norish.dev)

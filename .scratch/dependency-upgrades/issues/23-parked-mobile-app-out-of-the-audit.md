@@ -1,6 +1,6 @@
 # 23 — The parked mobile app stops counting against the audit
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 25 (type checking)
 Target release: 0.26.0-beta
 
@@ -42,3 +42,4 @@ The Expo SDK 56 → 57 upgrade belongs to the mobile rewrite, not to this effort
 
 - Filed 2026-10-12 with the spec.
 - 2026-10-13 — The maintainer chose option 3 and dropping `expo()` for now.
+- 2026-10-13 — Done. apps/mobile is outside the workspace with its own `pnpm-lock.yaml`; its `catalog:` entries are pinned to the versions the catalog held, and its `@norish/*` packages use `link:`. `pnpm dev:mobile` starts Metro. The server no longer mounts `expo()` or trusts `mobile://`/`exp://` origins. Taking it out exposed a hidden dependency: apps/web's tests used `@testing-library/user-event`, which only expo-router pulled in; apps/web now declares it. `pnpm audit` on the workspace: 130 findings (44 high, 70 moderate, 16 low), none from Expo.

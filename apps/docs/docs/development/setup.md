@@ -28,7 +28,8 @@ cp .env.example .env.local
 # Run the web app
 pnpm run dev
 
-# Run the mobile app (Expo)
+# Run the parked mobile app (Expo); it installs separately
+pnpm --dir apps/mobile install --ignore-workspace
 pnpm run dev:mobile
 ```
 
@@ -60,7 +61,8 @@ pnpm run docker:up
 # Run the web app (also starts the embedded parser from apps/parser-api/.venv)
 pnpm run dev
 
-# Run the mobile app (Expo)
+# Run the parked mobile app (Expo); it installs separately
+pnpm --dir apps/mobile install --ignore-workspace
 pnpm run dev:mobile
 ```
 

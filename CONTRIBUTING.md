@@ -55,21 +55,21 @@ pnpm dev
 
 ## Development Commands
 
-| Command              | Description                              |
-| -------------------- | ---------------------------------------- |
-| `pnpm dev`           | Start development server with hot reload |
-| `pnpm dev:mobile`    | Start the parked Expo mobile workspace   |
-| `pnpm build`         | Create production build                  |
-| `pnpm start`         | Run production server                    |
-| `pnpm test`          | Run tests via Turbo (all workspaces)     |
-| `pnpm test:run`      | Alias for `pnpm test`                    |
-| `pnpm test:coverage` | Run tests with coverage report           |
-| `pnpm lint`          | Check for linting errors                 |
-| `pnpm typecheck`     | Type-check every workspace               |
-| `pnpm format`        | Check formatting with Prettier           |
-| `pnpm format:check`  | Check formatting without changes         |
-| `pnpm i18n:check`    | Check for missing locale keys            |
-| `pnpm db:push`       | Push schema changes to database          |
+| Command              | Description                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| `pnpm dev`           | Start development server with hot reload                                                              |
+| `pnpm dev:mobile`    | Start the parked Expo app (install it first with `pnpm --dir apps/mobile install --ignore-workspace`) |
+| `pnpm build`         | Create production build                                                                               |
+| `pnpm start`         | Run production server                                                                                 |
+| `pnpm test`          | Run tests via Turbo (all workspaces)                                                                  |
+| `pnpm test:run`      | Alias for `pnpm test`                                                                                 |
+| `pnpm test:coverage` | Run tests with coverage report                                                                        |
+| `pnpm lint`          | Check for linting errors                                                                              |
+| `pnpm typecheck`     | Type-check every workspace                                                                            |
+| `pnpm format`        | Check formatting with Prettier                                                                        |
+| `pnpm format:check`  | Check formatting without changes                                                                      |
+| `pnpm i18n:check`    | Check for missing locale keys                                                                         |
+| `pnpm db:push`       | Push schema changes to database                                                                       |
 
 ## Project Structure
 
@@ -77,7 +77,7 @@ pnpm dev
 norish/
 ├── apps/             # App workspaces
 │   ├── web/          # Next.js app (App Router + server entry)
-│   └── mobile/       # Expo app workspace (@norish/mobile) — parked pending a rewrite; not covered by the gates
+│   └── mobile/       # Expo app (@norish/mobile) — parked pending a rewrite; outside the workspace, not covered by the gates
 ├── packages/         # Shared libraries
 │   ├── api/          # Server API logic (routers, AI, parsing)
 │   ├── auth/         # Auth helpers

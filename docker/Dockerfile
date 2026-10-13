@@ -121,10 +121,6 @@ RUN pnpm deploy --legacy --filter @norish/web --prod /app/deploy && \
   cd /app/deploy/node_modules && \
   # Remove workspace copies (source is in packages/, server code in dist-server/)
   rm -rf @norish && \
-  # Remove mobile-only auth deps pulled in via @better-auth/expo peer resolution
-  rm -rf @expo @expo-google-fonts expo expo-* \
-  @react-native @react-navigation react-native react-native-* \
-  hermes-compiler fb-dotslash react-devtools-core && \
   # Remove build-only tools that leak through transitive deps
   rm -rf typescript @esbuild esbuild tsx \
   @prisma prisma drizzle-kit \

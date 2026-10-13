@@ -46,7 +46,6 @@ export default defineConfig({
     "@better-auth/api-key",
     "@better-auth/core",
     "@better-auth/utils",
-    "@better-auth/expo",
     "better-call",
     "jose",
     "cookie",
