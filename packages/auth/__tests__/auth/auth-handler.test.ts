@@ -67,6 +67,7 @@ function createIdentityProvider() {
   const grants = new Map<string, { identity: Identity; nonce: string | null; forged: boolean }>();
   const tokenRequests: URLSearchParams[] = [];
   let issuer = "";
+  let hanging = false;
 
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
   const signIdToken = (claims: Record<string, unknown>, key = privateKey) => {
@@ -76,6 +77,9 @@ function createIdentityProvider() {
   };
 
   const server = createServer(async (req, res) => {
+    // A provider that takes the connection and never answers.
+    if (hanging) return;
+
     const url = new URL(req.url ?? "/", issuer);
     const json = (body: unknown) => {
       res.writeHead(200, { "content-type": "application/json" });
@@ -146,8 +150,14 @@ function createIdentityProvider() {
 
   return {
     tokenRequests,
-    async start() {
-      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    get listening() {
+      return server.listening;
+    },
+    set hanging(value: boolean) {
+      hanging = value;
+    },
+    async start(port = 0) {
+      await new Promise<void>((resolve) => server.listen(port, "127.0.0.1", resolve));
       issuer = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
       return issuer;
@@ -411,19 +421,70 @@ describe("rate limiting", () => {
 });
 
 describe("an identity provider that is down when Norish starts", () => {
-  it("leaves OIDC sign-in off until the auth instance is built again", async () => {
+  it("turns OIDC sign-in on once the provider can be reached again", async () => {
+    const port = Number(new URL(issuer).port);
+
     await idp.stop();
+    vi.useFakeTimers({ toFake: ["Date"] });
 
     try {
-      const down = await importAuth();
-      const response = await down.auth.handler(
-        post("/sign-in/social", { provider: "oidc", callbackURL: "/" })
-      );
-
-      expect(response.status).toBe(404);
-    } finally {
-      issuer = await idp.start();
       authModule = await importAuth();
+
+      // Held the way the auth route holds it, from before the instance is rebuilt.
+      const handler = authModule.auth.handler;
+      const startSignIn = () =>
+        handler(post("/sign-in/social", { provider: "oidc", callbackURL: "/" }));
+
+      expect((await startSignIn()).status).toBe(404);
+
+      // A provider that is back is asked again only once the retry delay is up.
+      await idp.start(port);
+      expect((await startSignIn()).status).toBe(404);
+
+      vi.setSystemTime(Date.now() + 30_000);
+
+      // The next use builds a replacement in the background, which takes over
+      // once it has the provider.
+      await authModule.auth.api.getSession({ headers: new Headers() });
+      await vi.waitFor(async () => {
+        const ctx = await authModule.auth.$context;
+
+        expect(ctx.socialProviders.map((provider) => provider.id)).toContain("oidc");
+      });
+
+      expect((await startSignIn()).status).toBe(200);
+    } finally {
+      vi.useRealTimers();
+      if (!idp.listening) await idp.start(port);
+    }
+  });
+
+  it("keeps answering session checks while a provider that never responds is retried", async () => {
+    const port = Number(new URL(issuer).port);
+
+    await idp.stop();
+    vi.useFakeTimers({ toFake: ["Date"] });
+
+    try {
+      authModule = await importAuth();
+      expect(
+        (
+          await authModule.auth.handler(
+            post("/sign-in/social", { provider: "oidc", callbackURL: "/" })
+          )
+        ).status
+      ).toBe(404);
+
+      idp.hanging = true;
+      await idp.start(port);
+      vi.setSystemTime(Date.now() + 30_000);
+
+      // The replacement's discovery request never gets an answer.
+      await expect(authModule.auth.api.getSession({ headers: new Headers() })).resolves.toBeNull();
+    } finally {
+      vi.useRealTimers();
+      idp.hanging = false;
+      if (!idp.listening) await idp.start(port);
     }
   });
 });

@@ -136,12 +136,18 @@ function buildSocialProviders() {
   return providers;
 }
 
+function isOIDCConfigured(): boolean {
+  const oidcProvider = getCachedOIDCProvider();
+
+  return Boolean(oidcProvider?.clientId && oidcProvider.clientSecret && oidcProvider.issuer);
+}
+
 function buildOIDCProviders() {
   const providers: any[] = [];
 
   const oidcProvider = getCachedOIDCProvider();
 
-  if (oidcProvider?.clientId && oidcProvider?.clientSecret && oidcProvider?.issuer) {
+  if (oidcProvider && isOIDCConfigured()) {
     // Build scopes: base scopes + any additional configured scopes
     const baseScopes = ["openid", "profile", "email"];
     const additionalScopes = oidcProvider.claimConfig?.scopes ?? [];
@@ -476,12 +482,52 @@ function createBetterAuth() {
 // The configured instance's own type, so plugin API methods are included.
 type AuthInstance = ReturnType<typeof createBetterAuth>;
 
-function createAuth(): AuthInstance {
-  return createBetterAuth();
-}
+/*
+ * Better Auth reads OIDC discovery once, while an instance is built, and leaves
+ * the provider out when it cannot be reached. Until an instance has it, a
+ * replacement is built in the background, at most every 30 seconds, and takes
+ * over once it has the provider. Requests keep the instance in use meanwhile,
+ * so a provider that never answers cannot hold them up.
+ */
+const OIDC_DISCOVERY_RETRY_MS = 30_000;
 
 // Lazy-initialized auth instance
 let _auth: AuthInstance | null = null;
+// From this time on, the next access builds a replacement in the background.
+let _retryAt: number | null = null;
+
+async function hasOIDCProvider(instance: AuthInstance): Promise<boolean> {
+  const ctx = await instance.$context.catch(() => null);
+
+  if (ctx?.socialProviders.some((provider) => provider.id === "oidc")) {
+    return true;
+  }
+
+  authLogger.warn(
+    { retryInMs: OIDC_DISCOVERY_RETRY_MS },
+    "OIDC provider could not be reached, sign-in with it is off until a retry succeeds"
+  );
+  _retryAt = Date.now() + OIDC_DISCOVERY_RETRY_MS;
+
+  return false;
+}
+
+function currentAuth(): AuthInstance {
+  if (!_auth) {
+    _auth = createBetterAuth();
+
+    if (isOIDCConfigured()) void hasOIDCProvider(_auth);
+  } else if (_retryAt !== null && Date.now() >= _retryAt) {
+    const replacement = createBetterAuth();
+
+    _retryAt = null;
+    void hasOIDCProvider(replacement).then((ready) => {
+      if (ready) _auth = replacement;
+    });
+  }
+
+  return _auth;
+}
 
 /**
  * Get the auth instance (lazy-initialized on first access)
@@ -489,11 +535,13 @@ let _auth: AuthInstance | null = null;
  */
 export const auth = new Proxy({} as AuthInstance, {
   get(_target, prop) {
-    if (!_auth) {
-      _auth = createAuth();
-    }
+    const value = Reflect.get(currentAuth(), prop);
 
-    return (_auth as any)[prop];
+    // A caller may keep a method it read once (the auth route exports
+    // `auth.handler`), so the method calls whichever instance is current then.
+    return typeof value === "function"
+      ? (...args: unknown[]) => Reflect.get(currentAuth(), prop)(...args)
+      : value;
   },
 });
 
