@@ -68,6 +68,23 @@ export interface ModelBuildOptions {
 }
 
 /**
+ * The Sonar models Perplexity retired on 2026-09-27, and the Agent API preset
+ * each starts from now (the provider's own suggestion). A stored Sonar choice
+ * is mapped where it becomes a model, so no setting has to be changed by hand.
+ */
+const RETIRED_SONAR_MODELS: Record<string, string> = {
+  sonar: "fast",
+  "sonar-pro": "low",
+  "sonar-reasoning": "medium",
+  "sonar-reasoning-pro": "medium",
+  "sonar-deep-research": "high",
+};
+
+function perplexityModelId(id: string): string {
+  return RETIRED_SONAR_MODELS[id] ?? id;
+}
+
+/**
  * Create AI model instances from configuration.
  * The AI Runtime checks enablement before calling this.
  */
@@ -170,8 +187,8 @@ function createProviderModels(
       const perplexity = createPerplexity({ apiKey, fetch: customFetch });
 
       return {
-        model: perplexity(model),
-        visionModel: perplexity(visionModel || model),
+        model: perplexity(perplexityModelId(model)),
+        visionModel: perplexity(perplexityModelId(visionModel || model)),
         providerName: "Perplexity",
       };
     }

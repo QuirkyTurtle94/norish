@@ -79,17 +79,18 @@ async function testPerplexityConnection(
   }
 
   try {
-    // Perplexity doesn't have a /models endpoint, so we use a minimal chat completion request
-    const response = await fetch("https://api.perplexity.ai/chat/completions", {
+    // Perplexity has no /models endpoint, so ask its Agent API (the one Norish
+    // uses since the Sonar API was retired) the smallest question it takes.
+    const response = await fetch("https://api.perplexity.ai/v1/agent", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "sonar",
-        messages: [{ role: "user", content: "Hi" }],
-        max_tokens: 1,
+        preset: "fast",
+        input: [{ type: "message", role: "user", content: "Hi" }],
+        max_output_tokens: 16,
       }),
       signal: AbortSignal.timeout(15_000),
     });

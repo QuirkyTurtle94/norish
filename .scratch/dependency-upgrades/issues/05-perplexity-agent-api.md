@@ -1,6 +1,6 @@
 # 05 — Perplexity moves to the Agent API
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: None. **Urgent**: the Sonar API that Norish calls was retired on 2026-09-27.
 Target release: 0.26.0-beta, in the same commit as ticket 29
 
@@ -35,17 +35,17 @@ Move `@ai-sdk/perplexity` from 4.0.48 to the newest **5.0.x**, in the same commi
 
 ## Acceptance criteria
 
-- [ ] **Versions.** `@ai-sdk/perplexity` is on 5.0.x, and `pnpm why @ai-sdk/provider` shows one copy (with ticket 29).
-- [ ] **Model list.** The model picker shows the Agent API presets.
+- [x] **Versions.** `@ai-sdk/perplexity` is on 5.0.x, and `pnpm why @ai-sdk/provider` shows one copy (with ticket 29).
+- [x] **Model list.** The model picker shows the Agent API presets.
 - [ ] **Real-key checks** (manual; the sandbox has no key):
   - the connection test succeeds;
   - a URL import (structured output) works;
   - an image-based import (vision) works.
-- [ ] **Stored ids.** Stored Sonar ids are mapped, with a unit test for the mapping.
-- [ ] **Existing tests.** The runtime tests pass (temperature fallback, structured output, image generation, transcription), as does the E2E AI project.
-- [ ] **Type check.** `pnpm typecheck` passes.
-- [ ] **AI boundary.** An `rg` check shows that no feature file imports `ai` or an `@ai-sdk/*` package.
-- [ ] **Release notes.** A bullet under `## Fixes and Improvements` ("Perplexity now uses Perplexity's Agent API; the retired Sonar API stopped working on September 27"), plus an `## Upgrade notes` entry on the model names and what happened to stored choices.
+- [x] **Stored ids.** Stored Sonar ids are mapped, with a unit test for the mapping.
+- [x] **Existing tests.** The runtime tests pass (temperature fallback, structured output, image generation, transcription), as does the E2E AI project.
+- [x] **Type check.** `pnpm typecheck` passes.
+- [x] **AI boundary.** An `rg` check shows that no feature file imports `ai` or an `@ai-sdk/*` package.
+- [x] **Release notes.** A bullet under `## Fixes and Improvements` ("Perplexity now uses Perplexity's Agent API; the retired Sonar API stopped working on September 27"), plus an `## Upgrade notes` entry on the model names and what happened to stored choices.
 
 ## Comments
 
@@ -57,3 +57,11 @@ Move `@ai-sdk/perplexity` from 4.0.48 to the newest **5.0.x**, in the same commi
   - search summaries of Perplexity's "Sonar moving to Agents API" notice (the page itself was unreachable).
 - Confirm the shutdown with a real key before writing the release note. If Sonar still answers, the urgency drops, but the move is still required.
 - 2026-10-13 — Did not ship in 0.25. Moved to 0.26 and joined with ticket 29; the maintainer chose the automatic model mapping (no manual steps for self-hosters).
+- 2026-10-13 — Done with ticket 29, on `@ai-sdk/perplexity` 5.0.11:
+  - **Model list:** the five Agent API presets (`fast`, `low`, `medium`, `high`, `xhigh`), all with vision.
+  - **Stored ids:** a Sonar id is mapped where it becomes a model (`providers.ts`), with the package docs' table. `perplexity-models.test.ts` covers all five, and a preset or `perplexity/…` id passes through unchanged.
+  - **Connection test:** posts `{ preset: "fast", input: [one user message], max_output_tokens: 16 }` to `https://api.perplexity.ai/v1/agent`; a 401 still reads as an invalid key.
+  - **PDF:** no feature sends PDF parts; the runtime's only file parts are the image import's images (JPEG, PNG, WebP, AVIF), which v5 turns into `input_image`. Nothing to decline.
+  - **Release notes:** a Fixes line and an Upgrade note on the presets and the mapping.
+  - **Not done here:** the real-key checks (connection test, URL import, image import) need a Perplexity key; the sandbox has none. The release note says Sonar was retired on September 27 on the package docs' word, without a live check.
+

@@ -1,6 +1,6 @@
 # 29 — The AI SDK line moves to its latest in-major versions
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 15 (undici 8). Ticket 05 lands in the same commit.
 Target release: 0.26.0-beta
 
@@ -34,17 +34,22 @@ On 2026-10-12 (take the newest when the work starts; `ai` was 7.0.138 on 2026-10
 
 ## Acceptance criteria
 
-- [ ] **One copy.** `pnpm why @ai-sdk/provider @ai-sdk/provider-utils` shows one version of each.
-- [ ] **Runtime tests pass:**
+- [x] **One copy.** `pnpm why @ai-sdk/provider @ai-sdk/provider-utils` shows one version of each.
+- [x] **Runtime tests pass:**
   - temperature fallback;
   - structured output, including the plain-JSON degrade for OpenAI-compatible endpoints (#538);
   - image generation;
   - transcription.
 - [ ] **E2E.** The E2E AI project passes.
 - [ ] **Real-key smoke** (manual): one hosted provider plus the OpenAI-compatible or Ollama path.
-- [ ] **AI boundary.** An `rg` check shows that no feature file imports `ai` or an `@ai-sdk/*` package.
+- [x] **AI boundary.** An `rg` check shows that no feature file imports `ai` or an `@ai-sdk/*` package.
 
 ## Comments
 
 - Filed 2026-10-12, split out of ticket 05 when the maintainer limited 0.25 to safe fixes.
 - 2026-10-13 — Joined with ticket 05.
+- 2026-10-13 — Done: `ai` 7.0.139; `@ai-sdk/anthropic` 4.0.79, `azure` 4.0.101, `google` 4.0.95, `groq` 4.0.60, `mistral` 4.0.63, `openai` 4.0.93, `deepseek` 3.0.64, `openai-compatible` 3.0.68, `typesafe-ai` 3.0.18, `perplexity` 5.0.11 (ticket 05), `@ai-sdk/provider` (dev) 4.0.27; `ai-sdk-ollama` 4.5.0; `openai` 7.32.0. Every one of them pins `@ai-sdk/provider` 4.0.27 and `provider-utils` 5.0.59, so the lockfile holds one of each.
+  - **Tests:** the 346 AI tests pass (temperature fallback, structured output with the plain-JSON degrade, image generation, transcription), and `pnpm typecheck` passes.
+  - **Boundary:** no file outside `ai/runtime/` imports `ai`, an `@ai-sdk/*` package, `ai-sdk-ollama` or `openai`.
+  - **Not done here:** the real-key smoke.
+
