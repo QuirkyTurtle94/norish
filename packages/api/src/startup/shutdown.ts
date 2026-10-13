@@ -24,6 +24,7 @@ type ShutdownTask = {
 // Shutdown timeouts
 const SHUTDOWN_TIMEOUT_MS = 30_000; // 30 seconds per operation
 const FORCE_EXIT_TIMEOUT_MS = 60_000; // 60 seconds total before force exit
+const SLOW_STEP_MS = 2_000; // a step this slow is named, so a slow shutdown says why
 
 /**
  * Execute a promise with a timeout. Rejects if the operation
@@ -41,10 +42,15 @@ async function withTimeout<T>(
     }, timeoutMs);
   });
 
+  const startedAt = Date.now();
+
   try {
     return await Promise.race([promise, timeoutPromise]);
   } finally {
     clearTimeout(timeoutId!);
+    const elapsedMs = Date.now() - startedAt;
+
+    if (elapsedMs > SLOW_STEP_MS) log.warn({ operation, elapsedMs }, "Shutdown step was slow");
   }
 }
 
