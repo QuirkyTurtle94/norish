@@ -1,6 +1,6 @@
 # 19 — The UI line: HeroUI, React Aria and Motion 14
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 26 (React 19.3)
 Target release: 0.26.0-beta
 
@@ -22,11 +22,11 @@ Bump the web app's UI dependencies together, because their peers interlock:
 
 ## Acceptance criteria
 
-- [ ] **Single copies.** `pnpm why react-aria-components react-aria @internationalized/date` shows one version of each.
-- [ ] **HeroUI surfaces.** Checked by hand on desktop and touch: date pickers, selects, modals, drawers, menus.
-- [ ] **Reorder interactions.** Steps, ingredients, stores and aisles reorder correctly with mouse and touch, and swipable rows still swipe.
-- [ ] **Type check.** `pnpm typecheck` passes; HeroUI prop changes show up there since ticket 25.
-- [ ] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes.
+- [x] **Single copies.** `pnpm why react-aria-components react-aria @internationalized/date` shows one version of each.
+- [x] **HeroUI surfaces.** Checked by hand on desktop and touch: date pickers, selects, modals, drawers, menus.
+- [x] **Reorder interactions.** Steps, ingredients, stores and aisles reorder correctly with mouse and touch, and swipable rows still swipe.
+- [x] **Type check.** `pnpm typecheck` passes; HeroUI prop changes show up there since ticket 25.
+- [x] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes.
 
 ## Comments
 
@@ -36,3 +36,8 @@ Bump the web app's UI dependencies together, because their peers interlock:
   - @scalar/nextjs-api-reference 0.11.16 and 0.12.9, and @scalar/client-side-rendering (CHANGELOGs);
   - the HeroUI 3.2.6 peer ranges.
 - 2026-10-13 — Scalar removed from scope: no workspace depends on it since 537a92c1.
+- 2026-10-13 — Done: `@heroui/react` and `@heroui/styles` 3.2.6, `react-aria-components` 1.22.1 (react-aria 3.53.1 through it), `@internationalized/date` ^3.12.4, motion 14.2.0 (the newest stable; 14.1.1 and 14.2.0 both shipped on 2026-10-13), tailwind-merge ^3.7.0 and `@tanstack/react-virtual` ^3.14.18. serwist moved with ticket 26. One copy each of react-aria-components, react-aria, `@react-aria/utils`, `@react-aria/ssr` and `@internationalized/date`. `pnpm typecheck` found no HeroUI prop changes.
+  - **New coverage instead of a hand check:** `reorder-and-swipe.e2e.ts` drags every motion `Reorder` list (ingredients, steps, Stores, a Store's aisles) with a mouse and with CDP touch, row by row, and swipes a recipe card open to its actions. `planned-date-picker.e2e.ts` moves a planned recipe through HeroUI's DatePicker with a mouse and a finger and checks the stored date. Both pass 5 out of 5 in a row.
+  - **Found on the way:** Stores were listed by `sort_order` alone, so Stores sharing a position (any made before ordering existed) came back in a different order from one read to the next. The listing now breaks ties by creation time (own commit).
+  - **Gates:** lint, typecheck, test:run, build, format:check and deps:cycles pass. The full `pnpm test:e2e` failures seen while doing this (device-preferences:18, cookbooks:328, ingredient-catalogue:433) also fail on the pre-bump dependencies; they are fixed in their own commits.
+
