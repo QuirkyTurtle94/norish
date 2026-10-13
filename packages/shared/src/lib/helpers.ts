@@ -53,6 +53,9 @@ export const parseJsonWithRepair = (input: string): any | null => {
  */
 const UNIT_PLACEHOLDER = "norishmultiwordunit";
 
+/** A list bullet a pasted line keeps: a dash, bullet or asterisk, then a space. */
+const LEADING_BULLET = /^\s*[-–—•·*]\s+/;
+
 /**
  * Hand `parse-ingredient` a line it can read, by collapsing a multi-word unit
  * name into one word it is told about.
@@ -98,8 +101,12 @@ export function parseIngredientWithDefaults(
   for (const line of lines) {
     if (!line) continue;
 
-    // Normalize comma decimals to periods (European format => US format)
-    const normalizedLine = line.toString().replace(/(\d),(\d)/g, "$1.$2");
+    // Normalize comma decimals to periods (European format => US format), and
+    // take a bullet off, which the parser reads as a range or as the name.
+    const normalizedLine = line
+      .toString()
+      .replace(/(\d),(\d)/g, "$1.$2")
+      .replace(LEADING_BULLET, "");
 
     const collapsed = withMultiWordUnitCollapsed(normalizedLine, multiWordUnits, flatUnits);
 

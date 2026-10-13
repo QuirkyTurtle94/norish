@@ -156,6 +156,46 @@ describe("parseIngredientWithDefaults", () => {
     expect(result[0].unitOfMeasureID).toBe("piece");
     expect(result[0].quantity).toBe(2);
   });
+
+  // A pasted list often keeps its bullets. The parser read the dash as the
+  // start of a range and the others as text, so a bullet is taken off first.
+  it.each([
+    ["- 2 cups flour", 2, "cup", "flour"],
+    ["• 1 tbsp oil", 1, "tablespoon", "oil"],
+    ["* 3 eggs", 3, null, "eggs"],
+    ["– 100 g sugar", 100, "gram", "sugar"],
+    ["- 1/2 tsp salt", 0.5, "teaspoon", "salt"],
+  ])("reads the bulleted line %j as the line without its bullet", (line, quantity, unit, name) => {
+    const [result] = parseIngredientWithDefaults(line);
+
+    expect(result).toMatchObject({
+      quantity,
+      quantity2: null,
+      unitOfMeasureID: unit,
+      description: name,
+    });
+  });
+
+  it("keeps ranges, a dash inside the line, and skips blank lines", () => {
+    expect(parseIngredientWithDefaults("2-3 cloves garlic")[0]).toMatchObject({
+      quantity: 2,
+      quantity2: 3,
+      unitOfMeasureID: "clove",
+      description: "garlic",
+    });
+    expect(parseIngredientWithDefaults("2 - 3 cloves garlic")[0]).toMatchObject({
+      quantity: 2,
+      quantity2: 3,
+      description: "garlic",
+    });
+    expect(parseIngredientWithDefaults("salt - to taste")[0]).toMatchObject({
+      quantity: null,
+      description: "salt - to taste",
+    });
+    expect(
+      parseIngredientWithDefaults(["1 cup milk", "", "2 eggs"]).map((line) => line.description)
+    ).toEqual(["milk", "eggs"]);
+  });
 });
 
 describe("stripHtmlTags", () => {

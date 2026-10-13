@@ -1058,8 +1058,8 @@ importers:
         specifier: 3.15.0
         version: 3.15.0
       parse-ingredient:
-        specifier: 2.2.0
-        version: 2.2.0
+        specifier: 3.0.0
+        version: 3.0.0
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -5985,9 +5985,9 @@ packages:
   parse-entities@4.0.2:
     resolution: {integrity: sha512-GG2AQYWoLgL877gQIKeRPGO1xF9+eG1ujIb5soS5gPvLQ1y2o8FL90w2QWNdf9I361Mpp7726c+lj3U0qK1uGw==}
 
-  parse-ingredient@2.2.0:
-    resolution: {integrity: sha512-0nC1B3AJxZHAXM4zu/57XlZbaXuK6vpZDQcHpwBALU7KRxw5f1O/Tr0x0Srz3vxpn4+AP0NqCLKqnNdkIx9GVQ==}
-    engines: {node: '>=10'}
+  parse-ingredient@3.0.0:
+    resolution: {integrity: sha512-1pmfoDfK2i/rE2jIBmGfcATDGEoCvYD98hClaMKzKsh11VNdgQzX44hs1YW1R7dgy0fO08VkNiK5+3isNlYbZA==}
+    engines: {node: '>=20'}
 
   parse5-htmlparser2-tree-adapter@7.1.0:
     resolution: {integrity: sha512-ruw5xyKs6lrpo9x9rCZqZZnIUntICjQAd0Wsmp396Ul9lN/h+ifgVV1x1gZHi8euej6wTfpqX8j+BFQxF0NS/g==}
@@ -11226,7 +11226,7 @@ snapshots:
       is-decimal: 2.0.1
       is-hexadecimal: 2.0.1
 
-  parse-ingredient@2.2.0:
+  parse-ingredient@3.0.0:
     dependencies:
       numeric-quantity: 3.3.3
 

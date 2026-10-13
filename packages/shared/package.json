@@ -39,7 +39,7 @@
     "fuse.js": "catalog:",
     "html-entities": "catalog:",
     "jsonrepair": "3.15.0",
-    "parse-ingredient": "2.2.0",
+    "parse-ingredient": "3.0.0",
     "react": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
