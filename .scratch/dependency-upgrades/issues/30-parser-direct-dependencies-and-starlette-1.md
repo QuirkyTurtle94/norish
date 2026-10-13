@@ -1,6 +1,6 @@
 # 30 — The parser on Python 3.15, with every dependency at its latest
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: None. Ticket 06 lands in the same commit.
 Target release: 0.26.0-beta
 
@@ -32,13 +32,20 @@ Move `apps/parser-api` to **Python 3.15** and every Python dependency to its lat
 
 ## Acceptance criteria
 
-- [ ] **Lock.** `uv.lock` and the `pyproject.toml` bounds are updated for Python 3.15, starlette is on 1.x, and ticket 06's floors are met.
-- [ ] **Wheels.** The Docker build installs every Python dependency from a wheel (no compiler step in the log).
-- [ ] **Tests.** `uv run pytest` passes in apps/parser-api.
-- [ ] **Imports.** A production Docker build imports a handful of real recipe URLs, including one through the extruct path, and the E2E URL-import tests pass.
-- [ ] **Release notes.** A bullet under `## Fixes and Improvements` for the parser's dependency updates.
+- [x] **Lock.** `uv.lock` and the `pyproject.toml` bounds are updated for Python 3.15, starlette is on 1.x, and ticket 06's floors are met.
+- [x] **Wheels.** The Docker build installs every Python dependency from a wheel (no compiler step in the log).
+- [x] **Tests.** `uv run pytest` passes in apps/parser-api.
+- [x] **Imports.** A production Docker build imports a handful of real recipe URLs, including one through the extruct path, and the E2E URL-import tests pass.
+- [x] **Release notes.** A bullet under `## Fixes and Improvements` for the parser's dependency updates.
 
 ## Comments
 
 - Filed 2026-10-12, split out of ticket 06 when the maintainer limited 0.25 to safe fixes.
 - 2026-10-13 — Python 3.15 and uv 0.13 added (newest stable, maintainer decision). Joined with ticket 06.
+- 2026-10-13 — Done on Python 3.15.0 with uv 0.13.0 (`ghcr.io/astral-sh/uv:0.13.0`; CI's `setup-uv` pins no version and takes the latest). `requires-python = ">=3.15,<3.16"`; fastapi 0.143.0, uvicorn 0.54.0, beautifulsoup4 4.15.0, recipe-scrapers 15.12.0 (still the latest); `uv lock --upgrade` brought starlette 1.8.0, pydantic 2.14.1 / pydantic-core 2.50.1, lxml 6.1.3, charset-normalizer 3.5.2, soupsieve 3.0.3, urllib3 2.8.0, anyio 4.15.1, idna 3.20 and lxml-html-clean 0.4.5.
+  - **Wheels:** the image's `uv sync` builds only Norish's own package and `jstyleson` (pure Python, published only as an sdist); every compiled dependency comes as a cp315 musllinux wheel.
+  - **Tests:** `uv run --with pytest pytest` passes 4 of 4 (pytest is not a project dependency).
+  - **Imports:** on 3.15 the parser reads BBC Good Food, AllRecipes and Albert Heijn pages with their site scrapers, and a JSON-LD page from an unknown host through `SchemaScraper` (mode `wild`, the extruct path). The production image (Python 3.15.0) imports BBC Good Food and AllRecipes end to end. Albert Heijn's import failed there because ah.nl now answers with a 143-byte page; the 0.26 image from before this change (Python 3.14, old dependencies) fails on the same HTML in the same way.
+  - **Release notes:** one line for the parser on Python 3.15 with its dependencies updated.
+  - **Developer setup:** uv 0.13 or later is now needed, since older uv cannot install CPython 3.15.0 final; the setup docs list it. On the maintainer's machine `uv self update` fails ("version 0.13.0 was not found for the app uv"), so it needs reinstalling with the standalone installer before the next `pnpm install`.
+

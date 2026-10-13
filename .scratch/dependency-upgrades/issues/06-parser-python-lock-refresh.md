@@ -1,6 +1,6 @@
 # 06 — The parser's Python lock picks up the security fixes
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: None.
 Target release: 0.26.0-beta, in the same commit as ticket 30
 
@@ -28,10 +28,10 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 
 ## Acceptance criteria
 
-- [ ] **Lock.** `uv.lock` holds at least the fixed versions above.
-- [ ] **Tests.** `uv run pytest` passes in apps/parser-api. No CI gate runs the Python tests today.
-- [ ] **Imports.** A production Docker build imports a handful of real recipe URLs, including one through the extruct path, and the E2E URL-import tests pass.
-- [ ] **Release notes.** A bullet under `## Fixes and Improvements`: "Security updates to the recipe parser's dependencies."
+- [x] **Lock.** `uv.lock` holds at least the fixed versions above.
+- [x] **Tests.** `uv run pytest` passes in apps/parser-api. No CI gate runs the Python tests today.
+- [x] **Imports.** A production Docker build imports a handful of real recipe URLs, including one through the extruct path, and the E2E URL-import tests pass.
+- [x] **Release notes.** A bullet under `## Fixes and Improvements`: "Security updates to the recipe parser's dependencies."
 
 ## Comments
 
@@ -39,3 +39,5 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 - 2026-10-12 — Narrowed for the safe-fixes-only 0.25: starlette 1.x and the direct-dependency bumps moved to ticket 30.
 - Source: the PyPI JSON API, including each release's `vulnerabilities` list.
 - 2026-10-13 — Did not ship in 0.25. Joined with ticket 30, which takes every Python dependency to its latest on Python 3.15.
+- 2026-10-13 — Done with ticket 30: lxml 6.1.3, lxml-html-clean 0.4.5, urllib3 2.8.0, anyio 4.15.1, idna 3.20 and soupsieve 3.0.3 all meet or pass the floors above, and starlette is on 1.8.0. The release-notes line is ticket 30's single parser line.
+

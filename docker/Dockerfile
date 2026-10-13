@@ -25,7 +25,7 @@ RUN npm install -g pnpm@12.11.2
 # inside node_modules.
 ENV PNPM_CONFIG_STORE_DIR=/root/.local/share/pnpm/store
 
-COPY --from=ghcr.io/astral-sh/uv:0.12.5 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.13.0 /uv /uvx /bin/
 
 ENV UV_LINK_MODE=copy \
   UV_PYTHON_DOWNLOADS=0 \
@@ -89,7 +89,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN --mount=type=cache,target=/root/.local/share/uv/python \
-  UV_PYTHON_DOWNLOADS=1 uv python install 3.14
+  UV_PYTHON_DOWNLOADS=1 uv python install 3.15
 
 # With injectWorkspacePackages enabled, workspace packages are copied into
 # node_modules during install. Re-run install after copying the full repo so
@@ -100,7 +100,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=cache,target=/root/.local/share/uv/python \
-  UV_PYTHON_DOWNLOADS=0 uv sync --project /app/apps/parser-api --locked --python 3.14
+  UV_PYTHON_DOWNLOADS=0 uv sync --project /app/apps/parser-api --locked --python 3.15
 
 # NODE_ENV matches what CI exports around the same `pnpm run build` (and turbo
 # passes it through to every package build), so the image build can never

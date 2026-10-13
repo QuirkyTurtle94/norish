@@ -13,6 +13,7 @@ There are two supported ways to develop Norish: the provided **devcontainer**
 
 - **Node.js** 26 (see `.nvmrc`)
 - **pnpm** 12.x
+- **uv** 0.13 or later (installs the recipe parser's Python 3.15)
 - **Docker** (for PostgreSQL, Redis, and Obscura)
 - **Git**
 
