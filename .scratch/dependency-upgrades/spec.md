@@ -39,7 +39,7 @@ Every dependency moves to its newest **stable** release. A line stays behind onl
 13. **The image installs from the lockfile** on pnpm 12, and Node is pinned to an exact tag that Renovate bumps (ticket 16).
 14. **BullMQ 6 and Job Schedulers land in the same release** (tickets 17 and 18). On 6.3.14 the existing boot sweep still finds and removes the repeatables 5.x created, so no stepping-stone release is needed. The sweep must stay.
 15. **The lazy-worker suspicion** (ticket 24) is reproduced against real Redis in the BullMQ 6 commit and fixed only if confirmed.
-16. **No manual steps for self-hosters** (carried over from the security plan): the old OIDC callback URL keeps working, stored Perplexity model ids are mapped automatically, and migrations run at boot.
+16. **No manual steps for self-hosters** (carried over from the security plan): stored Perplexity model ids are mapped automatically, and migrations run at boot. The old OIDC callback URL does not keep working: reversed during ticket 09, where the maintainer ruled out legacy code; an Upgrade note covers it.
 17. **Transitive advisories are cleared last** (ticket 03): after the sweep, `pnpm audit --audit-level=high` must be clean, with an override only for a transitive package that is still vulnerable. The zod single-copy override stays, moved to the new version.
 18. **No 0.24 backport.**
 
@@ -134,6 +134,7 @@ The Target Version's notes (`apps/docs/docs/release-notes/0.26.0-beta.md`) get:
   - the queue upgrade is one-way, so back up Redis before upgrading if you might roll back (18);
   - the identity provider must be reachable when Norish starts, ID tokens must be RS- or ES-signed, and sign-out no longer ends the IdP session (09);
   - stored Perplexity model choices are mapped to the new model names (05);
+  - the OIDC callback URL moves to `/api/auth/callback/oidc` (09);
   - signing in no longer links accounts; link a provider from Settings (10).
 
 The toolchain tickets are internal and stay unpublished (ADR-0010).

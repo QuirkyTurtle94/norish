@@ -18,7 +18,6 @@ import { countUsers } from "@norish/db/repositories/users";
 import * as schema from "@norish/db/schema/auth";
 import { isRegistrationEnabled } from "@norish/shared-server/config/server-config-loader";
 import { authLogger } from "@norish/shared-server/logger";
-import { getPublisherClient } from "@norish/shared-server/redis/client";
 
 import {
   getPendingOIDCProfile,
@@ -33,6 +32,7 @@ import {
   getCachedOIDCProvider,
   getCachedPasswordAuthEnabled,
 } from "./provider-cache";
+import { redisSecondaryStorage } from "./secondary-storage";
 
 /**
  * Creates a wrapped adapter factory that intercepts user email lookups
@@ -44,8 +44,7 @@ import {
  *
  * The user it finds by email, or joined onto an account (an OAuth sign-in),
  * comes back decrypted: Better Auth compares the provider's verified email
- * with it to mark the user verified, and only links further providers to a
- * verified user.
+ * with it to mark the user verified, and seeds the session with it.
  */
 function createEncryptedEmailAdapter<T extends BetterAuthOptions>(
   baseAdapterFactory: (options: T) => DBAdapter<T>
@@ -79,19 +78,25 @@ function createEncryptedEmailAdapter<T extends BetterAuthOptions>(
 
         const result = await baseAdapter.findOne(params);
 
-        if (
-          params.model === "account" &&
-          result &&
-          typeof result === "object" &&
-          "user" in result
-        ) {
-          return { ...result, user: decryptUser(result.user) };
-        }
+        return params.model === "account" ? decryptJoinedUser(result) : result;
+      },
+      // Better Auth finds the owner of an OAuth account with a findMany joined
+      // onto the user.
+      findMany: async <R>(params: Parameters<DBAdapter<T>["findMany"]>[0]) => {
+        const results = await baseAdapter.findMany<R>(params);
 
-        return result;
+        return params.model === "account" ? results.map((row) => decryptJoinedUser(row)) : results;
       },
     };
   };
+}
+
+function decryptJoinedUser<T>(row: T): T {
+  if (row && typeof row === "object" && "user" in row) {
+    return { ...row, user: decryptUser(row.user) };
+  }
+
+  return row;
 }
 
 // Helper to decrypt user object fields
@@ -151,6 +156,8 @@ function buildOIDCProviders() {
       clientSecret: oidcProvider.clientSecret,
       scopes: allScopes,
       pkce: true,
+      // Signing out of Norish leaves the identity provider's session alone.
+      disableProviderLogout: true,
       // Store full profile for claim processing after session creation
       // Merges claims from ID token and userinfo endpoint (ID token takes precedence for groups)
       getUserInfo: async (tokens: { accessToken: string; idToken?: string }) => {
@@ -176,6 +183,8 @@ function buildOIDCProviders() {
 
         return {
           id: sub,
+          // Better Auth keys an OIDC account on the subject.
+          sub,
           email: (profile.email as string) || undefined,
           name: (profile.name as string) || (profile.preferred_username as string) || undefined,
           image: (profile.picture as string) || undefined,
@@ -240,27 +249,7 @@ function createBetterAuth() {
           ]
         : []),
     ],
-    secondaryStorage: {
-      get: async (key: string) => {
-        const redis = await getPublisherClient();
-
-        return redis.get(key);
-      },
-      set: async (key: string, value: string, ttl?: number) => {
-        const redis = await getPublisherClient();
-
-        if (ttl) {
-          await redis.setex(key, ttl, value);
-        } else {
-          await redis.set(key, value);
-        }
-      },
-      delete: async (key: string) => {
-        const redis = await getPublisherClient();
-
-        await redis.del(key);
-      },
-    },
+    secondaryStorage: redisSecondaryStorage,
     // Rate limiting configuration. Values come from the environment so a test
     // harness can lift the ceiling; the defaults are the production ones.
     rateLimit: {
@@ -306,6 +295,11 @@ function createBetterAuth() {
       }),
       accountLinking: {
         enabled: true,
+        // Signing in never attaches a new identity to an existing user, even one
+        // with the same email: that is how an account is taken over. Linking
+        // happens only from a signed-in session, where the trusted providers
+        // may be linked although they do not report the email as verified.
+        disableImplicitLinking: true,
         trustedProviders: ["oidc", "google", "github"],
       },
     },

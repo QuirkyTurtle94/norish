@@ -4,6 +4,8 @@ import { trpcLogger as log } from "@norish/shared-server/logger";
 import { sweepUserAvatars } from "@norish/shared-server/media/avatar-cleanup";
 import { emitConnectionInvalidation } from "@norish/shared-server/realtime/connection";
 
+import { auth } from "./auth";
+
 /**
  * Hand a household on before its admin is deleted.
  *
@@ -39,7 +41,7 @@ async function passOnHousehold(userId: string): Promise<void> {
 
 /**
  * Delete an account and settle everything that hangs off it: the household it
- * administers, its avatar files on disk, and its live connections.
+ * administers, its avatar files on disk, its sessions and its live connections.
  *
  * Every path that removes an account goes through here — a user closing their
  * own account and an administrator removing someone else's — so the two can
@@ -49,6 +51,9 @@ export async function deleteUserAccount(userId: string): Promise<void> {
   await passOnHousehold(userId);
   await sweepUserAvatars(userId);
   await deleteUser(userId);
+
+  // Sessions live in Redis, which the row's cascade never reaches.
+  await (await auth.$context).internalAdapter.deleteUserSessions(userId);
 
   // After the row is gone, so a client that reconnects on the invalidation
   // finds the account already absent rather than briefly still there.

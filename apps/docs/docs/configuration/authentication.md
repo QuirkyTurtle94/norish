@@ -23,11 +23,17 @@ After that first sign-in:
 When registering an OAuth/OIDC application, use these callback URLs (replace the
 host with your `AUTH_URL`):
 
-| Provider | Callback URL                                                      |
-| -------- | ----------------------------------------------------------------- |
-| OIDC     | `https://example.norish-domain.com/api/auth/oauth2/callback/oidc` |
-| GitHub   | `https://example.norish-domain.com/api/auth/callback/github`      |
-| Google   | `https://example.norish-domain.com/api/auth/callback/google`      |
+| Provider | Callback URL                                                 |
+| -------- | ------------------------------------------------------------ |
+| OIDC     | `https://example.norish-domain.com/api/auth/callback/oidc`   |
+| GitHub   | `https://example.norish-domain.com/api/auth/callback/github` |
+| Google   | `https://example.norish-domain.com/api/auth/callback/google` |
+
+## Linking accounts
+
+Signing in never links accounts. Signing in with a provider whose email already belongs to
+another account is refused with "This email is already in use." To sign in with a second provider,
+link it to your account from **Settings**.
 
 ## Password auth
 
@@ -40,6 +46,8 @@ Email & password sign-in is the default login method when no other provider is c
 ## OIDC
 
 Connect any OpenID Connect compatible provider (Authentik, PocketId, KeyCloack, …).
+Norish checks ID tokens against the provider's published signing keys, so the provider must sign
+them with an RS or ES key; HS256 is not supported.
 
 ```yaml title="docker-compose.yml (environment)"
 OIDC_NAME: NoraId

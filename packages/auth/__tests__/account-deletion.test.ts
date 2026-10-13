@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { deleteUserAccount } from "@norish/shared-server/accounts/deletion";
+import { deleteUserAccount } from "@norish/auth/account-deletion";
 
 const repositories = vi.hoisted(() => ({
   getHouseholdForUser: vi.fn(),
@@ -9,6 +9,15 @@ const repositories = vi.hoisted(() => ({
   deleteUser: vi.fn(),
   sweepUserAvatars: vi.fn(),
   emitConnectionInvalidation: vi.fn(),
+  deleteUserSessions: vi.fn(),
+}));
+
+vi.mock("@norish/auth/auth", () => ({
+  auth: {
+    $context: Promise.resolve({
+      internalAdapter: { deleteUserSessions: repositories.deleteUserSessions },
+    }),
+  },
 }));
 
 vi.mock("@norish/db/repositories/households", () => ({
@@ -49,13 +58,15 @@ describe("deleteUserAccount", () => {
     repositories.deleteUser.mockResolvedValue(undefined);
     repositories.sweepUserAvatars.mockResolvedValue(undefined);
     repositories.emitConnectionInvalidation.mockResolvedValue(undefined);
+    repositories.deleteUserSessions.mockResolvedValue(undefined);
   });
 
-  it("sweeps avatars, deletes the row, and cuts live connections", async () => {
+  it("sweeps avatars, deletes the row, ends its sessions and cuts live connections", async () => {
     await deleteUserAccount("user-1");
 
     expect(repositories.sweepUserAvatars).toHaveBeenCalledWith("user-1");
     expect(repositories.deleteUser).toHaveBeenCalledWith("user-1");
+    expect(repositories.deleteUserSessions).toHaveBeenCalledWith("user-1");
     expect(repositories.emitConnectionInvalidation).toHaveBeenCalledWith(
       "user-1",
       "account-deleted"

@@ -1,6 +1,6 @@
 # 09 — Better Auth 1.7
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 08. Ticket 10 lands in the same commit.
 Target release: 0.26.0-beta
 
@@ -49,19 +49,19 @@ For Norish, 1.7 is a migration, not a bump. Each item below comes from the 1.7.7
 
 ## Acceptance criteria
 
-- [ ] **Versions.** Every `@better-auth/*` package is on 1.7.x and utils on 0.4.2, with one copy each. `@better-auth/expo` is gone (ticket 23).
-- [ ] **Rate limiting is tested with the limiter on.** The new storage methods have unit tests, and at least one automated run has rate limiting on: `AUTH_RATE_LIMIT_ENABLED=true` in an integration test or an E2E variant. The E2E harness turns it off (`production-stack.ts`), so the suite can't catch item 1 as it stands.
-- [ ] **OIDC end to end:**
+- [x] **Versions.** Every `@better-auth/*` package is on 1.7.x and utils on 0.4.2, with one copy each. `@better-auth/expo` is gone (ticket 23).
+- [x] **Rate limiting is tested with the limiter on.** The new storage methods have unit tests, and at least one automated run has rate limiting on: `AUTH_RATE_LIMIT_ENABLED=true` in an integration test or an E2E variant. The E2E harness turns it off (`production-stack.ts`), so the suite can't catch item 1 as it stands.
+- [x] **OIDC end to end:**
   - first login;
   - returning login, matching the existing account row;
-  - the legacy redirect URI still works;
+  - ~~the legacy redirect URI still works~~ dropped 2026-10-13, see Comments;
   - an IdP that is down at startup behaves as documented;
   - sign-out lands on `/login`.
-- [ ] **Unchanged flows.** GitHub, Google, password and API keys (REST and WebSocket) behave as before.
-- [ ] **Schema.** `pnpm db:generate` produces no migration.
-- [ ] **Gates and type check.** The gates, `pnpm typecheck` and E2E pass.
-- [ ] **Docs and Upgrade notes.**
-  - `authentication.md` shows the new callback URL, and the legacy one for as long as it works.
+- [x] **Unchanged flows.** GitHub, Google, password and API keys (REST and WebSocket) behave as before.
+- [x] **Schema.** `pnpm db:generate` produces no migration.
+- [x] **Gates and type check.** The gates, `pnpm typecheck` and E2E pass.
+- [x] **Docs and Upgrade notes.**
+  - `authentication.md` shows the new callback URL ~~, and the legacy one for as long as it works~~.
   - The 0.26 Upgrade notes cover: ID tokens must be RS- or ES-signed; the IdP must be reachable when Norish starts; sign-out still doesn't end the IdP session.
 
 ## Comments
@@ -74,3 +74,10 @@ For Norish, 1.7 is a migration, not a bump. Each item below comes from the 1.7.7
   - `authClient.hydrateSession`, to skip the first `/get-session`;
   - a `TRUSTED_PROXIES` setting mapped to `advanced.ipAddress.trustedProxies`.
 - 2026-10-13 — Checked against the 1.6.33 and 1.7.7 tarballs: no schema change and no backfill; the `sub` fix and the callback forward are required; `trustedProviders` behaves as in 1.6. The legacy-URL decision is made. Ticket 10's `disableImplicitLinking` lands in the same commit.
+- 2026-10-13 — **The legacy callback URL is not kept** (maintainer, during implementation: "No legacy code allowed, breaking changes are fine"). This reverses the item 3 decision and spec decision 16 for OIDC: no `redirectURI` override and no forward from `/api/auth/oauth2/callback/:id`. The OIDC callback is 1.7's `/api/auth/callback/oidc`; `authentication.md` shows it and an Upgrade note tells self-hosters to change the redirect URI at their identity provider. For the same reason the rate-limit counters use the bare `ip|path` key: a JSON record 1.6 left there makes INCR fail for at most one window (60 s, or 10 s for sign-in) after the upgrade.
+- 2026-10-13 — Done on 1.7.7 (`better-auth`, core, api-key; utils 0.4.2; one copy each, no peer warnings; `@better-auth/utils` 0.5.0 is still better-call 1.4.0's own dependency). What changed beyond the items above:
+  - The storage moved to `packages/auth/src/secondary-storage.ts`: `increment` is one Lua script (INCR, EXPIRE only on creation), `getAndDelete` is GETDEL. Tested against a real Redis (testcontainers): a fixed window that is never extended, and 25 concurrent increments counted 1–25.
+  - **The encrypted-email adapter also wraps `findMany`.** 1.7 finds an OAuth account's owner with `findMany` joined onto the user, not `findOne`, so the user came back with an encrypted email and a provider's verified email never matched it. The existing "marks a user verified" test caught it.
+  - OIDC's `getUserInfo` returns `sub`; `disableProviderLogout: true`; the clients drop `genericOAuthClient` and every provider signs in through `signIn.social`.
+- 2026-10-13 — **How it was verified.** `packages/auth/__tests__/auth/auth-handler.test.ts` drives the real auth config through Better Auth's HTTP handler, with a fake identity provider (discovery, JWKS, token, userinfo; RS256 ID tokens signed with node:crypto), a real Redis and the memory adapter: first sign-in (account keyed on `sub`), returning sign-in to the same user and account row, the `redirect_uri` sent to both the authorize URL and the token exchange, an ID token signed by another key refused with `unable_to_get_user_info`, sign-out answering without an IdP logout URL (so `user-context.tsx`'s `/login?logout=true` is where the browser goes), an identity provider down when the instance is built (`/sign-in/social` answers 404), the fourth sign-in within 10 s answered 429 with `AUTH_RATE_LIMIT_ENABLED=true`, and an API key read by `getSession` (the path REST and the WebSocket share through `getVerifiedSession`). Each 1.7 change was removed once to see its test fail. GitHub and Google were not run against the real providers: their sign-in after the provider answers is `handleOAuthUserInfo`, covered by `oauth-email-verification.test.ts`; password sign-in is what the whole E2E suite logs in with. **Not verified here:** a real identity provider (Authentik, PocketID, Keycloak) in a browser, and the WebSocket itself with an API key. `pnpm db:generate`: no changes. Gates, typecheck, format:check and deps:cycles pass; `pnpm test:e2e`: 175 passed.
+- 2026-10-13 — **Found on the way, fixed in its own commit:** with registration closed, a new user's SSO sign-in answered with a bare 403 JSON instead of the auth-error page, because the registration gate's `APIError` carries no `code` and the OAuth callback only redirects errors that have one. better-call 1.4.0 already shipped with 1.6.33, so 0.25 behaves the same.
