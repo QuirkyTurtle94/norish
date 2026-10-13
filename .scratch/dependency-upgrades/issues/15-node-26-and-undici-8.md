@@ -1,6 +1,6 @@
 # 15 — Node 26 and undici 8
 
-Status: in-progress
+Status: resolved
 Blocked by: 13, 14 (their engine floors are checked against Node 26)
 Target release: 0.26.0-beta
 
@@ -39,14 +39,16 @@ Move the runtime to Node 26, and undici to 8 with it.
 
 ## Acceptance criteria
 
-- [ ] **Node version.** The image runs Node 26, and CI runs the gates on Node 26.
-- [ ] **AI transport.** The runtime tests pass, and a real AI call through `createFetchWithTimeout` succeeds on Node 26 (the E2E AI project covers it).
-- [ ] **Image smoke.** The health check, a video import, an image upload (including HEIC) and a URL import through the parser all work.
-- [ ] **E2E.** `pnpm test:e2e` passes.
-- [ ] **Release notes.** An Upgrade note for source installs (Node 26 required).
+- [x] **Node version.** The image runs Node 26, and CI runs the gates on Node 26.
+- [x] **AI transport.** The runtime tests pass, and a real AI call through `createFetchWithTimeout` succeeds on Node 26 (the E2E AI project covers it).
+- [x] **Image smoke.** The health check, a video import, an image upload (including HEIC) and a URL import through the parser all work.
+- [x] **E2E.** `pnpm test:e2e` passes.
+- [x] **Release notes.** An Upgrade note for source installs (Node 26 required).
 
 ## Comments
 
 - Filed 2026-10-12 with the spec as "Node 24 LTS".
 - 2026-10-13 — The maintainer chose Node 26, as the security plan had. undici 8 moved here from the held lines because it only works with Node 26's bundled fetch. Checked: Node `deps/undici` per line, the undici 8.11.2 tarball (`dispatcher1-wrapper.js`, `migrating-from-v7-to-v8.md`), Docker Hub `node:26-alpine3.24`.
 - 2026-10-13 — Code done: `.nvmrc` 26.11.1, `node:26-alpine3.24`, devcontainer `javascript-node:5-26-bookworm`, `@types/node ^26.6.5`, undici ^8.11.2, root `engines.node >=26` with pnpm `engineStrict: true` (a Node 24 install now fails with ERR_PNPM_UNSUPPORTED_ENGINE instead of every AI call failing later), docs and AGENTS/CONTRIBUTING updated, Upgrade note added. Gates green on Node 26.11.1. A real HTTPS fetch through `createFetchWithTimeout` returns 200 on Node 26 and fails with "invalid onRequestStart method" on Node 24, as predicted; the `transport.ts` comment is accurate again. The undici 7.30 left in the lockfile is nested under cheerio and `@ai-sdk/provider-utils` and never meets our dispatcher. **Open:** the image smoke test (health, video, HEIC upload, URL import) and the libvips record, because `docker build` here cannot read Docker Desktop's keychain-backed credentials from a non-interactive session.
+- 2026-10-13 — Open items closed. **libvips:** in the 0.26 image on Node 26.11.1, `sharp.versions` lists 29 libraries with vips 8.18.7, which is sharp's prebuilt `@img/sharp-libvips-linuxmusl-*`. Alpine's libvips was never loaded, so `vips-dev`, `SHARP_IGNORE_GLOBAL_LIBVIPS` and the runtime `vips` package are removed (HEIC goes through heic-convert, not libvips). **Image smoke** on the rebuilt image (ticket 16): health, JPEG and HEIC uploads, a URL import through the parser with its video, yt-dlp and ffmpeg all work. `pnpm test:e2e` passes (one load-only flake that passes alone).
+

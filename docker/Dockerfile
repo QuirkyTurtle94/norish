@@ -36,10 +36,7 @@ ENV UV_LINK_MODE=copy \
 ##############################
 FROM builder-base AS deps
 
-RUN apk add --no-cache python3 make g++ pkgconfig libpq-dev vips-dev
-
-# Tell sharp to use system libvips
-ENV SHARP_IGNORE_GLOBAL_LIBVIPS=0
+RUN apk add --no-cache python3 make g++ pkgconfig libpq-dev
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/landing/package.json ./apps/landing/package.json
@@ -83,11 +80,9 @@ FROM builder-base AS build
 
 # Native build deps are already compiled in node_modules from deps stage.
 # Only re-install if pnpm deploy triggers native rebuilds.
-RUN apk add --no-cache pkgconfig libpq-dev vips-dev
+RUN apk add --no-cache pkgconfig libpq-dev
 
 WORKDIR /app
-
-ENV SHARP_IGNORE_GLOBAL_LIBVIPS=0
 
 COPY --from=deps /app/node_modules ./node_modules
 
@@ -206,7 +201,7 @@ FROM base AS runtime
 LABEL org.opencontainers.image.source="https://github.com/norish-recipes/norish"
 
 # Install runtime-only system deps (base already ran apk upgrade)
-RUN apk add --no-cache libpq ffmpeg vips su-exec && \
+RUN apk add --no-cache libpq ffmpeg su-exec && \
   # Clean up npm (not needed, we use node directly)
   rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack && \
   rm -rf /var/cache/apk/* /tmp/* /root/.npm
