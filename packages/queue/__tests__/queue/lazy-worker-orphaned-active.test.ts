@@ -93,6 +93,16 @@ describe("createLazyWorker with a job left active by a previous process", () => 
     expect(capturedProcessor).toBeDefined();
   });
 
+  it("closes a worker whose run fails, so the next job starts a fresh one", async () => {
+    mockQueueGetJobCounts.mockResolvedValue({ waiting: 0, active: 1 });
+    mockWorkerRun.mockRejectedValueOnce(new Error("Redis went away"));
+    const { createLazyWorker } = await import("@norish/queue/lazy-worker-manager");
+
+    await createLazyWorker("ingredient-review", vi.fn(), { connection: {} as never });
+
+    await vi.waitFor(() => expect(mockWorkerClose).toHaveBeenCalled());
+  });
+
   it("starts nothing for an empty queue", async () => {
     mockQueueGetJobCounts.mockResolvedValue({ waiting: 0, active: 0 });
     const { createLazyWorker } = await import("@norish/queue/lazy-worker-manager");
