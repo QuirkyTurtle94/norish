@@ -489,5 +489,6 @@ test("cleaning names with AI proposes each food's plain name, which confirmed re
   await expect(panel.getByText("Nothing is waiting on you.")).toBeVisible();
   await panel.getByRole("button", { name: "Close panel" }).click();
   await expect(ingredientRow("tonijn uit blik")).toBeVisible();
-  await expect(readIngredientOf("GR TONIJN UIT BLIK")).resolves.toBe("tonijn uit blik");
+  // The page shows the rename before its write commits.
+  await expect.poll(() => readIngredientOf("GR TONIJN UIT BLIK")).toBe("tonijn uit blik");
 });
