@@ -12,7 +12,7 @@ There are two supported ways to develop Norish: the provided **devcontainer**
 ## Prerequisites
 
 - **Node.js** 26 (see `.nvmrc`)
-- **pnpm** 10.x or later
+- **pnpm** 12.x
 - **Docker** (for PostgreSQL, Redis, and Obscura)
 - **Git**
 

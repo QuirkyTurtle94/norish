@@ -3,7 +3,7 @@
 ##############################
 # Base image (minimal, no pnpm needed at runtime)
 ##############################
-FROM node:26-alpine3.24 AS base
+FROM node:26.11.1-alpine3.24 AS base
 
 # Security: upgrade all packages to latest versions to fix CVEs
 RUN apk upgrade --no-cache && \
@@ -18,7 +18,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ##############################
 FROM base AS builder-base
 
-RUN npm install -g pnpm@10.34.5
+RUN npm install -g pnpm@12.11.2
+
+# The store lives on a cache mount, so pnpm cannot hard link from it into /app.
+# Named explicitly, pnpm copies from it instead of starting a second store
+# inside node_modules.
+ENV PNPM_CONFIG_STORE_DIR=/root/.local/share/pnpm/store
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.5 /uv /uvx /bin/
 
@@ -37,7 +42,9 @@ RUN apk add --no-cache python3 make g++ pkgconfig libpq-dev vips-dev
 ENV SHARP_IGNORE_GLOBAL_LIBVIPS=0
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/landing/package.json ./apps/landing/package.json
 COPY apps/web/package.json ./apps/web/package.json
+COPY apps/parser-api/package.json ./apps/parser-api/package.json
 COPY apps/parser-api/pyproject.toml ./apps/parser-api/pyproject.toml
 COPY apps/parser-api/uv.lock ./apps/parser-api/uv.lock
 
@@ -57,6 +64,8 @@ COPY packages/ui/package.json ./packages/ui/package.json
 
 # tooling/*
 COPY tooling/eslint/package.json ./tooling/eslint/package.json
+COPY tooling/ingredient-icons/package.json ./tooling/ingredient-icons/package.json
+COPY tooling/nutrition/package.json ./tooling/nutrition/package.json
 COPY tooling/prettier/package.json ./tooling/prettier/package.json
 COPY tooling/tailwind/package.json ./tooling/tailwind/package.json
 COPY tooling/tailwind/heroui-theme.css ./tooling/tailwind/heroui-theme.css
@@ -112,13 +121,14 @@ RUN pnpm run build && \
   rm -rf apps/web/.next/standalone/node_modules/typescript \
   apps/web/.next/standalone/node_modules/ffmpeg-static
 
-# Create isolated production deployment with pnpm deploy.
-# --legacy: pnpm v10's default deploy requires injectWorkspacePackages, which
-# this repo deliberately does not set (injected copies of packages/* went stale
-# against their sources during development). The workspace copies deploy makes
-# are deleted on the next line regardless, so legacy deploy is equivalent here.
-RUN pnpm deploy --legacy --filter @norish/web --prod /app/deploy && \
+# Create isolated production deployment with pnpm deploy. It installs the
+# versions pnpm-lock.yaml records (a --legacy deploy re-resolved every range on
+# each build, so the image held whatever was newest that day).
+RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   cd /app/deploy/node_modules && \
+  # Remove the deploy's virtual store: nothing links into it, the hoisted
+  # node_modules holds its own copy of every package
+  rm -rf .pnpm && \
   # Remove workspace copies (source is in packages/, server code in dist-server/)
   rm -rf @norish && \
   # Remove build-only tools that leak through transitive deps
@@ -130,7 +140,7 @@ RUN pnpm deploy --legacy --filter @norish/web --prod /app/deploy && \
   vitest @vitest @testing-library jsdom \
   @babel babel-plugin-* babel-preset-* \
   jest-* @jest fast-check axe-core \
-  rollup terser \
+  rollup terser vite rolldown @rolldown @types \
   turbo turbo-* && \
   # Remove packages superseded by system binaries (apk add ffmpeg)
   rm -rf ffmpeg-static && \
@@ -152,7 +162,8 @@ RUN pnpm deploy --legacy --filter @norish/web --prod /app/deploy && \
 
 # Strip test files and dev configs from packages/ before they get copied to runtime.
 # This avoids shipping test fixtures, vitest configs, and TS build configs.
-RUN find /app/packages -type d -name '__tests__' -exec rm -rf {} + 2>/dev/null; \
+RUN rm -rf /app/packages/*/node_modules; \
+  find /app/packages -type d -name '__tests__' -exec rm -rf {} + 2>/dev/null; \
   find /app/packages -type f \( \
   -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' \
   -o -name 'vitest.config.*' -o -name 'tsconfig*.json' -o -name 'eslint.config.*' \
@@ -215,7 +226,7 @@ RUN test -n "${NORISH_VERSION_REPORT_JSON}"
 ENV NORISH_VERSION_REPORT_JSON=${NORISH_VERSION_REPORT_JSON}
 
 # Use non-root user for runtime.
-# node:26-alpine already has user 'node' with UID/GID 1000.
+# The node image already has user 'node' with UID/GID 1000.
 # For custom UID/GID, create a new user; otherwise reuse 'node'.
 ARG UID=1000
 ARG GID=1000

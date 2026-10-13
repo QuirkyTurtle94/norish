@@ -62,13 +62,19 @@ nodeLinker: hoisted
 # only Node 26 understands; on an older Node every AI call fails. Refuse early.
 engineStrict: true
 
-onlyBuiltDependencies:
-  - "@tailwindcss/oxide"
-  - "@heroui/shared-utils"
-  - esbuild
-  - ffmpeg-static
-  - sharp
-  - unrs-resolver
+allowBuilds:
+  "@heroui/shared-utils": true
+  "@parcel/watcher": false
+  "@swc/core": false
+  "@tailwindcss/oxide": true
+  cpu-features: false
+  esbuild: true
+  ffmpeg-static: true
+  msgpackr-extract: false
+  protobufjs: false
+  sharp: true
+  ssh2: false
+  unrs-resolver: true
 
 overrides:
   # Optional peers resolved once and never used; they only carried advisories.

@@ -6,4 +6,4 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN corepack enable && corepack prepare pnpm@10.34.5 --activate
+RUN npm install -g pnpm@12.11.2
