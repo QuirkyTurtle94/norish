@@ -59,7 +59,7 @@ function composeFile(masterKey: string): string {
     restart: unless-stopped
 
   redis:
-    image: redis:8.4.0
+    image: redis:8.10.1
     container_name: norish-redis
     restart: unless-stopped
     volumes:

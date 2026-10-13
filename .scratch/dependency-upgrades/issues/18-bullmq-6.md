@@ -1,6 +1,6 @@
 # 18 — BullMQ 6
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 17 (the commit before). Ticket 24 is checked in this commit.
 Target release: 0.26.0-beta
 
@@ -41,16 +41,23 @@ After ticket 17, the remaining breaking surface doesn't touch Norish:
 
 ## Acceptance criteria
 
-- [ ] **Type check.** `pnpm typecheck` passes.
-- [ ] **One ioredis.** `pnpm why ioredis` shows one 6.x copy, and every client sets `protocol: 2`.
+- [x] **Type check.** `pnpm typecheck` passes.
+- [x] **One ioredis.** `pnpm why ioredis` shows one 6.x copy, and every client sets `protocol: 2`.
 - [ ] **Boot twice.** A real-Redis test starts from a 5.x-created repeatable, boots twice on 6, and ends with exactly one scheduler per task and no legacy keys.
-- [ ] **Tests.** The queue tests pass, including ticket 17's scheduler and client assertions.
+- [x] **Tests.** The queue tests pass, including ticket 17's scheduler and client assertions.
 - [ ] **Production smoke.** On a production build: a scheduled task fires, an enrichment runs, a URL import and a paste import run, and the admin job-queue view lists jobs.
-- [ ] **Docs.** The Redis version is aligned in `README.md` and the docs.
-- [ ] **Release notes.** An Upgrade note that the queue upgrade is one-way: back up Redis before upgrading if you might roll back.
-- [ ] **Ticket 24.** Its outcome is recorded in its comments.
+- [x] **Docs.** The Redis version is aligned in `README.md` and the docs.
+- [x] **Release notes.** An Upgrade note that the queue upgrade is one-way: back up Redis before upgrading if you might roll back.
+- [x] **Ticket 24.** Its outcome is recorded in its comments.
 
 ## Comments
 
 - Filed 2026-10-12 with the spec.
 - 2026-10-13 — Moved into 0.26 with no release in between (see ticket 17). ioredis 6 taken with `protocol: 2`; the earlier hold reason ("BullMQ's CI still tests against ioredis 5") could not be confirmed from the registry.
+- 2026-10-13 — Done: bullmq 6.3.14 and ioredis 6.0.0, one copy each in the lockfile. `protocol: 2` is set in the two option builders every client comes from: BullMQ's `getBaseOptions()` (its connections duplicate it) and shared-server's `getRedisConnectionOptions()` (publisher, subscribers via `duplicate()`, resume streams, Better Auth's secondary storage). The ioredis v5→v6 guide (wiki) lists, beyond RESP3 by default: Node ≥ 20; `replyMapping` (default `"legacy"`, unchanged shapes); RESP3 lifts subscriber-mode limits (not taken: RESP2 keeps them); `duplicate()` keeps the reply mapping; `enableOfflineQueue: false` now rejects commands sent from a `connect` listener (Norish sets it to `true`). Nothing about Lua scripts or reconnection.
+  - `pnpm typecheck` passed with no change after ticket 17. `Worker.run()` still sets the running flag synchronously in 6.3.14, which ticket 24's fix relies on.
+  - **Boot twice:** `producer-redis.test.ts` (ticket 17) passes on 6. Per the maintainer, it starts from Job Schedulers only, not from a hand-built 5.x repeatable.
+  - **Production smoke:** not run separately. The full E2E suite covers URL and paste imports, enrichment runs and the admin job views; a scheduler firing at midnight was not watched.
+  - **Docs:** README and `QuickStartCompose` now show `redis:8.10.1`, as the compose files do. **Release notes:** the one-way queue upgrade note.
+  - **E2E:** 173 passed. The realtime restart flake was traced to the scenario before it and fixed in its own commit; one enrichment scenario failure is being chased as a flake (it passes alone).
+

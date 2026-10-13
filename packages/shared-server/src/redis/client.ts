@@ -43,6 +43,9 @@ export function redisRetryStrategy(times: number): number {
 export function getRedisConnectionOptions(url = SERVER_CONFIG.REDIS_URL): RedisOptions {
   return {
     ...parseRedisUrl(url),
+    // ioredis 6 speaks RESP3 by default; RESP2 keeps subscriber mode and every
+    // reply shape as they were.
+    protocol: 2,
     lazyConnect: true,
     maxRetriesPerRequest: null,
     keepAlive: REDIS_KEEP_ALIVE_MS,

@@ -32,6 +32,9 @@ const globalForBull = globalThis as unknown as {
 function getBaseOptions(): RedisOptions {
   return {
     ...parseRedisUrl(SERVER_CONFIG.REDIS_URL),
+    // ioredis 6 speaks RESP3 by default; RESP2 keeps the wire protocol BullMQ
+    // and every reply shape here were written against.
+    protocol: 2,
     maxRetriesPerRequest: null,
 
     // Performance optimizations
