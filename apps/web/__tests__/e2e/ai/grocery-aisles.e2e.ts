@@ -56,7 +56,9 @@ async function addGrocery(
   await page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.getByText(shown).first()).toBeVisible();
   await page.getByRole("button", { name: "Close panel" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  // None left, rather than one hidden: the Store picker's popover can still be
+  // leaving while the panel is, and then two dialogs are on the page at once.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
 /** The Store's block on the list, whichever view is showing. */
@@ -138,7 +140,7 @@ async function fileFromPanel(name: string, aisleName: string): Promise<void> {
   await field.getByRole("button").click();
   await page.getByRole("option", { name: aisleName, exact: true }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
 /** Switch the grouped list on or off from the view menu; the page says which it shows. */
@@ -176,7 +178,7 @@ async function closeStoreManager(): Promise<void> {
     .getByRole("dialog", { name: "Manage Stores" })
     .getByRole("button", { name: "Close panel" })
     .click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
 test("a Store given two aisles shows both headings, with the list unchanged above them", async () => {
@@ -264,7 +266,7 @@ test("filing a name from the panel moves the row and its same-named sibling, her
   await page.getByText("komkommer", { exact: true }).first().click();
   await expect(page.getByTestId("aisle-selector").getByRole("button")).toContainText("No aisle");
   await page.getByRole("button", { name: "Close panel" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   await fileFromPanel("kwark", "Zuivel");
   await expect.poll(() => readAisleFiling(STORE, "kwark")).toBe("Zuivel");

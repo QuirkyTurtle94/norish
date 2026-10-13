@@ -62,7 +62,7 @@ async function addGroceryToShop(name: string, shown: string = name): Promise<voi
   // The add panel stays open for batch adding; the list underneath is what
   // every assertion here is about.
   await page.getByRole("button", { name: "Close panel" }).click();
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
 /** One grocery's own row, whichever Store's section it is sitting in. */
@@ -286,7 +286,7 @@ test("a grocery dragged into another Store is priced there, on the list", async 
   // shopper opening anything to make it look.
   await dragGroceryToStore("roomboter", STORE_NAME);
 
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect
     .poll(async () => readGroceryStore("roomboter"), { timeout: 30_000 })
     .toBe(STORE_NAME);
