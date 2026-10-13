@@ -9,10 +9,9 @@
  */
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { request } from "@playwright/test";
-import { Client } from "pg";
 
 import type { AIE2EStack } from "./fixture";
-import { databaseUrl } from "./database";
+import { withDatabase } from "./database";
 import { expect, test } from "./fixture";
 import { createPlainStore } from "./grocery-aisles-support";
 
@@ -47,7 +46,7 @@ function recipeWith(name: string) {
 }
 
 /** Seeds a recipe through the mutation the recipe form uses; answers its id. */
-async function seedRecipe(stack: AIE2EStack, name: string): Promise<string> {
+async function seedRecipeWithRows(stack: AIE2EStack, name: string): Promise<string> {
   const api = await request.newContext({
     baseURL: stack.baseURL,
     extraHTTPHeaders: {
@@ -64,21 +63,19 @@ async function seedRecipe(stack: AIE2EStack, name: string): Promise<string> {
     if (!response.ok()) throw new Error(`recipes.create failed: ${response.status()}`);
     const recipeId = ((await response.json()) as { result: { data: { json: string } } }).result.data
       .json;
-    // The mutation answers before its transaction lands; wait for the rows.
-    const database = new Client({ connectionString: databaseUrl() });
 
-    await database.connect();
-    try {
-      await expect
-        .poll(
-          async () =>
-            (await database.query("select 1 from steps where recipe_id = $1", [recipeId])).rowCount,
-          { timeout: 30_000 }
-        )
-        .toBe(3);
-    } finally {
-      await database.end();
-    }
+    // The mutation answers before its transaction lands; wait for the rows.
+    await expect
+      .poll(
+        () =>
+          withDatabase(
+            async (database) =>
+              (await database.query("select 1 from steps where recipe_id = $1", [recipeId]))
+                .rowCount
+          ),
+        { timeout: 30_000 }
+      )
+      .toBe(3);
 
     return recipeId;
   } finally {
@@ -259,7 +256,7 @@ for (const pointer of ["mouse", "touch"] as const) {
     browser,
     aiStack,
   }) => {
-    const recipeId = await seedRecipe(aiStack, `${RECIPE_NAME} ${pointer} ${Date.now()}`);
+    const recipeId = await seedRecipeWithRows(aiStack, `${RECIPE_NAME} ${pointer} ${Date.now()}`);
     const { context, page } = await openPage(browser, aiStack, pointer);
 
     try {
@@ -317,7 +314,7 @@ for (const pointer of ["mouse", "touch"] as const) {
 test("a recipe card swipes open to its actions with a finger", async ({ browser, aiStack }) => {
   const name = `Swipe Stew ${Date.now()}`;
 
-  await seedRecipe(aiStack, name);
+  await seedRecipeWithRows(aiStack, name);
   const { context, page } = await openPage(browser, aiStack, "touch");
 
   try {

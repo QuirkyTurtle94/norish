@@ -5,22 +5,10 @@
  * it without a type error.
  */
 import type { Locator } from "@playwright/test";
-import { Client } from "pg";
 
 import { seedRecipe } from "./cookbooks-support";
-import { databaseUrl } from "./database";
+import { withDatabase } from "./database";
 import { expect, test } from "./fixture";
-
-async function withDatabase<T>(run: (database: Client) => Promise<T>): Promise<T> {
-  const database = new Client({ connectionString: databaseUrl() });
-
-  await database.connect();
-  try {
-    return await run(database);
-  } finally {
-    await database.end();
-  }
-}
 
 /** The day of the month the recipe is planned on, as stored. */
 function plannedDay(recipeId: string): Promise<number | undefined> {
