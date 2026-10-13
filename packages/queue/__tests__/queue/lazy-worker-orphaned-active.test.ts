@@ -28,6 +28,7 @@ vi.mock("bullmq", async (importOriginal) => {
     pause = mockWorkerPause;
     resume = mockWorkerResume;
     isPaused = mockWorkerIsPaused;
+    isRunning = () => true;
     removeAllListeners = mockWorkerRemoveAllListeners;
 
     constructor(_queueName: string, processor: (job: unknown, token?: string) => Promise<unknown>) {

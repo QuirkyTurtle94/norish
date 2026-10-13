@@ -274,15 +274,13 @@ async function createWorkerInstance<T>(state: LazyWorkerState<T>): Promise<void>
     log.error({ err: error, queueName }, "Lazy worker error");
   });
 
-  // Start processing
-  try {
-    await worker.run();
-    state.isRunning = true;
-    log.info({ queueName }, "Lazy worker started");
-  } catch (err) {
-    log.error({ err, queueName }, "Failed to start lazy worker");
-    state.isRunning = false;
-  }
+  // Start processing. run() settles only when the worker closes, so it is not
+  // awaited: a boot with jobs already waiting would never get past it.
+  worker.run().catch((err) => {
+    log.error({ err, queueName }, "Lazy worker stopped with an error");
+  });
+  state.isRunning = worker.isRunning();
+  log.info({ queueName }, "Lazy worker started");
 }
 
 /**
