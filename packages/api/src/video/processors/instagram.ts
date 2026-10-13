@@ -178,7 +178,9 @@ export class InstagramProcessor extends BaseVideoProcessor {
       recipe = await extractRecipeWithAI(description, recipeId, url);
     } catch (error) {
       log.warn({ url, err: error }, "AI extraction failed for Instagram image post");
-      throw new Error("Instagram image posts are only supported if the caption contains a recipe");
+      throw new Error("Instagram image posts are only supported if the caption contains a recipe", {
+        cause: error,
+      });
     }
 
     // Download thumbnail as recipe image

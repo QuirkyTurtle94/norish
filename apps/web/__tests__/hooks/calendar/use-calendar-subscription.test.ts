@@ -1,5 +1,4 @@
 import { useCalendarSubscription } from "@/hooks/calendar/use-calendar-subscription";
-// eslint-disable-next-line import/order
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

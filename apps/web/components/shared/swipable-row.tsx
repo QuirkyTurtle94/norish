@@ -278,9 +278,9 @@ const SwipeableRow = forwardRef<SwipeableRowRef, Props>(
       document.addEventListener("scroll", onScroll, { passive: true, capture: true });
 
       return () => {
-        document.removeEventListener("pointerdown", onPointerDown, { capture: true } as any);
-        window.removeEventListener("scroll", onScroll, { capture: true } as any);
-        document.removeEventListener("scroll", onScroll, { capture: true } as any);
+        document.removeEventListener("pointerdown", onPointerDown, { capture: true });
+        window.removeEventListener("scroll", onScroll, { capture: true });
+        document.removeEventListener("scroll", onScroll, { capture: true });
       };
     }, [isOpen, committing, swipeAmount]);
 

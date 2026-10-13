@@ -219,7 +219,7 @@ async function execYtDlp(args: string[], cwd?: string): Promise<string> {
       details.push(`Stdout:\n${stdout}`);
     }
 
-    throw new Error(details.join("\n\n"));
+    throw new Error(details.join("\n\n"), { cause: error });
   }
 }
 
@@ -365,7 +365,9 @@ export async function ensureYtDlpBinary(): Promise<void> {
   } catch (downloadError) {
     log.error({ err: downloadError, ytDlpPath }, "Could not download the yt-dlp binary");
 
-    throw new Error("Failed to download yt-dlp binary. Video processing is unavailable.");
+    throw new Error("Failed to download yt-dlp binary. Video processing is unavailable.", {
+      cause: downloadError,
+    });
   }
 }
 
@@ -582,16 +584,16 @@ export async function getVideoMetadata(
 
     // Provide more specific error messages
     if (errorMessage.includes("Unsupported URL")) {
-      throw new Error("Video platform not supported or URL is invalid.");
+      throw new Error("Video platform not supported or URL is invalid.", { cause: error });
     }
     if (errorMessage.includes("Video unavailable") || errorMessage.includes("private")) {
-      throw new Error("Video is unavailable or private.");
+      throw new Error("Video is unavailable or private.", { cause: error });
     }
     if (errorMessage.includes("Sign in to confirm")) {
-      throw new Error("Video requires authentication or age verification.");
+      throw new Error("Video requires authentication or age verification.", { cause: error });
     }
 
-    throw new Error(`Failed to fetch video information: ${errorMessage}`);
+    throw new Error(`Failed to fetch video information: ${errorMessage}`, { cause: error });
   } finally {
     await auth?.cleanup();
   }

@@ -56,6 +56,7 @@ export function ThemeToggle() {
 
     doc.startViewTransition(() => {
       // The snapshot pair needs the DOM flipped synchronously inside the callback.
+      // eslint-disable-next-line @eslint-react/dom-no-flush-sync
       flushSync(() => setTheme(next));
     });
   };

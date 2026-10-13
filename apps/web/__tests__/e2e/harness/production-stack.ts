@@ -269,7 +269,9 @@ export class ProductionStack {
       try {
         await this.stop();
       } catch (cleanupError) {
-        throw new AggregateError([setupError, cleanupError], setupError.message);
+        throw new AggregateError([setupError, cleanupError], setupError.message, {
+          cause: cleanupError,
+        });
       }
 
       throw setupError;
@@ -350,7 +352,7 @@ export class ProductionStack {
       try {
         await this.stopServer();
       } catch (cleanupError) {
-        throw new AggregateError([error, cleanupError], String(error));
+        throw new AggregateError([error, cleanupError], String(error), { cause: cleanupError });
       }
 
       throw error;

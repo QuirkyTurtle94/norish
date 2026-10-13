@@ -202,7 +202,7 @@ export async function parseImages(
 
   if (!imageField) return defaultResult;
 
-  let downloadedImages: string[] = [];
+  let downloadedImages: string[];
 
   // Single pre-downloaded image
   if (isLocalPath(imageField)) {

@@ -489,7 +489,7 @@ export default function VideoPlayer({
                   if (!videoRef.current) return;
                   const total = videoRef.current.duration || duration || 0;
                   const current = videoRef.current.currentTime;
-                  let newTime = current;
+                  let newTime: number;
 
                   if (e.key === "ArrowRight") {
                     newTime = Math.min(total, current + 5);

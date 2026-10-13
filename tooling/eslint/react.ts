@@ -1,19 +1,8 @@
-import jsxA11y from "eslint-plugin-jsx-a11y";
-import reactPlugin from "eslint-plugin-react";
+import eslintReact from "@eslint-react/eslint-plugin";
+import stylistic from "@stylistic/eslint-plugin";
+import jsxA11y from "eslint-plugin-jsx-a11y-x";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig } from "eslint/config";
-
-type FlatConfigLike = {
-  plugins?: Record<string, unknown>;
-  languageOptions?: Record<string, unknown>;
-  settings?: Record<string, unknown>;
-  rules?: Record<string, unknown>;
-};
-
-const reactRecommended = reactPlugin.configs.flat?.recommended as FlatConfigLike | undefined;
-const reactJsxRuntime = reactPlugin.configs.flat?.["jsx-runtime"] as FlatConfigLike | undefined;
-const jsxA11yRecommended = (jsxA11y as { flatConfigs?: { recommended?: FlatConfigLike } })
-  .flatConfigs?.recommended;
 
 export const reactConfig = defineConfig(
   {
@@ -36,32 +25,25 @@ export const reactConfig = defineConfig(
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
+    extends: [eslintReact.configs["recommended-typescript"], jsxA11y.configs.recommended],
     plugins: {
-      ...reactRecommended?.plugins,
-      ...reactJsxRuntime?.plugins,
-      ...jsxA11yRecommended?.plugins,
-    } as never,
+      "@stylistic": stylistic,
+    },
     languageOptions: {
-      ...reactRecommended?.languageOptions,
-      ...reactJsxRuntime?.languageOptions,
-      ...jsxA11yRecommended?.languageOptions,
       globals: {
         React: "writable",
       },
     },
-    settings: {
-      ...reactRecommended?.settings,
-      react: {
-        version: "detect",
-      },
-    },
     rules: {
-      ...reactRecommended?.rules,
-      ...reactJsxRuntime?.rules,
-      ...jsxA11yRecommended?.rules,
-      "react/prop-types": "off",
-      "react/self-closing-comp": "warn",
-      "react/jsx-sort-props": [
+      // eslint-plugin-react-hooks below owns the hooks rules, some off on purpose;
+      // these are @eslint-react's copies of them.
+      "@eslint-react/exhaustive-deps": "off",
+      "@eslint-react/purity": "off",
+      "@eslint-react/rules-of-hooks": "off",
+      "@eslint-react/set-state-in-effect": "off",
+      "@eslint-react/set-state-in-render": "off",
+      "@stylistic/jsx-self-closing-comp": "warn",
+      "@stylistic/jsx-sort-props": [
         "warn",
         {
           callbacksLast: true,
@@ -70,8 +52,8 @@ export const reactConfig = defineConfig(
           reservedFirst: true,
         },
       ],
-      "jsx-a11y/click-events-have-key-events": "warn",
-      "jsx-a11y/interactive-supports-focus": "warn",
+      "jsx-a11y-x/click-events-have-key-events": "warn",
+      "jsx-a11y-x/interactive-supports-focus": "warn",
     },
   },
   reactHooks.configs.flat.recommended,

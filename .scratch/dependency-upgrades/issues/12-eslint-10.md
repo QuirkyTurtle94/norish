@@ -1,6 +1,6 @@
 # 12 — ESLint 10
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 11 (typescript-eslint latest)
 Target release: 0.26.0-beta
 
@@ -58,3 +58,4 @@ Changes that touch Norish, from ESLint's v10 migration guide and the 10.12.0 tar
   - `migrate-to-10.0.0.md` at v10.12.0;
   - the tarballs of eslint-plugin-react 7.37.5, jsx-a11y 6.10.2, eslint-plugin-import 2.32.0 and `@eslint/compat` 2.1.1.
 - 2026-10-13 — The maintainer chose the replacement plugins over `fixupPluginRules`. Checked: `@next/eslint-plugin-next` 16.4.0 pulls none of the old plugins; react-hooks 7.1.1, typescript-eslint, unused-imports 4.4.1 and turbo already accept ESLint 10.
+- 2026-10-13 — Done on ESLint 10.12.0 / `@eslint/js` 10.0.1. eslint-plugin-react → `@eslint-react/eslint-plugin` 5.26 (`recommended-typescript`) + `@stylistic/eslint-plugin` 5.10 (`jsx-self-closing-comp`, `jsx-sort-props` with the same options); jsx-a11y → `eslint-plugin-jsx-a11y-x` 0.2 (`recommended`, same two rules at warn); eslint-plugin-import and `@eslint/compat` removed (`includeIgnoreFile` from `eslint/config`). `@eslint-react`'s copies of the hooks rules (`exhaustive-deps`, `purity`, `rules-of-hooks`, `set-state-in-effect`, `set-state-in-render`) are off because eslint-plugin-react-hooks owns them; its `disable-conflict-eslint-plugin-react-hooks` config goes the other way (turns react-hooks off) and would have re-enabled rules the repo switched off deliberately. Its `rules-of-hooks` also misread Playwright fixtures' `use()` as React's. Fixed rather than disabled: 10 `preserve-caught-error` (causes added), 3 `no-useless-assignment`. One inline disable: landing's `flushSync` inside `startViewTransition`, already explained there. Warnings: 478 → 635. The +157 are @eslint-react style findings left at warn: `naming-convention-ref-name` 57, `no-array-index-key` 38, `no-use-context` 20, `no-context-provider` 18, `use-state` 11, `dom-no-dangerously-set-innerhtml` 6, a handful of singles. The flagged event-listener "leaks" in `swipable-row.tsx` were not leaks; dropping their `as any` casts let the rule see the matching removals. Lint 36 s on ESLint 9; see the next commit for the `projectService` measurement.
