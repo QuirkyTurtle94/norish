@@ -138,7 +138,7 @@ const serwist = new Serwist({
       matcher: ({ request, sameOrigin }) => sameOrigin && request.destination === "document",
       handler: new ReachabilityDeadlineDocuments({ cacheName: PAGES_CACHE_NAME.html }),
     },
-    // Same-origin images (recipe photos via /_next/image included), cache-first
+    // Same-origin images (recipe photos included), cache-first
     // like the hand-rolled sw.js this replaces — but bounded. The old worker
     // capped nothing; defaultCache's 64-entry image LRUs are below the Warm Set
     // floor (50 recipes × primary image plus grid thumbnails), so recently-viewed

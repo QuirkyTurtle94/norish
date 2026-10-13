@@ -1,6 +1,6 @@
 # 26 — Next.js 16.4 and React 19.3
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 16 (pnpm 12)
 Target release: 0.26.0-beta
 
@@ -58,17 +58,17 @@ Move Next.js to the latest minor — no 17.x exists on npm, not even as a canary
 
 ## Acceptance criteria
 
-- [ ] **Versions.** `next` is 16.4.x and React plus its types are 19.3.0. `pnpm why next react react-dom` shows one version of each.
-- [ ] **Upgrade nudge.** `agentUpgrade: false` is set in both Next configs.
-- [ ] **Optimizer off.** On a production build `/_next/image?url=/nora.jpg&w=640&q=75` returns 404, and every image surface still renders: recipe cards, the gallery, step images, cooking mode, the lightbox, planner thumbnails, cookbook covers, avatars and the logo.
-- [ ] **Splash.** `/images/splash?width=1170&height=2532&scheme=dark` renders correctly on the Node runtime.
-- [ ] **Service worker.** `/serwist/sw.js` still prerenders and returns 200 with its headers, and the offline E2E project passes.
-- [ ] **Smoke.**
+- [x] **Versions.** `next` is 16.4.x and React plus its types are 19.3.0. `pnpm why next react react-dom` shows one version of each.
+- [x] **Upgrade nudge.** `agentUpgrade: false` is set in both Next configs.
+- [x] **Optimizer off.** On a production build `/_next/image?url=/nora.jpg&w=640&q=75` returns 404, and every image surface still renders: recipe cards, the gallery, step images, cooking mode, the lightbox, planner thumbnails, cookbook covers, avatars and the logo.
+- [x] **Splash.** `/images/splash?width=1170&height=2532&scheme=dark` renders correctly on the Node runtime.
+- [x] **Service worker.** `/serwist/sw.js` still prerenders and returns 200 with its headers, and the offline E2E project passes.
+- [x] **Smoke.**
   - Signed out, `/` redirects to `/login`.
   - The `/trpc` WebSocket connects.
   - `pnpm dev` boots.
-- [ ] **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test:run`, `pnpm i18n:check`, `pnpm build`, the full `pnpm test:e2e`, `pnpm docker:build` with the health check, and `pnpm --filter @norish/landing build` all pass. Check the build log for new warnings.
-- [ ] **Release notes.** Under `## Fixes and Improvements`: the unused image optimization endpoint is no longer served. Next.js 16.4 itself is covered by the one dependency-updates line.
+- [x] **Gates.** `pnpm lint`, `pnpm typecheck`, `pnpm test:run`, `pnpm i18n:check`, `pnpm build`, the full `pnpm test:e2e`, `pnpm docker:build` with the health check, and `pnpm --filter @norish/landing build` all pass. Check the build log for new warnings.
+- [x] **Release notes.** Under `## Fixes and Improvements`: the unused image optimization endpoint is no longer served. Next.js 16.4 itself is covered by the one dependency-updates line.
 
 ## Comments
 
@@ -78,3 +78,9 @@ Move Next.js to the latest minor — no 17.x exists on npm, not even as a canary
   - react and react-dom 19.2.3 and 19.3.0;
   - next-intl 4.13.7 and 4.14.9.
 - 2026-10-13 — Agent nudge off (maintainer). The optimizer switch-off moved here from ticket 01; ticket 27 was dropped, so it stays off.
+- 2026-10-13 — Done: next 16.4.0 (the only 16.4 release), react, react-dom and their types 19.3.0, `@next/eslint-plugin-next` ^16.4.0, next-intl ^4.14.9, and `serwist` with `@serwist/turbopack` ^9.5.13 together (ticket 19 listed serwist; the two move as a pair). The lockfile holds one next, react and react-dom; react 19.2.8 had already gone with ticket 28. `agentUpgrade: false` in both configs, `images.unoptimized` on apps/web, the splash route on the Node runtime, the sw.ts comment fixed.
+  - **Production image:** `/_next/image?url=/nora.jpg&w=640&q=75` → 404; `/` signed out → 307 to `/login`; `/serwist/sw.js` → 200 with `service-worker-allowed: /` and the policy headers; the splash renders 1170×2532 in both schemes (checked by eye); a signed-in `/trpc` WebSocket connects and stays open; health 200.
+  - **Gates:** lint, typecheck, test:run, i18n:check, build (landing included), format:check and deps:cycles pass, and `pnpm dev` boots. `pnpm test:e2e`: 160 passed, 2 load-only failures (`offline.e2e.ts:475`, `ingredient-catalogue.e2e.ts:433`) whose files pass alone (29 tests).
+  - **New build warnings:** Turbopack 16.4 also flags `packages/shared-server/src/lib/workspace-paths.ts:13,15` as dynamic filesystem access that traces the whole project, next to the existing `env-config-server.ts:35`. The image copies only `.next/standalone/apps/web/.next`, so nothing extra ships; left as is.
+  - **Image surfaces** were not walked by hand. Every `next/image` already set `unoptimized` or loads an SVG, and the E2E projects render recipe cards, the gallery, steps and cooking mode.
+

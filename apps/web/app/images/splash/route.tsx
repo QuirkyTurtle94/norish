@@ -3,8 +3,6 @@ import { ImageResponse } from "next/og";
 
 import { WORDMARK_PATHS, WORDMARK_VIEWBOX } from "./wordmark";
 
-export const runtime = "edge";
-
 const DEFAULT_WIDTH = 1170;
 const DEFAULT_HEIGHT = 2532;
 

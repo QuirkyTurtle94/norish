@@ -57,6 +57,14 @@ export default withSerwist(
       root: resolve(configDirectory, "../.."),
     },
     productionBrowserSourceMaps: false,
+    // Norish never uses the image optimizer, and /_next/image is unauthenticated
+    // (the auth proxy skips _next); unoptimized makes Next answer it with 404.
+    images: { unoptimized: true },
+    experimental: {
+      // Otherwise `next build` fails under a coding agent whenever the installed
+      // Next has an advisory. Renovate is where new advisories surface.
+      agentUpgrade: false,
+    },
     allowedDevOrigins: [
       "localhost",
       "192.168.2.13",
