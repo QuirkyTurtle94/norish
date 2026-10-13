@@ -281,6 +281,43 @@ test("a foreign Origin is refused, an absent one is accepted, and no session clo
   expect(await anonymous.closed).toEqual({ code: 4401, reason: "Unauthorized" });
 });
 
+// Before the Redis restart, not after: restarting the Redis container behind
+// Docker Desktop's port forwarding can leave one server connection half-open
+// for seconds, and BullMQ's close waits for that connection to answer, so a
+// server stopped right after it overran the shutdown budget for a reason that
+// is the harness's, not the server's.
+test("a restart closes every socket with 1012 within seconds, and clients reconnect", async () => {
+  const raw = await Promise.all(
+    Array.from({ length: RAW_SOCKETS_AT_SHUTDOWN }, () =>
+      rawSocket(stack, sessionHeaders(stack, "b"))
+    )
+  );
+  const ledgerA = await socketLedger(pageA);
+  const ledgerB = await socketLedger(pageB);
+
+  const startedAt = Date.now();
+
+  await stack.server.stopServer();
+  const shutdownMs = Date.now() - startedAt;
+
+  const closes = await Promise.all(raw.map((socket) => socket.closed));
+
+  expect(closes.map((close) => close.code)).toEqual(
+    Array.from({ length: RAW_SOCKETS_AT_SHUTDOWN }, () => 1012)
+  );
+  expect(shutdownMs).toBeLessThan(SHUTDOWN_BUDGET_MS);
+
+  await stack.server.startServer();
+
+  await expect.poll(() => closeCodes(pageA)).toContain(1012);
+  await expect.poll(() => closeCodes(pageB)).toContain(1012);
+  await waitForSocket(pageA, ledgerA.opens + 1, 60_000);
+  await waitForSocket(pageB, ledgerB.opens + 1, 60_000);
+
+  await addGrocery(pageA, "na-server-herstart");
+  await expect(rowFor(pageB, "na-server-herstart")).toBeVisible({ timeout: 30_000 });
+});
+
 test("a Redis restart is logged once and both browsers converge afterwards", async () => {
   const groceryList = (response: Response) =>
     response.url().includes("groceries.list") && response.ok();
@@ -313,38 +350,6 @@ test("a Redis restart is logged once and both browsers converge afterwards", asy
 
   await addGrocery(pageA, "na-redis-herstart");
   await expect(rowFor(pageB, "na-redis-herstart")).toBeVisible({ timeout: 30_000 });
-});
-
-test("a restart closes every socket with 1012 within seconds, and clients reconnect", async () => {
-  const raw = await Promise.all(
-    Array.from({ length: RAW_SOCKETS_AT_SHUTDOWN }, () =>
-      rawSocket(stack, sessionHeaders(stack, "b"))
-    )
-  );
-  const ledgerA = await socketLedger(pageA);
-  const ledgerB = await socketLedger(pageB);
-
-  const startedAt = Date.now();
-
-  await stack.server.stopServer();
-  const shutdownMs = Date.now() - startedAt;
-
-  const closes = await Promise.all(raw.map((socket) => socket.closed));
-
-  expect(closes.map((close) => close.code)).toEqual(
-    Array.from({ length: RAW_SOCKETS_AT_SHUTDOWN }, () => 1012)
-  );
-  expect(shutdownMs).toBeLessThan(SHUTDOWN_BUDGET_MS);
-
-  await stack.server.startServer();
-
-  await expect.poll(() => closeCodes(pageA)).toContain(1012);
-  await expect.poll(() => closeCodes(pageB)).toContain(1012);
-  await waitForSocket(pageA, ledgerA.opens + 1, 60_000);
-  await waitForSocket(pageB, ledgerB.opens + 1, 60_000);
-
-  await addGrocery(pageA, "na-server-herstart");
-  await expect(rowFor(pageB, "na-server-herstart")).toBeVisible({ timeout: 30_000 });
 });
 
 test("a revoked session ends at the sign-in page, not in a reconnect loop", async () => {
