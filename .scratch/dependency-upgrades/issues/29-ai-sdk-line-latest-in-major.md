@@ -1,16 +1,16 @@
 # 29 — The AI SDK line moves to its latest in-major versions
 
 Status: ready-for-agent
-Blocked by: 05
+Blocked by: 15 (undici 8). Ticket 05 lands in the same commit.
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`
 
 ## What to build
 
-Move `ai` and every `@ai-sdk/*` package in `packages/shared-server` to the newest version inside its current major. This ends the two `@ai-sdk/provider` / `provider-utils` copies that ticket 05 left behind.
+Move `ai` and every `@ai-sdk/*` package in `packages/shared-server` to the newest version inside its current major. Ticket 05 moves `@ai-sdk/perplexity` to 5 in the same commit, so the lockfile never holds two `@ai-sdk/provider` copies. There is no `ai` 8 on npm (2026-10-13), so in-major is the latest.
 
-At research time:
+On 2026-10-12 (take the newest when the work starts; `ai` was 7.0.138 on 2026-10-13):
 
 | Package                         | Today   | Latest in-major |
 | ------------------------------- | ------- | --------------- |
@@ -47,3 +47,4 @@ At research time:
 ## Comments
 
 - Filed 2026-10-12, split out of ticket 05 when the maintainer limited 0.25 to safe fixes.
+- 2026-10-13 — Joined with ticket 05.

@@ -1,7 +1,8 @@
 # 24 — Lazy workers may never report running
 
-Status: needs-triage
-Blocked by: None — can start immediately
+Status: ready-for-agent
+Blocked by: 17. Checked in ticket 18's commit.
+Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`. This was found while researching BullMQ 6; it is not a dependency change.
 
@@ -35,3 +36,4 @@ log.info({ queueName }, "Lazy worker started");
 ## Comments
 
 - Filed 2026-10-12 with the spec.
+- 2026-10-13 — The maintainer put the reproduction in the BullMQ 6 commit, because the same code is open then. Fix only if confirmed.

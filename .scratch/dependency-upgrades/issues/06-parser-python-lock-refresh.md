@@ -1,8 +1,8 @@
 # 06 — The parser's Python lock picks up the security fixes
 
 Status: ready-for-agent
-Blocked by: None. It needs an environment with Python 3.14 and uv; the research sandbox could not download an interpreter.
-Target release: 0.25.0-beta (safe fixes only)
+Blocked by: None.
+Target release: 0.26.0-beta, in the same commit as ticket 30
 
 Spec: `.scratch/dependency-upgrades/spec.md`
 
@@ -10,7 +10,7 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 
 `apps/parser-api` (Python 3.14, uv, FastAPI) runs inside the production image and parses untrusted pages.
 
-**In 0.25, only the transitive packages that have a fix inside their current major move.** Use one `uv lock --upgrade-package <name>` per package, to the smallest fixed version. The current constraints allow every one of these (checked against PyPI `requires_dist`).
+**These are the security-relevant transitive packages.** Ticket 30 moves the whole lock to the latest releases on Python 3.15; this table is the floor that lock must meet.
 
 | Package         | Locked | Move to  | Why it matters                                                                                                                                 |
 | --------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -28,8 +28,8 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 
 ## Acceptance criteria
 
-- [ ] **Lock.** `uv.lock` holds the fixed versions above. No direct dependency and no other package changes; review the lock diff to confirm.
-- [ ] **Tests.** `uv run pytest` passes in apps/parser-api. No CI gate runs the Python tests today; ticket 07 adds `pip-audit`.
+- [ ] **Lock.** `uv.lock` holds at least the fixed versions above.
+- [ ] **Tests.** `uv run pytest` passes in apps/parser-api. No CI gate runs the Python tests today.
 - [ ] **Imports.** A production Docker build imports a handful of real recipe URLs, including one through the extruct path, and the E2E URL-import tests pass.
 - [ ] **Release notes.** A bullet under `## Fixes and Improvements`: "Security updates to the recipe parser's dependencies."
 
@@ -38,3 +38,4 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 - Filed 2026-10-12 with the spec.
 - 2026-10-12 — Narrowed for the safe-fixes-only 0.25: starlette 1.x and the direct-dependency bumps moved to ticket 30.
 - Source: the PyPI JSON API, including each release's `vulnerabilities` list.
+- 2026-10-13 — Did not ship in 0.25. Joined with ticket 30, which takes every Python dependency to its latest on Python 3.15.

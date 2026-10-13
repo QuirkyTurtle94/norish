@@ -21,7 +21,11 @@ Spec: `.scratch/dependency-upgrades/spec.md`
   - uuid 8.3.2.
 - **Where the critical advisories sit.** They are in the dev server (proxy-addr and shell-quote via webpack-dev-server) and in the build-time workers (tinypool). The static site the deploy publishes contains none of them.
 
-**TypeScript in apps/docs.** It is on `~5.9.3`, used only by its `typecheck` script. Stay on 5.9 or move to 6. TypeScript 6 deprecates `baseUrl`, which `apps/docs/tsconfig.json` uses, so check whether Docusaurus' tsconfig preset needs it first.
+**TypeScript in apps/docs** moves from `~5.9.3` to 6.0.3, like the workspace (decided 2026-10-13). TypeScript 6 deprecates `baseUrl`, which `apps/docs/tsconfig.json` uses; check whether Docusaurus' tsconfig preset needs it, and replace it with `paths` if not.
+
+**pnpm in apps/docs.** Its `packageManager` moves to the same pnpm 12 as the workspace (ticket 16).
+
+**Install.** apps/docs is outside the workspace: `pnpm install --ignore-workspace` inside it.
 
 **Pin `wrangler`.** `.github/workflows/docs-deploy.yml` deploys to Cloudflare Pages on pushes to main that touch `apps/docs/**`. It fetches an unpinned `wrangler@4` through `pnpm dlx`, in a job that holds `CLOUDFLARE_API_TOKEN`. Pin an exact version.
 
@@ -37,3 +41,4 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 - Sources:
   - `pnpm outdated` and `pnpm audit` inside apps/docs;
   - a scratch refresh and its audit.
+- 2026-10-13 — TypeScript 6 and pnpm 12 decided; HeroUI 3.2.6 and React 19.3 are part of the in-range refresh.

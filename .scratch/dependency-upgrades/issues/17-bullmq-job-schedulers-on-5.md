@@ -1,8 +1,8 @@
 # 17 — Scheduled tasks move to Job Schedulers while still on BullMQ 5
 
 Status: ready-for-agent
-Blocked by: None — can start immediately
-Target release: 0.26.0-beta. It must ship at least one release before ticket 18.
+Blocked by: 25 (type checking)
+Target release: 0.26.0-beta, the commit right before ticket 18
 
 Spec: `.scratch/dependency-upgrades/spec.md`
 
@@ -34,7 +34,7 @@ Move `bullmq` from 5.81.3 to **5.81.5**, the latest 5.x, which also includes a f
 - [ ] **Upgraded instance.** An instance upgraded from the current release ends up with no legacy repeatables, no duplicate schedulers and no stranded jobs.
 - [ ] **Enrichment enqueue** works and the run sequence still increments.
 - [ ] **Tests.** The updated tests fail against the old code paths.
-- [ ] **Type check.** A strict `tsc --noEmit` on packages/queue and packages/trpc shows no new errors; the gates use `--noCheck`.
+- [ ] **Type check.** `pnpm typecheck` passes.
 - [ ] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes.
 
 ## Comments
@@ -43,3 +43,4 @@ Move `bullmq` from 5.81.3 to **5.81.5**, the latest 5.x, which also includes a f
 - Sources:
   - the bullmq 5.81.3, 5.81.5 and 6.3.13 tarballs;
   - a search summary of BullMQ's v5 → v6 migration guide (the page itself was unreachable). That guide says to "migrate legacy repeatable jobs to Job Schedulers before upgrading".
+- 2026-10-13 — No release is needed between this and ticket 18. Checked in the 5.81.3 and 6.3.14 tarballs: Norish's repeatables are md5-keyed with a `repeat:<md5>` hash; 6.3.14's `getJobSchedulers` reads them and `removeJobScheduler-3.lua` (byte-identical in both) removes them, so the boot sweep in `producer.ts:58-62` works on 6. BullMQ's guide says "migrate on v5 first", but its v6 error only fires for legacy colon-shaped keys, which Norish never wrote.

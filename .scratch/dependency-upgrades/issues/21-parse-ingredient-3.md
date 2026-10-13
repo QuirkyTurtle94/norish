@@ -41,3 +41,4 @@ Move `parse-ingredient` from 2.2.0 to **3.0.0** (packages/shared, `src/lib/helpe
 
 - Filed 2026-10-12 with the spec.
 - Source: the parse-ingredient 2.2.0 and 3.0.0 tarballs.
+- 2026-10-13 — Unchanged.

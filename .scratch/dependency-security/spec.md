@@ -1,6 +1,8 @@
 # Dependency security: 0.25.0 patches, 0.26.0 sweep
 
-Status: ready-for-agent
+Status: superseded
+
+The 0.25.0 half (tickets 01–04) shipped in PR #617. The 0.26.0 half (05–09) is superseded by `.scratch/dependency-upgrades/` as of 2026-10-13.
 
 ## Problem Statement
 

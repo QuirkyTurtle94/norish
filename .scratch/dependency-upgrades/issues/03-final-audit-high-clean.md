@@ -1,50 +1,38 @@
-# 03 — Transitive advisories get security floors
+# 03 — The final audit comes back high-clean
 
 Status: ready-for-agent
-Blocked by: None — can start immediately (independent of 01 and 02)
-Target release: 0.25.0-beta (safe fixes only)
+Blocked by: every other 0.26 ticket in this plan
+Target release: 0.26.0-beta (the last commit on the branch)
 
 Spec: `.scratch/dependency-upgrades/spec.md`
 
 ## What to build
 
-Most transitive findings are stale lockfile state, not real constraints: their parents already allow the patched release. pnpm 10 has no targeted way to refresh a single transitive dependency (`pnpm update <name>` left both undici copies in place and changed unrelated packages), so apply the fixes as **range-selector overrides**. pnpm matches each selector against the dependent's declared range, so only the vulnerable ranges move, and only to a patch release inside the same major.
+The 0.25 floors below were never applied. After the sweep most of them are moot, because their parents move to releases that already require patched versions. So this ticket runs last:
 
-**Direct bump:** `undici` `^7.30.0` in `packages/shared-server`.
+1. `pnpm audit --audit-level=high` in the workspace, and inside `apps/docs`.
+2. For every high or critical finding that remains, bump its parent first. Only when the parent has no fixed release, add a **range-selector override** in `pnpm-workspace.yaml` that moves the vulnerable range to the smallest patched release inside its major, with a comment naming the parent that needs it.
+3. The zod override stays as a single-copy pin (ticket 08); the other existing overrides stay only if `pnpm why` still shows two copies without them.
+4. Anything that cannot be fixed (no release exists, such as braces) is listed in the comments with its path and whether it ships.
 
-- 7.29.0 has high advisories, fixed in 7.29.1: a TLS-validation bypass in BalancedPool, and a DoS via an unrequested WebSocket subprotocol.
-- Stay on 7; 8 is held (see the spec).
-
-**Overrides.** Append this block under the existing `overrides:` key in `pnpm-workspace.yaml`, indented like the entries already there. In a scratch copy these floors changed 42 lockfile packages, and every remaining non-mobile transitive advisory cleared except the two named under **Left for 0.26**.
+The floor list researched on 2026-10-12 is a starting point, not a target:
 
 ```yaml
-overrides:
-  # … the existing entries stay as they are …
-  # Security floors (2026-10-12): drop each one once its parents require a patched release
-  "@babel/core@<7.29.6": ^7.29.6
-  "@grpc/grpc-js@>=1.14.0 <1.14.5": ^1.14.5
-  "@humanfs/node@<0.16.8": ^0.16.8
-  "@protobufjs/utf8@<1.1.1": ^1.1.1
-  "baseline-browser-mapping@<2.11.0": ^2.11.0
-  "brace-expansion@<1.1.21": ^1.1.21
-  "brace-expansion@>=2.0.0 <2.1.7": ^2.1.7
-  "browserslist@<4.28.7": ^4.28.7
-  "fast-copy@>=4.0.0 <4.1.0": ^4.1.0
-  "js-yaml@>=4.0.0 <4.3.2": ^4.3.2
-  "lodash@<4.18.0": ^4.18.0
-  "nanoid@>=5.0.0 <5.1.16": ^5.1.16
-  "protobufjs@<7.6.5": ^7.6.5
-  "qs@<6.16.0": ^6.16.0
-  "sharp@<0.35.5": ^0.35.5
-  "source-map-js@<1.2.2": ^1.2.2
-  "undici@>=7.0.0 <7.29.1": ^7.29.1
-  "undici@>=8.0.0 <8.10.2": ^8.10.2
+"@babel/core@<7.29.6": ^7.29.6
+"@grpc/grpc-js@>=1.14.0 <1.14.5": ^1.14.5
+"@humanfs/node@<0.16.8": ^0.16.8
+"baseline-browser-mapping@<2.11.0": ^2.11.0
+"brace-expansion@<1.1.21": ^1.1.21
+"brace-expansion@>=2.0.0 <2.1.7": ^2.1.7
+"browserslist@<4.28.7": ^4.28.7
+"fast-copy@>=4.0.0 <4.1.0": ^4.1.0
+"js-yaml@>=4.0.0 <4.3.2": ^4.3.2
+"lodash@<4.18.0": ^4.18.0
+"qs@<6.16.0": ^6.16.0
+"source-map-js@<1.2.2": ^1.2.2
 ```
 
-**Left for 0.26 (ticket 28).** Removing the unused optional peers — `prisma`, `@prisma/client`, `mysql2` and drizzle-kit's `@esbuild-kit/esm-loader` — is not a patch-level change: it deletes a subtree of more than 100 lockfile entries. What they carry doesn't ship (dev and build only), so they wait for 0.26:
-
-- esbuild 0.18.20 (moderate);
-- the hono / effect / valibot / deepmerge-ts cluster, which the audit attributes to apps/mobile.
+protobufjs, @protobufjs/utf8 and sharp were cleared in 0.25; nanoid 5 left with Scalar; undici moves to 8 (ticket 15).
 
 ## Notes
 
@@ -77,13 +65,12 @@ overrides:
 
 ## Acceptance criteria
 
-- [ ] **Audit.** `pnpm audit` lists nothing outside three groups: the Expo cluster, the unused prisma/esbuild-kit subtree (ticket 28), and `next` and `better-auth` until 01 and 02 land.
-- [ ] **Lockfile diff.** Reviewed: only the floored packages change (about 42 entries in the scratch run), each within its major.
-- [ ] **Image.** Inside a production Docker build, the deployed tree (`/app/deploy/node_modules/.pnpm/lock.yaml`) shows the floored versions, and the nested `packages/shared-server/node_modules/undici`, if present, is ≥ 7.29.1.
-- [ ] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes (the realtime and AI projects exercise undici and ws). An archive export works (archiver with the floored lodash and brace-expansion).
-- [ ] **Release notes.** None of its own; it is covered by 01's security bullet.
+- [ ] **Audit.** `pnpm audit --audit-level=high` exits 0 in the workspace and in apps/docs, or every remaining entry is listed in the comments with its reason.
+- [ ] **Overrides.** Every override has a comment naming the parent that still needs it.
+- [ ] **Image.** The deployed tree in a production Docker build (`node_modules/.pnpm/lock.yaml`) shows the patched versions.
+- [ ] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes.
 
 ## Comments
 
-- Filed 2026-10-12 with the spec.
-- 2026-10-12 — Narrowed for the safe-fixes-only 0.25. The dead-peer removals and the in-range dev bumps (testcontainers, jsdom, drizzle-orm) moved to ticket 28.
+- Filed 2026-10-12 with the spec as "Transitive advisories get security floors" for 0.25; not applied in 0.25.
+- 2026-10-13 — Repurposed as the sweep's last step: fix by upgrade first, override only what remains (the approach of `.scratch/dependency-security/` ticket 09). The table under Notes describes the lockfile of 2026-10-12.

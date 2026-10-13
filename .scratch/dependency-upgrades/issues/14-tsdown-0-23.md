@@ -1,7 +1,7 @@
 # 14 — tsdown 0.23
 
 Status: ready-for-agent
-Blocked by: None — can start immediately
+Blocked by: 11
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`

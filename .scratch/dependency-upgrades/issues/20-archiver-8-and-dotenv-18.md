@@ -32,3 +32,4 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 - Sources:
   - the archiver 7.0.1 and 8.0.0 tarballs, and @types/archiver 6.0.4 and 8.0.0;
   - the dotenv 17.4.2 and 18.0.7 tarballs.
+- 2026-10-13 — Unchanged; dotenv is now 18.0.7.
