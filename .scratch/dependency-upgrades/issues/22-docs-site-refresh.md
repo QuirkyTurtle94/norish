@@ -1,6 +1,6 @@
 # 22 — The docs site refresh
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: None — can start immediately
 Target release: 0.26.0-beta. The `wrangler` pin is worth doing sooner.
 
@@ -31,8 +31,8 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 
 ## Acceptance criteria
 
-- [ ] **Format and build.** `pnpm format` and `pnpm build` in apps/docs pass; the build enforces broken links and anchors.
-- [ ] **Audit.** The apps/docs audit count is recorded before and after.
+- [x] **Format and build.** `pnpm format` and `pnpm build` in apps/docs pass; the build enforces broken links and anchors.
+- [x] **Audit.** The apps/docs audit count is recorded before and after.
 - [ ] **Deploy.** `wrangler` is pinned to an exact version, and the deploy workflow is green on its next run.
 
 ## Comments
@@ -42,3 +42,12 @@ Spec: `.scratch/dependency-upgrades/spec.md`
   - `pnpm outdated` and `pnpm audit` inside apps/docs;
   - a scratch refresh and its audit.
 - 2026-10-13 — TypeScript 6 and pnpm 12 decided; HeroUI 3.2.6 and React 19.3 are part of the in-range refresh.
+- 2026-10-13 — Done:
+  - **Refresh:** `pnpm update` within the current ranges; Docusaurus stays on 3.10.2 (still the latest stable), React and React DOM move to 19.3, Prettier to 3.9.10. HeroUI 3.2.6 and React Aria Components 1.22.1 are pinned to match the web app.
+  - **Tooling:** TypeScript 6.0.3 and pnpm 12.11.2. Under pnpm 12, `onlyBuiltDependencies` in `apps/docs/pnpm-workspace.yaml` became `allowBuilds` (the same three packages). Run installs from `apps/docs` without `--ignore-workspace`, as the deploy does; that flag now skips the docs project's own settings.
+  - **`baseUrl`:** TypeScript 6 rejects it, and the Docusaurus preset sets it, so `tsconfig.json` unsets it (`null`) and declares the `@site/*` path itself; `pnpm typecheck` passes.
+  - **Audit:** 50 advisories (4 critical, 26 high) before, 7 (2 critical, 2 high) after. Left: tinypool ×2 (critical, build-time workers), serialize-javascript ×2, braces (no fix), postcss-selector-parser and uuid, all waiting on Docusaurus.
+  - **Format and build:** `pnpm format` passes once trailing whitespace and one table's separator width were fixed in eight pages Prettier 3.9.10 now flags, the 0.25 versioned copies included. `pnpm build` passes, with its broken-link and anchor checks.
+  - **wrangler:** pinned to 4.149.0 in the docs deploy and, since its job holds the same token, the landing deploy. 4.150.0 was published the same day, inside pnpm 12's one-day release age.
+  - **Not verified:** the deploy workflow's next run.
+

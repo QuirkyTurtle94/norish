@@ -46,4 +46,6 @@ jobs:
         # fails on the monorepo root) and to avoid the action's deprecated Node 20
         # runtime. --branch=main marks this as a production deploy (matches the
         # project's production branch), so it publishes to norish.dev.
-        run: pnpm dlx wrangler@4 pages deploy apps/landing/out --project-name=norish --branch=main
+        # Pinned exactly: this job holds the Cloudflare token, so it runs only a
+        # wrangler release someone chose (Renovate bumps it).
+        run: pnpm dlx wrangler@4.149.0 pages deploy apps/landing/out --project-name=norish --branch=main

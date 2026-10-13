@@ -54,4 +54,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         # Run wrangler via `pnpm dlx` (matches landing-deploy.yml). --branch=main
         # marks this as a production deploy to the norish-docs project.
-        run: pnpm dlx wrangler@4 pages deploy apps/docs/build --project-name=norish-docs --branch=main
+        # Pinned exactly: this job holds the Cloudflare token, so it runs only a
+        # wrangler release someone chose (Renovate bumps it).
+        run: pnpm dlx wrangler@4.149.0 pages deploy apps/docs/build --project-name=norish-docs --branch=main
