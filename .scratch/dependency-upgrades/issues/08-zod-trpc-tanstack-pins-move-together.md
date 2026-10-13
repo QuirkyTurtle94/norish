@@ -1,6 +1,6 @@
 # 08 — zod, tRPC and TanStack Query move together
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 25 (type checking)
 Target release: 0.26.0-beta
 
@@ -28,12 +28,13 @@ Move the three lines the root `overrides` pin. Each moves together with its cata
 
 ## Acceptance criteria
 
-- [ ] **Single copies.** `pnpm why zod @trpc/server @tanstack/query-core` shows one version of each.
-- [ ] **OpenAPI document.** The generated document (`/api/docs`; trpc-to-openapi with zod-openapi 5.4.x) is unchanged. Diff it before and after.
-- [ ] **Type check.** `pnpm typecheck` passes.
-- [ ] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes (the offline and realtime projects exercise the TanStack persist layer and tRPC subscriptions).
+- [x] **Single copies.** `pnpm why zod @trpc/server @tanstack/query-core` shows one version of each.
+- [x] **OpenAPI document.** The generated document (`/api/docs`; trpc-to-openapi with zod-openapi 5.4.x) is unchanged. Diff it before and after.
+- [x] **Type check.** `pnpm typecheck` passes.
+- [x] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes (the offline and realtime projects exercise the TanStack persist layer and tRPC subscriptions).
 
 ## Comments
 
 - Filed 2026-10-12 with the spec.
 - 2026-10-13 — Targets refreshed; the zod pin's reason recorded above.
+- 2026-10-13 — Done on zod 4.6.7, tRPC 11.19.0 and TanStack Query 5.104.2 (with `query-persist-client-core` in apps/web). The lockfile holds one copy each of `zod`, `@trpc/server`, `@tanstack/query-core` and `@tanstack/react-query`; the pin's reason is written next to the zod override. **The OpenAPI document changed in spelling only:** zod 4.6 writes a nullable primitive as `type: ["string", "null"]` where 4.4 wrote `anyOf: [{ type: "string" }, { type: "null" }]`. Read back as anyOf, the old and new documents are identical (checked with a script that normalises one form into the other), so no operation, field or bound changed. The docs site's API reference read `type` as a string and would have printed `string,null`; it now reads the list as the anyOf it means. The published copy is refreshed. typecheck, lint, test:run, i18n:check, build, format:check and deps:cycles pass; `pnpm test:e2e`: 175 passed.

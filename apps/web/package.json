@@ -45,7 +45,7 @@
     "@norish/trpc": "workspace:*",
     "@norish/ui": "workspace:*",
     "@serwist/turbopack": "^9.5.13",
-    "@tanstack/query-persist-client-core": "5.101.4",
+    "@tanstack/query-persist-client-core": "5.104.2",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-virtual": "^3.14.18",
     "@trpc/client": "catalog:",
