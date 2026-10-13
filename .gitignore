@@ -103,3 +103,7 @@ docker-compose.yml
 # Playwright E2E artifacts. This root ignore is also used by the web format gate.
 apps/web/__tests__/e2e/.results/
 apps/web/__tests__/e2e/.runtime/
+
+# Vitest reports and coverage
+.vitest/
+coverage/

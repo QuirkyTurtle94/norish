@@ -90,6 +90,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "^5.0.4",
     "eslint": "catalog:",
     "fake-indexeddb": "^6.0.0",
     "jsdom": "catalog:",

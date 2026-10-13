@@ -22,7 +22,7 @@ catalog:
   "@trpc/server": ^11.18.0
   "@trpc/tanstack-react-query": ^11.18.0
   "@types/archiver": ^6.0.3
-  "@types/node": ^25.9.5
+  "@types/node": ^25.9.9
   "@types/react": 19.2.18
   "@types/react-dom": 19.2.4
   "@vitejs/plugin-react": ^6.1.2
@@ -47,28 +47,16 @@ catalog:
   superjson: ^2.2.6
   tailwindcss: ^4.3.3
   trpc-to-openapi: ^3.3.0
-  turbo: ^2.11.7
   tsx: 4.23.15
+  turbo: ^2.11.7
   typescript: 6.0.3
   vite: ^8.3.4
-  vitest: ^4.1.11
+  vitest: ^5.0.4
   ws: 8.22.0
   zod: 4.4.3
   zod-openapi: ^5.4.6
 
 nodeLinker: hoisted
-
-overrides:
-  # Optional peers resolved once and never used; they only carried advisories.
-  "@prisma/client": "-"
-  "drizzle-kit>@esbuild-kit/esm-loader": "-"
-  mysql2: "-"
-  prisma: "-"
-  "@tanstack/react-query": 5.101.4
-  "@trpc/client": 11.18.0
-  "@trpc/server": 11.18.0
-  "@trpc/tanstack-react-query": 11.18.0
-  zod: 4.4.3
 
 onlyBuiltDependencies:
   - "@tailwindcss/oxide"
@@ -78,3 +66,14 @@ onlyBuiltDependencies:
   - sharp
   - unrs-resolver
 
+overrides:
+  # Optional peers resolved once and never used; they only carried advisories.
+  "@prisma/client": "-"
+  "@tanstack/react-query": 5.101.4
+  "@trpc/client": 11.18.0
+  "@trpc/server": 11.18.0
+  "@trpc/tanstack-react-query": 11.18.0
+  "drizzle-kit>@esbuild-kit/esm-loader": "-"
+  mysql2: "-"
+  prisma: "-"
+  zod: 4.4.3

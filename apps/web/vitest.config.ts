@@ -9,6 +9,8 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
   plugins: [react()],
   test: {
+    // Vitest 5 defaults this to true; kept off so the upgrade changes no test.
+    clearMocks: false,
     environment: "jsdom",
     globals: true,
     env: {
