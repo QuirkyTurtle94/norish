@@ -1,4 +1,6 @@
+import { readFileSync } from "node:fs";
 import { Readable } from "node:stream";
+import JSZip from "jszip";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FullRecipeInsertSchema } from "@norish/shared/contracts/zod";
@@ -306,5 +308,31 @@ describe("norish archive round-trip", () => {
     expect(parsed.dto).not.toHaveProperty("userId");
     expect(parsed.dto).not.toHaveProperty("author");
     expect(parsed.dto).not.toHaveProperty("authorName");
+  });
+
+  it("still reads an archive a 0.25 instance wrote", async () => {
+    // Written by archiver 7, before the move to 8; the parser must not care.
+    const archive = await JSZip.loadAsync(
+      readFileSync(new URL("./fixtures/norish-archive-0.25.zip", import.meta.url))
+    );
+    const recipe = buildFullRecipe();
+    const [entry] = await extractNorishRecipes(archive);
+
+    expect((await readNorishManifest(archive)).exporter?.name).toBe("Mika");
+    expect(entry?.parseError).toBeUndefined();
+
+    const { dto } = await parseNorishRecipeToDTO(
+      entry!.json,
+      MINTED_ID,
+      new Map([["italian", ITALIAN_ID]]),
+      archive.folder(entry!.folderKey)
+    );
+
+    expect(dto.name).toBe(recipe.name);
+    expect(dto.recipeIngredients.map((line) => line.ingredientName)).toEqual([
+      "spaghetti",
+      "clams",
+    ]);
+    expect(dto.steps.map((step) => step.step)).toEqual(["Boil the pasta", "Steam the clams"]);
   });
 });
