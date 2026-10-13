@@ -42,15 +42,14 @@ async function withTimeout<T>(
     }, timeoutMs);
   });
 
-  const startedAt = Date.now();
+  // Named while it is still running, so a step a supervisor kills says so too.
+  const slow = setTimeout(() => log.warn({ operation }, "Shutdown step is slow"), SLOW_STEP_MS);
 
   try {
     return await Promise.race([promise, timeoutPromise]);
   } finally {
     clearTimeout(timeoutId!);
-    const elapsedMs = Date.now() - startedAt;
-
-    if (elapsedMs > SLOW_STEP_MS) log.warn({ operation, elapsedMs }, "Shutdown step was slow");
+    clearTimeout(slow);
   }
 }
 
