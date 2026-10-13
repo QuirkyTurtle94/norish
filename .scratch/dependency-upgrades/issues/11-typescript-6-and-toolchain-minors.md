@@ -1,6 +1,6 @@
 # 11 — TypeScript 6 and the toolchain minors
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 25 (type checking), 28 (lockfile refresh)
 Target release: 0.26.0-beta
 
@@ -55,3 +55,4 @@ pnpm itself moves in ticket 16.
   - the typescript 6.0.3 and 7.0.2 tarballs;
   - typescript-eslint 8.71.1's peer range (`>=4.8.4 <6.1.0`).
 - 2026-10-13 — Versions say "latest" instead of 2026-10-12 numbers; eslint-plugin-import removal moved to ticket 12; pnpm moved to ticket 16.
+- 2026-10-13 — Done: one TypeScript (6.0.3) across the workspace, `"types": ["node"]` in `tooling/typescript/base.json`, `dom.iterable` dropped, `typescript: catalog:` declared in every workspace that runs `tsc`, `tsx` in the catalog. Toolchain floors raised to what ticket 28's re-lock already resolved. Landing and web type-check without `next-env.d.ts`, so no `next typegen` step was needed. The Playwright 1.64 bump needs a Chrome for Testing download from `storage.googleapis.com`, which the maintainer's DNS blocks; E2E waits on that.

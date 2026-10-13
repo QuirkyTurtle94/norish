@@ -78,7 +78,7 @@
     "@norish/prettier-config": "workspace:*",
     "@norish/tailwind-config": "workspace:*",
     "@norish/tsconfig": "workspace:*",
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "catalog:",
     "@testcontainers/postgresql": "catalog:",
     "@testcontainers/redis": "catalog:",
@@ -98,7 +98,8 @@
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
     "tsdown": "^0.22.14",
-    "tsx": "4.23.12",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
   },

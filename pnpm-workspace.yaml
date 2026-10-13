@@ -25,7 +25,7 @@ catalog:
   "@types/node": ^25.9.5
   "@types/react": 19.2.18
   "@types/react-dom": 19.2.4
-  "@vitejs/plugin-react": ^6.1.0
+  "@vitejs/plugin-react": ^6.1.2
   archiver: ^7.0.1
   better-auth: 1.6.33
   bullmq: ^5.81.3
@@ -40,16 +40,17 @@ catalog:
   next: 16.3.8
   pg: 8.23.1
   postcss: ^8.5.30
-  prettier: ^3.9.6
+  prettier: ^3.9.10
   react: 19.2.3
   react-dom: 19.2.3
   server-only: ^0.0.1
   superjson: ^2.2.6
   tailwindcss: ^4.3.3
   trpc-to-openapi: ^3.3.0
-  turbo: ^2.10.11
-  typescript: 5.9.3
-  vite: ^8.2.2
+  turbo: ^2.11.7
+  tsx: 4.23.15
+  typescript: 6.0.3
+  vite: ^8.3.4
   vitest: ^4.1.11
   ws: 8.22.0
   zod: 4.4.3

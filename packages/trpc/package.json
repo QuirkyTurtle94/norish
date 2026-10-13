@@ -76,6 +76,7 @@
     "@types/ws": "8.18.2",
     "eslint": "catalog:",
     "prettier": "catalog:",
+    "typescript": "catalog:",
     "vitest": "catalog:"
   },
   "prettier": "@norish/prettier-config"
