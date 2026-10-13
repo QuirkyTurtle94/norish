@@ -165,6 +165,11 @@ describe("parseIngredientWithDefaults", () => {
     ["* 3 eggs", 3, null, "eggs"],
     ["– 100 g sugar", 100, "gram", "sugar"],
     ["- 1/2 tsp salt", 0.5, "teaspoon", "salt"],
+    // No amount is negative: a dash against the number is a bullet too. The
+    // parser read "-1 egg" as 1 of nothing and "-2 tbsp butter" as plain text.
+    ["-1 egg", 1, null, "egg"],
+    ["-2 tbsp butter", 2, "tablespoon", "butter"],
+    ["–1 cup flour", 1, "cup", "flour"],
   ])("reads the bulleted line %j as the line without its bullet", (line, quantity, unit, name) => {
     const [result] = parseIngredientWithDefaults(line);
 

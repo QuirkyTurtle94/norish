@@ -53,8 +53,11 @@ export const parseJsonWithRepair = (input: string): any | null => {
  */
 const UNIT_PLACEHOLDER = "norishmultiwordunit";
 
-/** A list bullet a pasted line keeps: a dash, bullet or asterisk, then a space. */
-const LEADING_BULLET = /^\s*[-–—•·*]\s+/;
+/**
+ * A list bullet a pasted line keeps: a dash, bullet or asterisk, then a space,
+ * or a dash right against the amount (no amount is negative).
+ */
+const LEADING_BULLET = /^\s*(?:[-–—•·*]\s+|[-–—](?=\d))/;
 
 /**
  * Hand `parse-ingredient` a line it can read, by collapsing a multi-word unit
