@@ -45,19 +45,6 @@ export default defineConfig(
     },
   },
   {
-    // app/sw.ts is excluded from tsconfig.json (it typechecks against webworker
-    // libs via tsconfig.sw.json), so the project service can't place it; let it
-    // lint under the default project instead of erroring.
-    languageOptions: {
-      parserOptions: {
-        projectService: {
-          allowDefaultProject: ["app/sw.ts"],
-        },
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-  },
-  {
     // The browser scenarios drive a harness served from localhost, which is a
     // secure context, and their `page.evaluate` bodies cannot import from the
     // app anyway. The secure-context restriction is about shipped client code.

@@ -86,10 +86,6 @@ export const baseConfig = defineConfig(
       globals: {
         ...globals.node,
       },
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
-      },
     },
     rules: {
       ...turboRecommendedRules,
