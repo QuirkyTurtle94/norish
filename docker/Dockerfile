@@ -3,7 +3,7 @@
 ##############################
 # Base image (minimal, no pnpm needed at runtime)
 ##############################
-FROM node:22-alpine3.24 AS base
+FROM node:26-alpine3.24 AS base
 
 # Security: upgrade all packages to latest versions to fix CVEs
 RUN apk upgrade --no-cache && \
@@ -215,7 +215,7 @@ RUN test -n "${NORISH_VERSION_REPORT_JSON}"
 ENV NORISH_VERSION_REPORT_JSON=${NORISH_VERSION_REPORT_JSON}
 
 # Use non-root user for runtime.
-# node:22-alpine already has user 'node' with UID/GID 1000.
+# node:26-alpine already has user 'node' with UID/GID 1000.
 # For custom UID/GID, create a new user; otherwise reuse 'node'.
 ARG UID=1000
 ARG GID=1000

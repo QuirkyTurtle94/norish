@@ -4,7 +4,7 @@ Thank you for your interest in contributing to Norish! This guide will help you 
 
 ## Prerequisites
 
-- **Node.js** 22.22.0 (see `.nvmrc`)
+- **Node.js** 26 (see `.nvmrc`)
 - **pnpm** 10.x or later
 - **Docker** (for PostgreSQL, Redis, and Obscura)
 - **Git**

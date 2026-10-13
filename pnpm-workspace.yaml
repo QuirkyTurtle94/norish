@@ -22,7 +22,7 @@ catalog:
   "@trpc/server": ^11.18.0
   "@trpc/tanstack-react-query": ^11.18.0
   "@types/archiver": ^6.0.3
-  "@types/node": ^25.9.9
+  "@types/node": ^26.6.5
   "@types/react": 19.2.18
   "@types/react-dom": 19.2.4
   "@vitejs/plugin-react": ^6.1.2
@@ -57,6 +57,10 @@ catalog:
   zod-openapi: ^5.4.6
 
 nodeLinker: hoisted
+
+# The AI transport hands an undici 8 dispatcher to Node's built-in fetch, which
+# only Node 26 understands; on an older Node every AI call fails. Refuse early.
+engineStrict: true
 
 onlyBuiltDependencies:
   - "@tailwindcss/oxide"

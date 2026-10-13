@@ -9,7 +9,7 @@ Use this file for lightweight repo context.
 
 ## Stack
 
-- Node.js 22 + TypeScript
+- Node.js 26 + TypeScript
 - pnpm workspaces + Turborepo
 - `apps/web`: Next.js 16 App Router, React 19, HeroUI v3 (`@heroui/react`), Tailwind CSS v4, Motion, TanStack Query, custom Node server bundle via tsdown
 - `apps/mobile`: Expo SDK 55, Expo Router, React Native 0.83, React 19, HeroUI Native v1 RC3 (`heroui-native`), Uniwind, Tailwind CSS v4 theme tokens, TanStack Query

@@ -1,6 +1,6 @@
 # 15 — Node 26 and undici 8
 
-Status: ready-for-agent
+Status: in-progress
 Blocked by: 13, 14 (their engine floors are checked against Node 26)
 Target release: 0.26.0-beta
 
@@ -49,3 +49,4 @@ Move the runtime to Node 26, and undici to 8 with it.
 
 - Filed 2026-10-12 with the spec as "Node 24 LTS".
 - 2026-10-13 — The maintainer chose Node 26, as the security plan had. undici 8 moved here from the held lines because it only works with Node 26's bundled fetch. Checked: Node `deps/undici` per line, the undici 8.11.2 tarball (`dispatcher1-wrapper.js`, `migrating-from-v7-to-v8.md`), Docker Hub `node:26-alpine3.24`.
+- 2026-10-13 — Code done: `.nvmrc` 26.11.1, `node:26-alpine3.24`, devcontainer `javascript-node:5-26-bookworm`, `@types/node ^26.6.5`, undici ^8.11.2, root `engines.node >=26` with pnpm `engineStrict: true` (a Node 24 install now fails with ERR_PNPM_UNSUPPORTED_ENGINE instead of every AI call failing later), docs and AGENTS/CONTRIBUTING updated, Upgrade note added. Gates green on Node 26.11.1. A real HTTPS fetch through `createFetchWithTimeout` returns 200 on Node 26 and fails with "invalid onRequestStart method" on Node 24, as predicted; the `transport.ts` comment is accurate again. The undici 7.30 left in the lockfile is nested under cheerio and `@ai-sdk/provider-utils` and never meets our dispatcher. **Open:** the image smoke test (health, video, HEIC upload, URL import) and the libvips record, because `docker build` here cannot read Docker Desktop's keychain-backed credentials from a non-interactive session.
