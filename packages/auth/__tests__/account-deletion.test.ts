@@ -38,7 +38,7 @@ vi.mock("@norish/shared-server/realtime/connection", () => ({
 }));
 
 vi.mock("@norish/shared-server/logger", () => ({
-  trpcLogger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  authLogger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 function household(adminUserId: string, memberIds: readonly string[]) {

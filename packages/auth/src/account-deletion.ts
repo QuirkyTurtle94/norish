@@ -1,6 +1,6 @@
 import { getHouseholdForUser, transferHouseholdAdmin } from "@norish/db/repositories/households";
 import { deleteUser } from "@norish/db/repositories/users";
-import { trpcLogger as log } from "@norish/shared-server/logger";
+import { authLogger as log } from "@norish/shared-server/logger";
 import { sweepUserAvatars } from "@norish/shared-server/media/avatar-cleanup";
 import { emitConnectionInvalidation } from "@norish/shared-server/realtime/connection";
 
