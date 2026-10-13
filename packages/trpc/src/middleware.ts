@@ -104,9 +104,10 @@ export const sharedRecipeProcedure = publicProcedure
     });
   });
 
-export type AuthedProcedureContext = Context & {
+export type AuthedProcedureContext = Omit<Context, "household"> & {
   user: User;
-  household: HouseholdWithUsersNamesDto | null;
+  // The request's own household, or the cached one `withAuth` falls back to.
+  household: Context["household"] | HouseholdWithUsersNamesDto | null;
   householdKey: string;
   userIds: string[];
   householdUserIds: string[] | null;

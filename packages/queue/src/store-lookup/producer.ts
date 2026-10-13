@@ -44,7 +44,8 @@ function jobId(...parts: string[]): string {
  */
 export async function addStoreMatchJob(
   queue: Queue<StoreLookupJobData>,
-  data: Extract<StoreLookupJobData, { kind: "match" }>,
+  // Only jobs queued before the upgrade lack the Ingredient; new ones carry it.
+  data: Extract<StoreLookupJobData, { kind: "match" }> & { ingredientId: string },
   now: number = Date.now()
 ): Promise<void> {
   await queue.add("match", data, {

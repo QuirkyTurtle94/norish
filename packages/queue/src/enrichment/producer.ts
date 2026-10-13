@@ -18,6 +18,7 @@ import { createLogger } from "@norish/shared-server/logger";
 
 import type { RecipeEnrichmentJobData } from "../contracts/job-types";
 import { removeRetainedTerminalJob } from "../helpers";
+import { getBullClient } from "../redis/bullmq";
 import { publishEnrichmentLifecycle } from "./announce";
 import { ENRICHMENT_JOB_NAMES, enrichmentJobId, findActiveEnrichmentJobId } from "./identity";
 
@@ -60,8 +61,7 @@ export async function addEnrichmentJob(
     return { kind, status: "duplicate", existingJobId: jobId };
   }
 
-  const redis = await queue.client;
-  const runSequence = await redis.incr(queue.toKey("enrichment-run-sequence"));
+  const runSequence = await getBullClient().incr(queue.toKey("enrichment-run-sequence"));
   const runData = { ...data, runId: data.runId ?? randomUUID(), runSequence };
   const job = await queue.add(ENRICHMENT_JOB_NAMES[kind], runData, { jobId });
   const storedRun = await queue.getJob(jobId);

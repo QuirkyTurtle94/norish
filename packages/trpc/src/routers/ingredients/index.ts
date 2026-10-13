@@ -225,11 +225,17 @@ const spellings = authedProcedure
   .query(({ ctx, input }) => listSpellings(actorOf(ctx), input.ingredientId));
 
 /** Where an Ingredient is still used, for the panel a refused delete opens. */
-const uses = authedProcedure
-  .input(z.object({ ingredientId: z.uuid() }))
-  .query(({ ctx, input }) =>
-    listIngredientUses({ ...actorOf(ctx), userIds: ctx.userIds }, input.ingredientId)
-  );
+const uses = authedProcedure.input(z.object({ ingredientId: z.uuid() })).query(({ ctx, input }) =>
+  listIngredientUses(
+    {
+      userId: ctx.user.id,
+      householdUserIds: ctx.householdUserIds,
+      isServerAdmin: ctx.isServerAdmin,
+      userIds: ctx.userIds,
+    },
+    input.ingredientId
+  )
+);
 
 const addAlias = authedProcedure
   .input(z.object({ ingredientId: z.uuid(), text: ingredientName }))

@@ -571,45 +571,50 @@ describe("useRecipesMutations", () => {
       expect(() => result.current.updateRecipe).not.toThrow();
     });
 
-    it("optimistically updates the detail cache for measurement system changes", async () => {
+    const detailKey = [["recipes", "get"], { input: { id: "recipe-1" }, type: "query" }];
+
+    function seedDetail(overrides: Partial<FullRecipeDTO> = {}) {
       queryClient.setQueryData(["recipes", "list", {}], createMockInfiniteData());
       queryClient.setQueryData(["recipes", "pending"], []);
-      queryClient.setQueryData<FullRecipeDTO>(
-        [["recipes", "get"], { input: { id: "recipe-1" }, type: "query" }],
-        {
-          id: "recipe-1",
-          userId: "user-1",
-          name: "Original recipe",
-          description: null,
-          notes: null,
-          url: null,
-          image: null,
-          originCountry: null,
-          originRegion: null,
-          provenanceNote: null,
-          cuisines: [],
-          servings: 1,
-          prepMinutes: null,
-          cookMinutes: null,
-          totalMinutes: null,
-          calories: null,
-          fat: null,
-          carbs: null,
-          protein: null,
-          systemUsed: "us",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          recipeIngredients: [],
-          steps: [],
-          tags: [],
-          categories: [],
-          author: { id: "user-1", name: "User", image: null, version: 1 },
-          images: [],
-          videos: [],
-          version: 1,
-        }
-      );
+      queryClient.setQueryData<FullRecipeDTO>(detailKey, {
+        id: "recipe-1",
+        userId: "user-1",
+        name: "Original recipe",
+        description: null,
+        notes: null,
+        url: null,
+        image: null,
+        originCountry: null,
+        originCountryName: null,
+        originRegion: null,
+        provenanceNote: null,
+        cuisines: [],
+        originalSystem: null,
+        dishColor: null,
+        servings: 1,
+        prepMinutes: null,
+        cookMinutes: null,
+        totalMinutes: null,
+        calories: null,
+        fat: null,
+        carbs: null,
+        protein: null,
+        systemUsed: "us",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        recipeIngredients: [],
+        steps: [],
+        tags: [],
+        categories: [],
+        author: { id: "user-1", name: "User", image: null, version: 1 },
+        images: [],
+        videos: [],
+        version: 1,
+        ...overrides,
+      });
+    }
 
+    async function runUpdate(data: Record<string, unknown>) {
       const { useRecipesMutations } = await import("@/hooks/recipes/use-recipes-mutations");
 
       renderHook(() => useRecipesMutations(), {
@@ -617,19 +622,43 @@ describe("useRecipesMutations", () => {
       });
 
       const mutationOpts = mockUpdateMutationOptions.mock.calls[0][0] as {
-        onMutate: (variables: { id: string; data: { systemUsed: "metric" } }) => Promise<unknown>;
+        onMutate: (variables: { id: string; data: Record<string, unknown> }) => Promise<unknown>;
       };
 
       await act(async () => {
-        await mutationOpts.onMutate({
-          id: "recipe-1",
-          data: { systemUsed: "metric" },
-        });
+        await mutationOpts.onMutate({ id: "recipe-1", data });
       });
 
-      expect(
-        queryClient.getQueryData([["recipes", "get"], { input: { id: "recipe-1" }, type: "query" }])
-      ).toEqual(expect.objectContaining({ systemUsed: "metric" }));
+      return queryClient.getQueryData<FullRecipeDTO>(detailKey);
+    }
+
+    it("optimistically updates the detail cache for measurement system changes", async () => {
+      seedDetail();
+
+      expect(await runUpdate({ systemUsed: "metric" })).toEqual(
+        expect.objectContaining({ systemUsed: "metric" })
+      );
+    });
+
+    it("keeps the optimistic detail whole when an edit adds rows and changes cuisines", async () => {
+      const italian = { id: "11111111-1111-4111-8111-111111111111", name: "Italian", version: 1 };
+
+      seedDetail({ cuisines: [italian], tags: [{ name: "pasta", version: 3 }] });
+
+      const detail = await runUpdate({
+        recipeIngredients: [{ ingredientName: "Basil", amount: "2", order: 0 }],
+        cuisines: [],
+        tags: [{ name: "pasta" }, { name: "quick" }],
+      });
+
+      expect(detail?.recipeIngredients).toEqual([
+        expect.objectContaining({ id: expect.any(String), ingredientName: "Basil", amount: 2 }),
+      ]);
+      expect(detail?.cuisines).toEqual([]);
+      expect(detail?.tags).toEqual([
+        { name: "pasta", version: 3 },
+        { name: "quick", version: 1 },
+      ]);
     });
   });
 

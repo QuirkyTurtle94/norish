@@ -483,13 +483,11 @@ function createBetterAuth() {
   });
 }
 
-// Type for the auth instance including plugin API methods used by this package.
-type AuthInstance = ReturnType<typeof betterAuth> & {
-  api: ReturnType<typeof betterAuth>["api"] & ApiKeyAuthService;
-};
+// The configured instance's own type, so plugin API methods are included.
+type AuthInstance = ReturnType<typeof createBetterAuth>;
 
 function createAuth(): AuthInstance {
-  return createBetterAuth() as AuthInstance;
+  return createBetterAuth();
 }
 
 // Lazy-initialized auth instance

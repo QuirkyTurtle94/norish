@@ -27,7 +27,7 @@ export function createImageImportQueue(
   // regardless of the configured retention to bound Redis memory.
   if (
     typeof defaultJobOptions.removeOnComplete === "object" &&
-    defaultJobOptions.removeOnComplete.age !== undefined
+    "age" in defaultJobOptions.removeOnComplete
   ) {
     defaultJobOptions.removeOnComplete = {
       ...defaultJobOptions.removeOnComplete,

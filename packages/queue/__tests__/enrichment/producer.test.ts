@@ -7,10 +7,14 @@ vi.mock("@norish/shared-server/logger", () => ({
   createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 
-const mocks = vi.hoisted(() => ({ publishLifecycle: vi.fn() }));
+const mocks = vi.hoisted(() => ({ publishLifecycle: vi.fn(), incr: vi.fn() }));
 
 vi.mock("../../src/enrichment/announce", () => ({
   publishEnrichmentLifecycle: mocks.publishLifecycle,
+}));
+
+vi.mock("../../src/redis/bullmq", () => ({
+  getBullClient: () => ({ incr: mocks.incr }),
 }));
 
 const { addEnrichmentJob } = await import("../../src/enrichment/producer");
@@ -20,13 +24,12 @@ const { ENRICHMENT_JOB_NAMES, ENRICHMENT_QUEUE_NAMES, enrichmentJobId } =
 const add = vi.fn();
 const getJob = vi.fn();
 const remove = vi.fn();
-const incr = vi.fn();
+const incr = mocks.incr;
 const toKey = vi.fn((suffix: string) => `norish:${suffix}`);
 
 const queue = {
   add,
   getJob,
-  client: Promise.resolve({ incr }),
   toKey,
 } as unknown as Queue<RecipeEnrichmentJobData>;
 
