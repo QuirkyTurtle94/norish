@@ -1171,7 +1171,6 @@
         "delayed": "Viivästetty",
         "completed": "Valmis",
         "failed": "Epäonnistui",
-        "paused": "Keskeytetty",
         "prioritized": "Priorisoitu",
         "unknown": "Tuntematon",
         "hanging": "Jumissa"

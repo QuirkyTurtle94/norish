@@ -29,7 +29,7 @@ function isKnownTask(data: ScheduledTaskJobData | undefined): boolean {
  * the list of tasks that do exist is already in hand.
  */
 async function removeStrandedTasks(queue: Queue<ScheduledTaskJobData>): Promise<void> {
-  const queued = await queue.getJobs(["waiting", "delayed", "paused", "failed"]);
+  const queued = await queue.getJobs(["waiting", "delayed", "failed"]);
   const stranded = queued.filter((job) => !isKnownTask(job.data));
 
   for (const job of stranded) {
@@ -50,11 +50,11 @@ async function removeStrandedTasks(queue: Queue<ScheduledTaskJobData>): Promise<
 }
 
 /**
- * Initialize repeatable jobs for all scheduled tasks.
- * Called once during server startup.
+ * Register every scheduled task as a Job Scheduler. Called once during server
+ * startup.
  */
 export async function initializeScheduledJobs(queue: Queue<ScheduledTaskJobData>): Promise<void> {
-  // Remove any stale repeatable jobs first to ensure clean state
+  // Remove every existing schedule first, so a task this build dropped stops running.
   const existing = await queue.getJobSchedulers();
 
   for (const job of existing) {
@@ -63,10 +63,10 @@ export async function initializeScheduledJobs(queue: Queue<ScheduledTaskJobData>
   await removeStrandedTasks(queue);
 
   for (const taskType of SCHEDULED_TASKS) {
-    await queue.add(
+    await queue.upsertJobScheduler(
       taskType,
-      { taskType },
-      { repeat: { pattern: CRON_MIDNIGHT }, jobId: taskType }
+      { pattern: CRON_MIDNIGHT },
+      { name: taskType, data: { taskType } }
     );
   }
 
@@ -85,5 +85,5 @@ export async function initializeScheduledJobs(queue: Queue<ScheduledTaskJobData>
     await queue.add("ingredient-catalogue-refresh", { taskType: "ingredient-catalogue-refresh" });
   }
 
-  log.info("Repeatable scheduled jobs initialized (daily at midnight)");
+  log.info("Scheduled tasks registered (daily at midnight)");
 }

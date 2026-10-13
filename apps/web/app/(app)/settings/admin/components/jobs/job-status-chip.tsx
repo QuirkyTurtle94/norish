@@ -21,7 +21,6 @@ const stateColors: Record<
   delayed: "warning",
   completed: "accent",
   failed: "danger",
-  paused: "default",
   prioritized: "default",
   unknown: "default",
 };

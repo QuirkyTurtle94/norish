@@ -32,7 +32,6 @@ const LISTABLE_STATES = [
   "delayed",
   "completed",
   "failed",
-  "paused",
   "prioritized",
 ] as const;
 
@@ -533,7 +532,6 @@ const summary = adminProcedure.query(async ({ ctx }): Promise<AdminQueueSummaryD
           delayed: counts.delayed ?? 0,
           completed: counts.completed ?? 0,
           failed: counts.failed ?? 0,
-          paused: counts.paused ?? 0,
           prioritized: counts.prioritized ?? 0,
         },
         hangingCount,

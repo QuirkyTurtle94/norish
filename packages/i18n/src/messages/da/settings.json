@@ -1171,7 +1171,6 @@
         "delayed": "Delayed",
         "completed": "Completed",
         "failed": "Failed",
-        "paused": "Paused",
         "prioritized": "Prioritized",
         "unknown": "Unknown",
         "hanging": "Hanging"

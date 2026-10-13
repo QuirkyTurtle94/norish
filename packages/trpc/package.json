@@ -59,7 +59,6 @@
     "@norish/shared-server": "workspace:*",
     "@trpc/server": "catalog:",
     "bullmq": "catalog:",
-    "ioredis": "catalog:",
     "jszip": "catalog:",
     "superjson": "catalog:",
     "trpc-to-openapi": "catalog:",

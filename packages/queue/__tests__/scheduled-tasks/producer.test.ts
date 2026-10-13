@@ -29,6 +29,7 @@ function fakeJob(taskType: string): FakeJob {
 function fakeQueue(queued: FakeJob[]) {
   return {
     add: vi.fn(async () => Promise.resolve()),
+    upsertJobScheduler: vi.fn(async () => Promise.resolve()),
     getJobSchedulers: vi.fn(async () => Promise.resolve([{ key: "old-sweep" }])),
     removeJobScheduler: vi.fn(async () => Promise.resolve()),
     getJobs: vi.fn(async () => Promise.resolve(queued)),
@@ -45,13 +46,16 @@ describe("initializeScheduledJobs", () => {
 
     await initializeScheduledJobs(queue);
 
-    const registered = vi
-      .mocked(queue.add)
-      .mock.calls.filter(([, , options]) => options?.repeat)
-      .map(([name]) => name);
-
-    expect(registered).toEqual([...SCHEDULED_TASKS]);
-    expect(registered).toContain("ingredient-catalogue-refresh");
+    // Job Schedulers: `add` with `repeat` is gone in BullMQ 6, and a task
+    // registered that way would run once and never again.
+    expect(vi.mocked(queue.upsertJobScheduler).mock.calls).toEqual(
+      SCHEDULED_TASKS.map((taskType) => [
+        taskType,
+        { pattern: "0 0 * * *" },
+        { name: taskType, data: { taskType } },
+      ])
+    );
+    expect(SCHEDULED_TASKS).toContain("ingredient-catalogue-refresh");
   });
 
   it("asks for the ingredient catalogue at once, so a new instance does not wait for midnight", async () => {
@@ -59,9 +63,7 @@ describe("initializeScheduledJobs", () => {
 
     await initializeScheduledJobs(queue);
 
-    const immediate = vi.mocked(queue.add).mock.calls.filter(([, , options]) => !options?.repeat);
-
-    expect(immediate).toEqual([
+    expect(vi.mocked(queue.add).mock.calls).toEqual([
       ["ingredient-catalogue-refresh", { taskType: "ingredient-catalogue-refresh" }],
     ]);
   });
@@ -72,9 +74,7 @@ describe("initializeScheduledJobs", () => {
 
     await initializeScheduledJobs(queue);
 
-    const immediate = vi.mocked(queue.add).mock.calls.filter(([, , options]) => !options?.repeat);
-
-    expect(immediate).toEqual([]);
+    expect(queue.add).not.toHaveBeenCalled();
   });
 
   it("clears out a task type the code no longer has", async () => {

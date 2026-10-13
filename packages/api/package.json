@@ -31,7 +31,6 @@
     "drizzle-orm": "catalog:",
     "ffmpeg-static": "^5.3.0",
     "html-entities": "catalog:",
-    "ioredis": "catalog:",
     "mime": "4.1.1",
     "next": "catalog:",
     "playwright-core": "^1.64.0",
