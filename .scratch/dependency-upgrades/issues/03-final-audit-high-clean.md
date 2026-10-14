@@ -1,6 +1,6 @@
 # 03 — The final audit comes back high-clean
 
-Status: ready-for-agent
+Status: wontfix
 Blocked by: every other 0.26 ticket in this plan
 Target release: 0.26.0-beta (the last commit on the branch)
 
@@ -74,3 +74,4 @@ protobufjs, @protobufjs/utf8 and sharp were cleared in 0.25; nanoid 5 left with 
 
 - Filed 2026-10-12 with the spec as "Transitive advisories get security floors" for 0.25; not applied in 0.25.
 - 2026-10-13 — Repurposed as the sweep's last step: fix by upgrade first, override only what remains (the approach of `.scratch/dependency-security/` ticket 09). The table under Notes describes the lockfile of 2026-10-12.
+- 2026-10-14 — Marked wontfix so agents skip it; the maintainer still does this by hand.

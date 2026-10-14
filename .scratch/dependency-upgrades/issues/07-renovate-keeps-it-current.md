@@ -1,6 +1,6 @@
 # 07 — Renovate keeps the dependencies current
 
-Status: ready-for-agent
+Status: wontfix
 Blocked by: 16 (pnpm 12 and the exact Node pin Renovate will bump)
 Target release: 0.26.0-beta
 
@@ -40,3 +40,4 @@ Nothing in the repo updates dependencies today, and the stale lockfile this effo
 
 - Filed 2026-10-12 with the spec as "Advisories can't pile up again" (audit gate, pnpm supply-chain settings, Renovate).
 - 2026-10-13 — Narrowed to Renovate. The maintainer kept the security plan's call against a CI audit gate. pnpm 12 turns on the supply-chain settings (`minimumReleaseAge`, `blockExoticSubdeps`, `strictDepBuilds`) by default; ticket 16 reconciles them.
+- 2026-10-14 — Marked wontfix so agents skip it; the maintainer still does this by hand.
