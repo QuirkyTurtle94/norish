@@ -4,9 +4,10 @@ import type { Transition } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SmartInstruction } from "@/components/recipe/smart-instruction";
 import { StepIngredientsRow } from "@/components/recipes/step-ingredients-row";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { BookOpenIcon } from "@heroicons/react/20/solid";
 import { Chip, ScrollShadow, Surface } from "@heroui/react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 
 import type { ResolvedCookingModeStep } from "./cooking-mode-steps";
@@ -32,7 +33,7 @@ export function CookingStepView({
   onStepChange,
 }: CookingStepViewProps) {
   const tCookMode = useTranslations("recipes.cookMode");
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<(HTMLDivElement | null)[]>([]);

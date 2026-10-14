@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { RollingText } from "@/components/shared/rolling-text";
-import { useReducedMotion } from "motion/react";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 type AnimatedNumberProps = {
   /** The rendered value. A change to it is what rolls the digits. */
@@ -32,7 +32,7 @@ function magnitude(value: string): number {
  * count going up.
  */
 export function AnimatedNumber({ value, className = "" }: AnimatedNumberProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const previousRef = useRef(value);
   const isRising = magnitude(value) >= magnitude(previousRef.current);
 

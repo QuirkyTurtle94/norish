@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { RollingText } from "@/components/shared/rolling-text";
 import { useRecipesFiltersContext } from "@/context/recipes-filters-context";
-import { useReducedMotion } from "motion/react";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { useTranslations } from "next-intl";
 
 import type { LibraryTypeFilter } from "@norish/shared/contracts";
@@ -91,7 +91,7 @@ export function sharedAffixes(labels: string[]): { prefix: string; suffix: strin
 export default function LibraryHeading({ id }: { id: string }) {
   const t = useTranslations("recipes.dashboard");
   const { filters } = useRecipesFiltersContext();
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const label = t(HEADING_KEYS[filters.libraryType]);
 
   // Which way the word travels: forward along the chips rolls up, back rolls
