@@ -1,6 +1,6 @@
 # 38 — Overrides and allowBuilds hold only what is needed
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`, tickets 03 and 28. Found in the branch review on 2026-10-13.
@@ -21,10 +21,14 @@ The branch added these entries to `pnpm-workspace.yaml`. None of them is needed 
 
 ## Acceptance criteria
 
-- [ ] Those four overrides and two `allowBuilds` entries are gone.
+- [x] Those four overrides and two `allowBuilds` entries are gone.
 - [ ] `pnpm install --frozen-lockfile` and `pnpm audit --audit-level=high` pass.
-- [ ] Every remaining override has a comment that says why it is there (ticket 03's rule).
+- [x] Every remaining override has a comment that says why it is there (ticket 03's rule).
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 (implemented) — The `@prisma/client`, `prisma`, `mysql2` and `drizzle-kit>@esbuild-kit/esm-loader` overrides and the `@heroui/shared-utils` and `unrs-resolver` `allowBuilds` entries are gone.
+  - Removing the three optional-peer overrides changed nothing in the lockfile but the overrides block itself: they were dead. Removing the esm-loader one brought back `@esbuild-kit/esm-loader` 2.6.5, `@esbuild-kit/core-utils`, esbuild 0.18.20 with its platform packages, `get-tsconfig` and `source-map-support`, as expected; `pnpm db:generate` still reports no schema changes.
+  - The tRPC and TanStack Query pins now say why they are there (one copy each across the workspaces, ticket 08); zod already did.
+  - `pnpm install --frozen-lockfile` passes. **`pnpm audit --audit-level=high` does not**, and did not before this ticket: its one high finding is `braces` ≤ 3.0.3 (GHSA-vfj7-8cjw-p6xm) through `tooling/eslint` › `@next/eslint-plugin-next` › fast-glob › micromatch, with no patched release, so no override can clear it (ticket 28 recorded it as the one finding left). The esm-loader's esbuild 0.18 advisory (GHSA-67mh-4wv8-2f99) shows as moderate, as the ticket expected, until drizzle-kit 1.0. Criterion left unticked for the maintainer: accept braces until `@next/eslint-plugin-next` moves off fast-glob 3, or ignore that advisory in `auditConfig`.

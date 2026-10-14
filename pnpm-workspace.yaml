@@ -59,7 +59,6 @@ catalog:
 nodeLinker: hoisted
 
 allowBuilds:
-  "@heroui/shared-utils": true
   "@parcel/watcher": false
   "@swc/core": false
   "@tailwindcss/oxide": true
@@ -70,19 +69,16 @@ allowBuilds:
   protobufjs: false
   sharp: true
   ssh2: false
-  unrs-resolver: true
   workerd: false
 
 overrides:
-  # Optional peers resolved once and never used; they only carried advisories.
-  "@prisma/client": "-"
+  # One copy each of tRPC and TanStack Query across the workspaces and the
+  # packages built on them (trpc-to-openapi, query-persist-client-core). Move
+  # the values with the catalog, keep the pins.
   "@tanstack/react-query": 5.104.2
   "@trpc/client": 11.19.0
   "@trpc/server": 11.19.0
   "@trpc/tanstack-react-query": 11.19.0
-  "drizzle-kit>@esbuild-kit/esm-loader": "-"
-  mysql2: "-"
-  prisma: "-"
   # One zod across the workspaces, zod-openapi, trpc-to-openapi and better-auth:
   # a second copy breaks declaration emit with TS2742 errors naming
   # @norish/shared/node_modules/zod. Move the value, keep the pin.
