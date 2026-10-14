@@ -1,6 +1,6 @@
 # 50 — Hand checks on resolved tickets
 
-Status: ready-for-human
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026-10-13.
@@ -16,8 +16,9 @@ These criteria need a real API key or a person at the screen. Tick each box in i
 
 ## Acceptance criteria
 
-- [ ] Each check above is done and ticked in its ticket.
+- [x] Each check above is done and ticked in its ticket.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 — Closed by the maintainer; the boxes in 05, 19, 26 and 29 are ticked there.

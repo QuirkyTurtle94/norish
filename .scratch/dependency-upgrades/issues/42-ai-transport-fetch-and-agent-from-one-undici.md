@@ -31,7 +31,7 @@ Land this before `.scratch/architecture-after-upgrades/` ticket 03, which passes
 
 - [x] `transport.ts` imports `fetch` and `Agent` from undici.
 - [x] No comment, setting or spec decision ties undici's major to Node's.
-- [ ] The `ai` E2E project passes.
+- [x] The `ai` E2E project passes.
 
 ## Comments
 
@@ -41,3 +41,4 @@ Land this before `.scratch/architecture-after-upgrades/` ticket 03, which passes
   - **Types.** undici's types for Request/Response lag the DOM lib's under TypeScript 6 (no `Symbol.dispose` on header iterators, an extra `duplex`), so the response is bridged with `as unknown as Promise<Response>`, with the reason at the line.
   - **Tests that patched `globalThis.fetch` for AI calls:** more than the review found. `provider-temperature.test.ts` and the openai/groq cases of `transcription.test.ts` stubbed it, and with undici's fetch they reached the real APIs with fake keys. Both now mock `@norish/shared-server/ai/runtime/transport` instead; the transcription test passes through to the real transport unless a case sets a stub. The provider-listing tests stub global fetch but never go through the transport, so they stay.
   - The `ai` E2E project runs with the branch's E2E pass at the end of this batch; its result is recorded here.
+- 2026-10-14 (review fixes) — the full `pnpm test:e2e` passed 175 of 175 (ai 143, offline 23, realtime 9) against a build of the review fixes. Ticket 15's out-of-date engine claims are corrected there.

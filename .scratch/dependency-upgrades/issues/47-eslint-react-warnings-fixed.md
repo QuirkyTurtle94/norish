@@ -31,7 +31,7 @@ After 39, the hooks warnings report as `@eslint-react/exhaustive-deps` too (2 in
 - [x] `pnpm lint` reports no `@eslint-react` warnings.
 - [x] Any rule switched off has its reason in a comment.
 - [x] The total warning count and its per-rule breakdown are recorded here.
-- [ ] `pnpm test:run` and the E2E projects pass. (The apps/web unit suite passes, 166 files / 1237 tests; the E2E run happens at the end of the branch's batch.)
+- [x] `pnpm test:run` and the E2E projects pass. (The apps/web unit suite passes, 166 files / 1237 tests; the E2E run happens at the end of the branch's batch.)
 
 ## Comments
 
@@ -53,3 +53,4 @@ After 39, the hooks warnings report as `@eslint-react/exhaustive-deps` too (2 in
   - Index keys kept, each with its reason at the line: image lists (uploads are named by content hash, so the same picture can sit in one list twice), the job timeline (a step can run twice in an attempt), the import notes and errors logs, the code-input slots, the rolling-number slots, and the nutrition placeholder rows. `components/skeleton/**` has the rule off in `apps/web/eslint.config.ts`: placeholders with no identity that never reorder.
   - `dom-no-dangerously-set-innerhtml`: the formatting help reads its `<strong>` through `t.rich`; the two inline `js`-class scripts (auth layout, landing root) keep it, since React escapes a script's text children.
   - `no-children-for-each` stays disabled at its one line: Panel's slot API places `Panel.Body`/`Panel.Footer` by type, so it has to read its children.
+- 2026-10-14 (review fixes) — From the review: `set-state-in-effect` is off with its reason (on, it flags 178 effects that copy loaded data into a draft), and the five `exhaustive-deps` disables say why. `packages/shared-react` now loads the React rules too: every `useContext` is `use`, every `.Provider` is the context itself (two `createElement` calls included), and its 43 findings are fixed, with one disable (`use-store-prices.ts`, a timer per pending link cleared through a map the rule can't follow). `pnpm lint` reports no `@eslint-react` warnings in any workspace. `pnpm test:run` passes, and the full `pnpm test:e2e` passed 175 of 175 (ai 143, offline 23, realtime 9) against a build of the review fixes.

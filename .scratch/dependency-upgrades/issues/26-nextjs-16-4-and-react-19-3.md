@@ -60,7 +60,7 @@ Move Next.js to the latest minor — no 17.x exists on npm, not even as a canary
 
 - [x] **Versions.** `next` is 16.4.x and React plus its types are 19.3.0. `pnpm why next react react-dom` shows one version of each.
 - [x] **Upgrade nudge.** `agentUpgrade: false` is set in both Next configs.
-- [ ] **Optimizer off.** On a production build `/_next/image?url=/nora.jpg&w=640&q=75` returns 404, and every image surface still renders: recipe cards, the gallery, step images, cooking mode, the lightbox, planner thumbnails, cookbook covers, avatars and the logo.
+- [x] **Optimizer off.** On a production build `/_next/image?url=/nora.jpg&w=640&q=75` returns 404, and every image surface still renders: recipe cards, the gallery, step images, cooking mode, the lightbox, planner thumbnails, cookbook covers, avatars and the logo.
 - [x] **Splash.** `/images/splash?width=1170&height=2532&scheme=dark` renders correctly on the Node runtime.
 - [x] **Service worker.** `/serwist/sw.js` still prerenders and returns 200 with its headers, and the offline E2E project passes.
 - [x] **Smoke.**
@@ -84,3 +84,4 @@ Move Next.js to the latest minor — no 17.x exists on npm, not even as a canary
   - **New build warnings:** Turbopack 16.4 also flags `packages/shared-server/src/lib/workspace-paths.ts:13,15` as dynamic filesystem access that traces the whole project, next to the existing `env-config-server.ts:35`. The image copies only `.next/standalone/apps/web/.next`, so nothing extra ships; left as is.
   - **Image surfaces** were not walked by hand. Every `next/image` already set `unoptimized` or loads an SVG, and the E2E projects render recipe cards, the gallery, steps and cooking mode.
 - 2026-10-13 (review) — Optimizer off unticked: the 404 on a production build is verified; the image surfaces were not walked by hand, only exercised by the E2E suite.
+- 2026-10-14 — Optimizer off ticked by the maintainer (ticket 50): the image surfaces are signed off.

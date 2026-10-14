@@ -37,7 +37,7 @@ Move `@ai-sdk/perplexity` from 4.0.48 to the newest **5.0.x**, in the same commi
 
 - [x] **Versions.** `@ai-sdk/perplexity` is on 5.0.x, and `pnpm why @ai-sdk/provider` shows one copy (with ticket 29).
 - [x] **Model list.** The model picker shows the Agent API presets.
-- [ ] **Real-key checks** (manual; the sandbox has no key):
+- [x] **Real-key checks** (manual; the sandbox has no key):
   - the connection test succeeds;
   - a URL import (structured output) works;
   - an image-based import (vision) works.
@@ -64,4 +64,5 @@ Move `@ai-sdk/perplexity` from 4.0.48 to the newest **5.0.x**, in the same commi
   - **PDF:** no feature sends PDF parts; the runtime's only file parts are the image import's images (JPEG, PNG, WebP, AVIF), which v5 turns into `input_image`. Nothing to decline.
   - **Release notes:** a Fixes line and an Upgrade note on the presets and the mapping.
   - **Not done here:** the real-key checks (connection test, URL import, image import) need a Perplexity key; the sandbox has none. The release note says Sonar was retired on September 27 on the package docs' word, without a live check.
-
+- 2026-10-14 — Real-key checks ticked by the maintainer (ticket 50).
+- 2026-10-14 (review fixes) — The Stored ids mapping is gone: the maintainer made a stored Sonar model a breaking change with an Upgrade note (ticket 37).

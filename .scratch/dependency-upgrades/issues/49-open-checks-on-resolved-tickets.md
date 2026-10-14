@@ -1,6 +1,6 @@
 # 49 — Open checks on resolved tickets
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026-10-13.
@@ -27,10 +27,11 @@ Tickets 17 "Upgraded instance" and 18 "Boot twice" stay as they are: the maintai
 
 ## Acceptance criteria
 
-- [ ] Each check above is done and ticked in its ticket, with what was observed in that ticket's comments.
+- [x] Each check above is done and ticked in its ticket, with what was observed in that ticket's comments.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
 - 2026-10-14 — Ticket 24's Warm idle check removed; the maintainer confirmed the lazy workers go (architecture ticket 01).
 - 2026-10-14 (worked) — **18, Production smoke: done**, ticked in 18 (a Job Scheduler run fired on the production image). **16, pnpm 12 everywhere:** devcontainer and Docker pass; CI waits for the branch to be pushed after the release-age block lifts (~18:15 CEST). **16, Reproducible:** two builds an hour apart from the same lockfile are identical, but not a day apart. Both stay open in 16 with what was seen. Status stays `ready-for-agent` until those two close.
+- 2026-10-14 — Closed by the maintainer; ticket 16's two remaining boxes are ticked there.

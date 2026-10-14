@@ -43,11 +43,11 @@ Two linked changes.
 
 ## Acceptance criteria
 
-- [ ] **Reproducible.** Two image builds of the same commit, a day apart, contain identical `node_modules` versions.
+- [x] **Reproducible.** Two image builds of the same commit, a day apart, contain identical `node_modules` versions.
 - [x] **Matches the lockfile.** The deployed tree's lock matches `pnpm-lock.yaml` for production dependencies.
 - [x] **Size.** Image size before and after is recorded.
 - [x] **Exact Node.** Both `FROM` lines name an exact Node version.
-- [ ] **pnpm 12 everywhere.** `pnpm install --frozen-lockfile` passes on pnpm 12 in CI, the devcontainer and Docker.
+- [x] **pnpm 12 everywhere.** `pnpm install --frozen-lockfile` passes on pnpm 12 in CI, the devcontainer and Docker.
 - [x] **Gates and E2E.** The gates pass, and `pnpm test:e2e` passes against the image build.
 
 ## Comments
@@ -73,3 +73,4 @@ Two linked changes.
 - 2026-10-13 (review) — pnpm 12 everywhere unticked: verified locally and in Docker; CI and the devcontainer have not run it yet.
 - 2026-10-14 (ticket 49) — **pnpm 12 everywhere:** the devcontainer image (`.devcontainer/default`, Node 26.11.1, pnpm 12.11.2) runs `pnpm install --frozen-lockfile` on a clean copy of HEAD (e02db30f) in 34 s, and the Docker build's frozen installs pass (ticket 43's two builds). Both ran with `PNPM_CONFIG_MINIMUM_RELEASE_AGE=0`, the release-age block described above, which lifts around 18:15 CEST today; nothing else differs. CI has not run it: the branch is not pushed yet, so the box stays open for that run.
 - 2026-10-14 (ticket 49) — **Reproducible:** two images built about an hour apart from the same lockfile (ticket 43's before and after builds, which differ only in the Dockerfile and two app commits with no dependency change) hold the same 534 package versions under `/app/node_modules`. Not two builds a day apart, so the box stays open; the same comparison on a rebuild tomorrow closes it.
+- 2026-10-14 — Both boxes ticked by the maintainer (ticket 49). Not observed by an agent: CI's frozen install still needs the push after the release-age block lifts, and no build a day apart was compared.

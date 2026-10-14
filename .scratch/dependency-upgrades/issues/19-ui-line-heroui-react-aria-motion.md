@@ -23,7 +23,7 @@ Bump the web app's UI dependencies together, because their peers interlock:
 ## Acceptance criteria
 
 - [x] **Single copies.** `pnpm why react-aria-components react-aria @internationalized/date` shows one version of each.
-- [ ] **HeroUI surfaces.** Checked by hand on desktop and touch: date pickers, selects, modals, drawers, menus.
+- [x] **HeroUI surfaces.** Checked by hand on desktop and touch: date pickers, selects, modals, drawers, menus.
 - [x] **Reorder interactions.** Steps, ingredients, stores and aisles reorder correctly with mouse and touch, and swipable rows still swipe.
 - [x] **Type check.** `pnpm typecheck` passes; HeroUI prop changes show up there since ticket 25.
 - [x] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes.
@@ -41,3 +41,4 @@ Bump the web app's UI dependencies together, because their peers interlock:
   - **Found on the way:** Stores were listed by `sort_order` alone, so Stores sharing a position (any made before ordering existed) came back in a different order from one read to the next. The listing now breaks ties by creation time (own commit).
   - **Gates:** lint, typecheck, test:run, build, format:check and deps:cycles pass. The full `pnpm test:e2e` failures seen while doing this (device-preferences:18, cookbooks:328, ingredient-catalogue:433) also fail on the pre-bump dependencies; they are fixed in their own commits.
 - 2026-10-13 (review) — HeroUI surfaces unticked: nothing was checked by hand. Selects, modals, panels and menus are exercised by the E2E suite, and only the date picker got a spec of its own, on desktop and touch.
+- 2026-10-14 — HeroUI surfaces ticked by the maintainer (ticket 50).

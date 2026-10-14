@@ -1,6 +1,6 @@
 # Dependency upgrades: everything to its latest stable release in 0.26
 
-Status: ready-for-agent
+Status: done
 
 Researched 2026-10-12 on `rc/0.25.0-beta`, re-checked against the code and the registries on 2026-10-13 on `rc/0.26.0-beta`, and decided with the maintainer the same day. Sources are the npm registry, PyPI, nodejs.org, Docker Hub, `pnpm audit`, `pnpm outdated -r`, real `tsc` runs and the package tarballs themselves. Where a finding rests on reading code rather than on a reproduced run, the ticket says so.
 
@@ -39,7 +39,7 @@ Every dependency moves to its newest **stable** release. A line stays behind onl
 13. **The image installs from the lockfile** on pnpm 12, and Node is pinned to an exact tag that Renovate bumps (ticket 16).
 14. **BullMQ 6 and Job Schedulers land in the same release** (tickets 17 and 18). On 6.3.14 the existing boot sweep still finds and removes the repeatables 5.x created, so no stepping-stone release is needed. The sweep must stay.
 15. **The lazy-worker suspicion** (ticket 24) is reproduced against real Redis in the BullMQ 6 commit and fixed only if confirmed.
-16. **No manual steps for self-hosters** (carried over from the security plan): stored Perplexity model ids are mapped automatically, and migrations run at boot. The old OIDC callback URL does not keep working: reversed during ticket 09, where the maintainer ruled out legacy code; an Upgrade note covers it.
+16. **No manual steps for self-hosters** (carried over from the security plan): migrations run at boot. Stored Perplexity model ids are not mapped: reversed on 2026-10-14, when the maintainer deleted the Sonar mapping (ticket 37); an Upgrade note says to pick a preset. The old OIDC callback URL does not keep working: reversed during ticket 09, where the maintainer ruled out legacy code; an Upgrade note covers it.
 17. **Transitive advisories are cleared last** (ticket 03): after the sweep, `pnpm audit --audit-level=high` must be clean, with an override only for a transitive package that is still vulnerable. The zod single-copy override stays, moved to the new version.
 18. **No 0.24 backport.**
 
@@ -56,7 +56,7 @@ Each step is one commit on `chore/dependency-upgrades`; every commit leaves the 
 7. **13** Vitest 5. **14** tsdown 0.23.
 8. **15** Node 26 and undici 8.
 9. **16** pnpm 12; the image installs from the lockfile; Node pinned exactly.
-10. **26** Next.js 16.4 and React 19.3; optimizer off; agent nudge off.
+10. **26** Next.js 16.4 and React 19.3; optimizer off. The agent checks are back on (36).
 11. **19** HeroUI 3.2.6, React Aria and motion 14.
 12. **08** zod, tRPC and TanStack Query, then **09** Better Auth 1.7.7 with **10** linking.
 13. **17** Job Schedulers, then **18** BullMQ 6 and ioredis 6 with **24** the lazy-worker check.
