@@ -36,8 +36,6 @@ ENV UV_LINK_MODE=copy \
 ##############################
 FROM builder-base AS deps
 
-RUN apk add --no-cache python3 make g++ pkgconfig libpq-dev
-
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/landing/package.json ./apps/landing/package.json
 COPY apps/web/package.json ./apps/web/package.json
@@ -78,10 +76,6 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 ##############################
 FROM builder-base AS build
 
-# Native build deps are already compiled in node_modules from deps stage.
-# Only re-install if pnpm deploy triggers native rebuilds.
-RUN apk add --no-cache pkgconfig libpq-dev
-
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -91,10 +85,9 @@ COPY . .
 RUN --mount=type=cache,target=/root/.local/share/uv/python \
   UV_PYTHON_DOWNLOADS=1 uv python install 3.15
 
-# With injectWorkspacePackages enabled, workspace packages are copied into
-# node_modules during install. Re-run install after copying the full repo so
-# injected workspace deps include non-package.json files (tsconfig presets,
-# source files, message JSON, etc.) before the build runs.
+# Only the root node_modules comes over from the deps stage, and the repo copy
+# leaves out every other node_modules: this install recreates the nested ones
+# under packages/* and apps/* from the store.
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
   pnpm install --frozen-lockfile --ignore-scripts --child-concurrency=1
 
@@ -121,8 +114,9 @@ RUN pnpm run build && \
 # each build, so the image held whatever was newest that day).
 RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   cd /app/deploy/node_modules && \
-  # Remove the deploy's virtual store: nothing links into it, the hoisted
-  # node_modules holds its own copy of every package
+  # pnpm 12's deploy also writes a copy of every package to a virtual store
+  # in .pnpm (about 880 MB), although nodeLinker is hoisted and an install
+  # writes none. Nothing links into it; the hoisted tree has its own copies.
   rm -rf .pnpm && \
   # Remove workspace copies (source is in packages/, server code in dist-server/)
   rm -rf @norish && \
@@ -201,7 +195,7 @@ FROM base AS runtime
 LABEL org.opencontainers.image.source="https://github.com/norish-recipes/norish"
 
 # Install runtime-only system deps (base already ran apk upgrade)
-RUN apk add --no-cache libpq ffmpeg su-exec && \
+RUN apk add --no-cache ffmpeg su-exec && \
   # Clean up npm (not needed, we use node directly)
   rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack && \
   rm -rf /var/cache/apk/* /tmp/* /root/.npm
