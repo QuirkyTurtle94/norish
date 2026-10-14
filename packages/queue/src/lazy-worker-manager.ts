@@ -17,6 +17,7 @@ import { Queue, QueueEvents, Worker } from "bullmq";
 
 import { createLogger } from "@norish/shared-server/logger";
 
+import { closeWorker } from "./close-worker";
 import { instrumentProcessor } from "./instrumented-processor";
 import { logQueueErrors } from "./operation-aware-queue";
 
@@ -300,7 +301,7 @@ async function destroyWorker<T>(state: LazyWorkerState<T>): Promise<void> {
 
   try {
     state.worker.removeAllListeners();
-    await state.worker.close();
+    await closeWorker(state.worker);
   } catch (err) {
     log.error({ err, queueName }, "Error closing lazy worker");
   }

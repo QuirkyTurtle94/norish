@@ -12,6 +12,7 @@ import { recheckUndecidedMintsOnRungChange } from "@norish/shared-server/ingredi
 import { createLogger } from "@norish/shared-server/logger";
 
 import type { ScheduledTaskJobData } from "./queue";
+import { closeWorker } from "../close-worker";
 import { baseWorkerOptions, QUEUE_NAMES, STALLED_INTERVAL, WORKER_CONCURRENCY } from "../config";
 import { instrumentProcessor } from "../instrumented-processor";
 import { reportStep } from "../job-steps";
@@ -149,7 +150,7 @@ export async function stopScheduledTasksWorker(): Promise<void> {
 
   if (worker) {
     worker.removeAllListeners();
-    await worker.close();
+    await closeWorker(worker);
     globalForWorker.scheduledTasksWorker = null;
     log.info("Scheduled tasks worker stopped");
   }

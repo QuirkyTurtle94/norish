@@ -39,7 +39,7 @@ If BullMQ misbehaves on RESP3, report it upstream with the failing test. Do not 
 - [x] No connection options set a retry strategy, keep-alive or connect timeout; ioredis 6's defaults apply.
 - [x] Pub/sub and BullMQ connections are built from one options builder.
 - [x] The real-Redis tests use the production options and compose's Redis version, and they pass.
-- [ ] The realtime E2E project passes, which shows pub/sub working on RESP3.
+- [x] The realtime E2E project passes, which shows pub/sub working on RESP3.
 
 ## Comments
 
@@ -49,3 +49,4 @@ If BullMQ misbehaves on RESP3, report it upstream with the failing test. Do not 
   - The Redis image is `REDIS_IMAGE` in `packages/shared-server/__tests__/helpers/redis.ts`, read from `docker/compose.base.yaml` itself (`redis:8.10.1`), so the tests cannot drift from compose. The four real-Redis suites and the E2E harness use it, and connect through `getBullConnectionOptions` / `getRedisConnectionOptions` with the container's URL. All four pass on RESP3 (6 + 19 tests).
   - `case "paused"` is gone from `toEnrichmentLifecycleState`.
   - The realtime E2E project runs with ticket 35, which reorders its scenarios; its result is recorded there.
+- 2026-10-14 — The realtime project passed 90/90 (`--repeat-each=10`) on RESP3 with ticket 35. Ticket 35 also added three options to the builders: `disconnectTimeout: 200` on every connection, `socketTimeout` on the publisher (10 s, the hub inherits it) and on BullMQ's (15 s). None is a retry strategy, keep-alive or connect timeout.

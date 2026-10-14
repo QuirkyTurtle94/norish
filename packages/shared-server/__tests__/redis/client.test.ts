@@ -27,10 +27,8 @@ class MockRedis {
 
   on = vi.fn();
   connect = vi.fn().mockResolvedValue(undefined);
-  quit = vi.fn().mockImplementation(function (this: MockRedis) {
+  disconnect = vi.fn().mockImplementation(function (this: MockRedis) {
     this.status = "end";
-
-    return Promise.resolve();
   });
   removeAllListeners = vi.fn();
   duplicate = vi.fn(() => ({ on: vi.fn(), status: "ready" }));
@@ -99,7 +97,7 @@ describe("publisher connection", () => {
 
     await closer.closeRedisConnections();
 
-    expect(client.quit).toHaveBeenCalledOnce();
+    expect(client.disconnect).toHaveBeenCalledOnce();
   });
 
   it("duplicates the publisher for a subscriber instead of opening a second publisher", async () => {
@@ -109,7 +107,10 @@ describe("publisher connection", () => {
     const publisher = await getPublisherClient();
     const subscriber = await createSubscriberClient();
 
-    expect(publisher.duplicate).toHaveBeenCalledExactlyOnceWith({ maxRetriesPerRequest: null });
+    expect(publisher.duplicate).toHaveBeenCalledExactlyOnceWith({
+      commandTimeout: undefined,
+      connectionName: `norish:${process.pid}:realtime-hub`,
+    });
     expect(subscriber).not.toBe(publisher);
     expect(constructed).toHaveLength(1);
   });
@@ -127,7 +128,11 @@ describe("connection options", () => {
       port: 6380,
       password: "secret",
       db: 3,
-      maxRetriesPerRequest: 1,
+      maxRetriesPerRequest: null,
+      commandTimeout: 5_000,
+      disconnectTimeout: 200,
+      socketTimeout: 10_000,
+      connectionName: `norish:${process.pid}:publisher`,
     });
     // RESP3, reconnecting for ever with capped backoff, a 30 s keep-alive.
     for (const option of ["protocol", "retryStrategy", "keepAlive", "connectTimeout"] as const) {

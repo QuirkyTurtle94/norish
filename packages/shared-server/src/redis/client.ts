@@ -25,6 +25,14 @@ const globalForRedis = globalThis as unknown as {
 };
 
 /**
+ * A socket that has received nothing for this long after a command went out is
+ * taken for dead and reconnected. Without it, a connection left half-open by a
+ * Redis restart is only noticed once the operating system's keep-alive gives
+ * up, minutes later.
+ */
+export const REDIS_SOCKET_TIMEOUT_MS = 10_000;
+
+/**
  * Connection options every Redis client in Norish starts from: the publisher,
  * each subscriber and BullMQ's connections. ioredis 6's defaults do the rest:
  * RESP3, reconnecting with capped exponential backoff for as long as the
@@ -35,6 +43,10 @@ export function getRedisConnectionOptions(url = SERVER_CONFIG.REDIS_URL): RedisO
     ...parseRedisUrl(url),
     lazyConnect: true,
     maxRetriesPerRequest: null,
+    // How long a deliberate disconnect waits for the far end to close before
+    // destroying the socket. Shutdown waits this long for every connection a
+    // Redis restart left unanswered; ioredis's two seconds overran its budget.
+    disconnectTimeout: 200,
   };
 }
 
@@ -51,9 +63,12 @@ function createPublisher(): Redis {
 
   const client = new Redis({
     ...getRedisConnectionOptions(),
-    // A command sent during an outage fails after a reconnect attempt instead
-    // of waiting for Redis to come back.
-    maxRetriesPerRequest: 1,
+    // A command fails when Redis has not answered it within five seconds, so
+    // an outage cannot hold a request for ever, while a restart that takes a
+    // second or two is waited out: a session read failed then reads as signed out.
+    commandTimeout: 5_000,
+    socketTimeout: REDIS_SOCKET_TIMEOUT_MS,
+    connectionName: `norish:${process.pid}:publisher`,
   });
 
   client.on("error", (err) => {
@@ -99,14 +114,17 @@ export async function getRedisHealth() {
 }
 
 /**
- * Create a new subscriber client.
- * Each subscriber needs its own connection because Redis clients
- * enter "subscribe mode" and can't do other operations.
+ * Create the Realtime Hub's subscriber client, duplicated from the publisher
+ * with its socket timeout. It needs its own connection because a Redis client
+ * in subscribe mode serves nothing else.
  */
 export async function createSubscriberClient(): Promise<Redis> {
   const publisher = await getPublisherClient();
   // A SUBSCRIBE waits out an outage rather than failing like a publisher's command.
-  const subscriber = publisher.duplicate({ maxRetriesPerRequest: null });
+  const subscriber = publisher.duplicate({
+    commandTimeout: undefined,
+    connectionName: `norish:${process.pid}:realtime-hub`,
+  });
 
   subscriber.on("error", (err) => {
     log.error({ err }, "Redis subscriber error");
@@ -118,15 +136,16 @@ export async function createSubscriberClient(): Promise<Redis> {
 }
 
 /**
- * Gracefully close all Redis connections.
- * Call during server shutdown.
+ * Close the publisher. Shutdown calls this after every consumer has stopped,
+ * so nothing is in flight: it disconnects rather than sending a QUIT that a
+ * dead socket would never answer.
  */
 export async function closeRedisConnections(): Promise<void> {
   const publisherClient = globalForRedis.publisherClient;
 
   if (publisherClient && publisherClient.status !== "end") {
     log.info("Closing Redis connections");
-    await publisherClient.quit();
+    publisherClient.disconnect();
     globalForRedis.publisherClient = null;
   }
 }

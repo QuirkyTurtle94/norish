@@ -1,8 +1,9 @@
 // @vitest-environment node
 /**
  * The publisher through a real Redis outage: callers keep getting the one
- * client while it reconnects, a command sent meanwhile fails instead of
- * waiting for Redis to come back, and no extra connection is left behind.
+ * client while it reconnects, a command sent during a restart is answered once
+ * Redis is back, one sent during a longer outage fails instead of waiting for
+ * ever, and no extra connection is left behind.
  */
 import { execFile } from "node:child_process";
 import { createServer } from "node:net";
@@ -58,6 +59,22 @@ afterAll(async () => {
   await container?.stop();
 });
 
+it("answers a command sent while Redis restarts", async () => {
+  const publisher = await getPublisherClient();
+
+  await publisher.set("session", "kept");
+  await docker("docker", ["stop", "-t", "1", container.getId()]);
+
+  const read = publisher.get("session");
+
+  // Down for two seconds: several reconnect attempts fail before it is back.
+  await new Promise((resolve) => setTimeout(resolve, 2_000));
+  await docker("docker", ["start", container.getId()]);
+
+  // Saved on the way down and loaded on the way up, as compose's Redis does.
+  await expect(read).resolves.toBe("kept");
+}, 60_000);
+
 it("keeps one publisher through an outage, and fails its commands meanwhile", async () => {
   const publisher = await getPublisherClient();
 
@@ -69,7 +86,7 @@ it("keeps one publisher through an outage, and fails its commands meanwhile", as
 
   expect(during[0]).toBe(publisher);
   expect(during[1]).toBe(publisher);
-  await expect(publisher.get("anything")).rejects.toThrow();
+  await expect(publisher.get("anything")).rejects.toThrow("Command timed out");
 
   await docker("docker", ["start", container.getId()]);
   await expect.poll(() => publisher.status, { timeout: 20_000 }).toBe("ready");

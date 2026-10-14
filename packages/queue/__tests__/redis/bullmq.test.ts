@@ -27,10 +27,8 @@ class MockRedis {
 
   on = vi.fn();
   connect = vi.fn().mockResolvedValue(undefined);
-  quit = vi.fn().mockImplementation(function (this: MockRedis) {
+  disconnect = vi.fn().mockImplementation(function (this: MockRedis) {
     this.status = "end";
-
-    return Promise.resolve();
   });
   removeAllListeners = vi.fn();
   duplicate = vi.fn();
@@ -84,7 +82,7 @@ describe("BullMQ connection", () => {
 
     await closer.closeBullConnection();
 
-    expect(client.quit).toHaveBeenCalledOnce();
+    expect(client.disconnect).toHaveBeenCalledOnce();
   });
 
   it("connects with every part of the URL, TLS and database index included", async () => {
@@ -113,6 +111,8 @@ describe("BullMQ connection", () => {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
       enableOfflineQueue: true,
+      disconnectTimeout: 200,
+      socketTimeout: 15_000,
       connectionName: `norish:${process.pid}:bull`,
     });
     for (const option of ["protocol", "retryStrategy", "keepAlive", "connectTimeout"] as const) {

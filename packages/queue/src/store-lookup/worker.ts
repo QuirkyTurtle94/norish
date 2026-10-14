@@ -7,6 +7,7 @@ import { getBullClient } from "@norish/queue/redis/bullmq";
 import { findIngredientFor } from "@norish/shared-server/ingredients/resolver";
 import { createLogger } from "@norish/shared-server/logger";
 
+import { closeWorker } from "../close-worker";
 import { baseWorkerOptions, QUEUE_NAMES, STALLED_INTERVAL, WORKER_CONCURRENCY } from "../config";
 import { instrumentProcessor } from "../instrumented-processor";
 import { completeStep, reportStep } from "../job-steps";
@@ -123,7 +124,7 @@ export async function stopStoreLookupWorker(): Promise<void> {
 
   if (worker) {
     worker.removeAllListeners();
-    await worker.close();
+    await closeWorker(worker);
     globalForWorker.storeLookupWorker = null;
     log.info("Store lookup worker stopped");
   }

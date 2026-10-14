@@ -26,9 +26,16 @@ const globalForBull = globalThis as unknown as {
 };
 
 /**
+ * Longer than the longest block BullMQ asks Redis for (ten seconds), so only a
+ * socket that stopped answering is dropped: a command can no longer hang for
+ * minutes on a connection a Redis restart left half-open.
+ */
+export const BULL_SOCKET_TIMEOUT_MS = 15_000;
+
+/**
  * The shared Redis options plus what BullMQ needs on top: it connects at once,
- * a command waits out an outage in the offline queue instead of failing, and
- * no ready check holds the connection back.
+ * a command waits out an outage in the offline queue instead of failing, no
+ * ready check holds the connection back, and a dead socket is dropped.
  */
 export function getBullConnectionOptions(url?: string): RedisOptions {
   return {
@@ -37,6 +44,7 @@ export function getBullConnectionOptions(url?: string): RedisOptions {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     enableOfflineQueue: true,
+    socketTimeout: BULL_SOCKET_TIMEOUT_MS,
   };
 }
 
@@ -85,14 +93,15 @@ export function getBullClient(): Redis {
 }
 
 /**
- * Close the BullMQ Redis connection.
- * Call during server shutdown.
+ * Close the shared BullMQ connection. Shutdown calls this after every worker
+ * and queue has closed, so nothing is in flight: it disconnects rather than
+ * sending a QUIT that a socket left half-open by a Redis restart never answers.
  */
 export async function closeBullConnection(): Promise<void> {
   const bullClient = globalForBull.bullClient;
 
   if (bullClient && bullClient.status !== "end") {
-    await bullClient.quit();
+    bullClient.disconnect();
     globalForBull.bullClient = null;
     log.info("BullMQ Redis connection closed");
   }
