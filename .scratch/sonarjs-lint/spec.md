@@ -1,6 +1,6 @@
 # eslint-plugin-sonarjs, on SonarQube's default profile
 
-Status: ready-for-agent
+Status: resolved
 
 Decided with the maintainer on 2026-10-14, on `chore/dependency-upgrades`, from a measured run of the plugin over every linted workspace and a survey of what other tools ship (`research.md`).
 

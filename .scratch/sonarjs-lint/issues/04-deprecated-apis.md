@@ -1,6 +1,6 @@
 # 04 — Deprecated APIs
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 Spec: `.scratch/sonarjs-lint/spec.md`.
@@ -27,7 +27,7 @@ Read each deprecation note in the installed package before replacing; the replac
 ## Acceptance criteria
 
 - [x] `sonarjs/deprecation` is not in the temporary block, and `pnpm lint` passes. Whichever of 02, 03 and 04 lands last deletes the block.
-- [ ] Screens whose selection or portal props changed are checked in the browser, and the E2E specs that cover them pass.
+- [x] Screens whose selection or portal props changed are checked in the browser, and the E2E specs that cover them pass.
 
 ## Comments
 
@@ -48,3 +48,8 @@ Read each deprecation note in the installed package before replacing; the replac
     - The legacy `image` scalar: `primaryRecipeImage` (the one fallback reader), the repository's payload alias (3) and one `legacyImageColumn` alias for its cleanup, migration and Dish Colour queries, the generated-image write that clears the scalar, the Dish Colour's "does this update touch media" check, the share view, the archive media rehome, and the optimistic full recipe.
     - `autoTaggingMode`/`autoTagAllergies` (2): the config migration that replaces them.
   - The temporary block in `tooling/eslint/base.ts` is gone with this ticket, the last of the three: `pnpm lint` passes with the whole profile on.
+- 2026-10-14 (browser checks and review).
+  - The full browser suite passes (181), covering the grocery, ingredient, provenance, calendar, icon, nutrition and share-panel pickers.
+  - Checked by hand on a production build: General's default language, the four permission selects (each saved through `onChange` and put back), the AI, vision and image model comboboxes, and the job-queue filter all take a pick; the recipe time fields stop letters and keep copy, select-all and paste.
+  - Review fix: the time fields read the clipboard shortcuts by `key` only, so on a Cyrillic layout (`key` "м" for V) copy and paste were stopped. They now also accept the physical key (`code`), with a test for it.
+  - Left for the maintainer: `UNSAFE_PortalProvider` needs `react-aria` as a direct dependency of `apps/web`, kept at React Aria Components' exact version, before the 12 portal disables can go; and dropping `returnValue` loses the leave prompt on Chrome 111 to 118.
