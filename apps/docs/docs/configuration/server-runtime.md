@@ -1,7 +1,7 @@
 ---
 sidebar_position: 4
 title: Server & runtime
-description: Core server settings, encryption key, networking, logging, uploads, and scheduler.
+description: Core server settings, encryption key, health checks, networking, logging, uploads, and scheduler.
 ---
 
 # Server & runtime
@@ -29,6 +29,15 @@ openssl rand -base64 32
 ```
 
 :::
+
+## Health checks
+
+| Endpoint               | Answers 200 when                                                       | Use it for                                                      |
+| ---------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `/api/v1/health/live`  | The server responds and its parser answers                             | Restarting Norish: the image's healthcheck, Kubernetes liveness |
+| `/api/v1/health/ready` | The database and Redis answer; the parser is reported but never counts | Sending traffic: Kubernetes readiness, load balancers           |
+
+`/api/v1/health` still works but is deprecated and will be removed in a later release.
 
 ## Networking & origins
 

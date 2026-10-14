@@ -457,13 +457,18 @@ export class ProductionStack {
     };
   }
 
+  /**
+   * Ready for traffic, and its embedded parser answering too: readiness alone
+   * does not wait for the parser, which URL-import specs need.
+   */
   private async isHealthy(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseURL}/api/v1/health`, {
-        signal: AbortSignal.timeout(2_000),
-      });
+      const responses = await Promise.all([
+        fetch(`${this.baseURL}/api/v1/health/ready`, { signal: AbortSignal.timeout(2_000) }),
+        fetch(`http://127.0.0.1:${this.parserPort}/health`, { signal: AbortSignal.timeout(2_000) }),
+      ]);
 
-      return response.ok;
+      return responses.every((response) => response.ok);
     } catch {
       return false;
     }

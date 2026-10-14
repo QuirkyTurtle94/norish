@@ -20,45 +20,52 @@ import { getRedisHealth } from "@norish/shared-server/redis/client";
 
 import { authedProcedure } from "../../middleware";
 import { publicProcedure, router } from "../../trpc";
-import { healthyResponseSchema, parserHealthSchema } from "./config-openapi-types";
+import {
+  healthyResponseSchema,
+  liveResponseSchema,
+  parserHealthSchema,
+  readyResponseSchema,
+} from "./config-openapi-types";
+
+/** The internal parser's own health check, which Norish runs as its child process. */
+async function getParserHealth() {
+  try {
+    const response = await fetch(buildInternalParserApiUrl("/health"), {
+      signal: AbortSignal.timeout(SERVER_CONFIG.PARSER_API_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      return {
+        status: "error" as const,
+        statusCode: response.status,
+      };
+    }
+
+    const parsedHealth = parserHealthSchema.parse(await response.json());
+
+    if (parsedHealth.status !== "ok") {
+      return {
+        status: parsedHealth.status ?? "unknown",
+        recipeScrapersVersion: parsedHealth.recipeScrapersVersion,
+      };
+    }
+
+    return {
+      status: "ok" as const,
+      recipeScrapersVersion: parsedHealth.recipeScrapersVersion,
+    };
+  } catch {
+    return {
+      status: "unreachable" as const,
+    };
+  }
+}
 
 export async function getServiceHealth() {
-  const parserHealthUrl = buildInternalParserApiUrl("/health");
   const [databaseHealth, redisHealth, parserHealth, appVersions] = await Promise.all([
     getDatabaseHealth(),
     getRedisHealth(),
-    (async () => {
-      try {
-        const response = await fetch(parserHealthUrl, {
-          signal: AbortSignal.timeout(SERVER_CONFIG.PARSER_API_TIMEOUT_MS),
-        });
-
-        if (!response.ok) {
-          return {
-            status: "error" as const,
-            statusCode: response.status,
-          };
-        }
-
-        const parsedHealth = parserHealthSchema.parse(await response.json());
-
-        if (parsedHealth.status !== "ok") {
-          return {
-            status: parsedHealth.status ?? "unknown",
-            recipeScrapersVersion: parsedHealth.recipeScrapersVersion,
-          };
-        }
-
-        return {
-          status: "ok" as const,
-          recipeScrapersVersion: parsedHealth.recipeScrapersVersion,
-        };
-      } catch {
-        return {
-          status: "unreachable" as const,
-        };
-      }
-    })(),
+    getParserHealth(),
     getAppVersions(),
   ]);
 
@@ -226,7 +233,8 @@ export const health = publicProcedure
       tags: ["Health"],
       summary: "Check API health",
       description:
-        "Reports API availability and verifies that the database, Redis and the internal parser service are healthy.",
+        "Deprecated: use /health/live to decide whether to restart Norish and /health/ready to decide whether to send it traffic. Reports API availability and verifies that the database, Redis and the internal parser service are healthy.",
+      deprecated: true,
       successDescription: "The API, database, Redis and parser service are healthy.",
       errorResponses: {
         503: "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
@@ -252,6 +260,75 @@ export const health = publicProcedure
     return health;
   });
 
+/**
+ * Whether to restart Norish: only what a restart can fix. Norish runs the
+ * parser itself, so a hung parser fails it; Postgres and Redis do not, since
+ * restarting Norish fixes neither.
+ */
+export const healthLive = publicProcedure
+  .meta({
+    openapi: {
+      method: "GET",
+      path: "/health/live",
+      protect: false,
+      tags: ["Health"],
+      summary: "Check whether Norish is alive",
+      description:
+        "Answers 200 while the server responds and its internal parser answers its own health check. Checks neither the database nor Redis. Point restart probes (Docker HEALTHCHECK, Kubernetes liveness) here.",
+      successDescription: "The server and its parser are alive.",
+      errorResponses: { 503: "The parser service is unhealthy or unreachable" },
+    },
+  })
+  .output(liveResponseSchema)
+  .query(async () => {
+    const parser = await getParserHealth();
+
+    if (parser.status !== "ok") {
+      throw new TRPCError({
+        code: "SERVICE_UNAVAILABLE",
+        message: `Parser service is ${parser.status}`,
+      });
+    }
+
+    return { status: "ok" as const, parser };
+  });
+
+/**
+ * Whether to send Norish traffic: Postgres and Redis must answer. The parser
+ * is reported but never fails it, since only URL imports need it.
+ */
+export const healthReady = publicProcedure
+  .meta({
+    openapi: {
+      method: "GET",
+      path: "/health/ready",
+      protect: false,
+      tags: ["Health"],
+      summary: "Check whether Norish is ready for traffic",
+      description:
+        "Answers 503 while the database or Redis is unreachable, and 200 otherwise. The parser's state is in the response but does not fail the check. Point readiness probes and load balancers here.",
+      successDescription: "The database and Redis are healthy.",
+      errorResponses: { 503: "The database or Redis is unhealthy or unreachable" },
+    },
+  })
+  .output(readyResponseSchema)
+  .query(async () => {
+    const [db, redis, parser] = await Promise.all([
+      getDatabaseHealth(),
+      getRedisHealth(),
+      getParserHealth(),
+    ]);
+
+    if (db.status !== "ok" || redis.status !== "ok") {
+      throw new TRPCError({
+        code: "SERVICE_UNAVAILABLE",
+        message: db.status !== "ok" ? `Database is ${db.status}` : `Redis is ${redis.status}`,
+      });
+    }
+
+    return { status: "ok" as const, db, redis, parser };
+  });
+
 export const configProcedures = router({
   localeConfig,
   tags,
@@ -264,4 +341,6 @@ export const configProcedures = router({
   timerKeywords,
   authProviders,
   health,
+  healthLive,
+  healthReady,
 });

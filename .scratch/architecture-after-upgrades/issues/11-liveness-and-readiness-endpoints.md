@@ -12,16 +12,26 @@ See `.scratch/architecture-after-upgrades/spec.md`, Health checks.
 
 **Status:** ready-for-agent
 
-- [ ] Two tRPC OpenAPI procedures sit beside `health` in `packages/trpc/src/routers/config/procedures.ts`, under the Health tag, with `protect: false`:
-  - [ ] `GET /api/v1/health/live` answers 200 while the process responds and the parser answers its health check, and 503 when the parser doesn't. It checks no Postgres and no Redis. (Norish runs the parser itself, so a restart fixes a hung one.)
-  - [ ] `GET /api/v1/health/ready` answers 503 when Postgres or Redis fails, and 200 otherwise. The parser's state is in the body and never fails the check.
-- [ ] `GET /api/v1/health` keeps exactly the behaviour ticket 53 leaves it with, and is marked `deprecated: true`. Its OpenAPI description names the two endpoints that replace it.
-- [ ] The image's `HEALTHCHECK` and `docker/docker-compose.example.yml` call live.
-- [ ] `docker/docker-compose.test.yml` and the E2E harness (`apps/web/__tests__/e2e/harness/production-stack.ts`) call ready. Where the harness needs the parser, it checks the parser's own health.
-- [ ] The health tests (`packages/trpc/__tests__/openapi/health.test.ts`) cover:
-  - [ ] live fails on a parser that doesn't answer, and stays 200 with Postgres or Redis down
-  - [ ] ready fails on Postgres or Redis, and stays 200 with the parser down
-  - [ ] the deprecated `/health` answers as before
-- [ ] `openapi.json` is regenerated, so the docs' API reference shows both endpoints and `/health` as deprecated.
+- [x] Two tRPC OpenAPI procedures sit beside `health` in `packages/trpc/src/routers/config/procedures.ts`, under the Health tag, with `protect: false`:
+  - [x] `GET /api/v1/health/live` answers 200 while the process responds and the parser answers its health check, and 503 when the parser doesn't. It checks no Postgres and no Redis. (Norish runs the parser itself, so a restart fixes a hung one.)
+  - [x] `GET /api/v1/health/ready` answers 503 when Postgres or Redis fails, and 200 otherwise. The parser's state is in the body and never fails the check.
+- [x] `GET /api/v1/health` keeps exactly the behaviour ticket 53 leaves it with, and is marked `deprecated: true`. Its OpenAPI description names the two endpoints that replace it.
+- [x] The image's `HEALTHCHECK` and `docker/docker-compose.example.yml` call live.
+- [x] `docker/docker-compose.test.yml` and the E2E harness (`apps/web/__tests__/e2e/harness/production-stack.ts`) call ready. Where the harness needs the parser, it checks the parser's own health.
+- [x] The health tests (`packages/trpc/__tests__/openapi/health.test.ts`) cover:
+  - [x] live fails on a parser that doesn't answer, and stays 200 with Postgres or Redis down
+  - [x] ready fails on Postgres or Redis, and stays 200 with the parser down
+  - [x] the deprecated `/health` answers as before
+- [x] `openapi.json` is regenerated, so the docs' API reference shows both endpoints and `/health` as deprecated.
 - [ ] The image builds and boots: its healthcheck reports healthy, and stays healthy with Redis stopped.
-- [ ] Release notes, under Upgrade notes: `/api/v1/health/live` is for restarts and `/api/v1/health/ready` is for traffic (Kubernetes readiness probes, load balancers), and the image's healthcheck now calls live. `/api/v1/health` still works but is deprecated and will be removed in a later release.
+- [x] Release notes, under Upgrade notes: `/api/v1/health/live` is for restarts and `/api/v1/health/ready` is for traffic (Kubernetes readiness probes, load balancers), and the image's healthcheck now calls live. `/api/v1/health` still works but is deprecated and will be removed in a later release.
+
+## Comments
+
+- 2026-10-14, implemented:
+  - `healthLive` and `healthReady` sit beside `health` in `config/procedures.ts`, and are listed in `openApiRouter` (`src/openapi.ts`), since that router, not the config router, is what the REST paths are served from. The parser check moved into one `getParserHealth()`, which all three use.
+  - **Beyond the ticket: the web app's own connectivity probe now calls ready.** `HEALTH_PROBE_PATH` (`apps/web/lib/connectivity/probe.ts`) used `/api/v1/health`, so a parser outage turned the whole app Offline, and removing the deprecated endpoint would later break it. Live in the app means Postgres and Redis answer. The parked mobile app still calls `/api/v1/health`; it is out of reach until its rewrite.
+  - The E2E harness waits for ready and for the embedded parser's own `/health` on its port, since URL-import specs need the parser and ready no longer waits for it.
+  - The README's compose snippet calls live, like the example compose.
+  - Docs: a "Health checks" table on the Server & runtime page, which the Upgrade note links to.
+  - **Still open:** the image boot check (healthy, and still healthy with Redis stopped). The Dockerfile changes again in ticket 12, so it is verified with that image.

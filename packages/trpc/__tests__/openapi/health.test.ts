@@ -283,4 +283,120 @@ describe("openapi health endpoint", () => {
       { BearerAuth: [] },
     ]);
   });
+
+  it("marks /health deprecated and names the two endpoints that replace it", () => {
+    const operation = getOpenApiDocument().paths["/health"]?.get;
+
+    expect(operation?.deprecated).toBe(true);
+    expect(operation?.description).toContain("/health/live");
+    expect(operation?.description).toContain("/health/ready");
+  });
+});
+
+function parserAnswers(status: number) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(
+      status === 200
+        ? new Response(JSON.stringify({ status: "ok", recipeScrapersVersion: "15.10.0" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })
+        : new Response(null, { status })
+    )
+  );
+}
+
+describe("openapi liveness and readiness endpoints", () => {
+  beforeEach(() => {
+    getSessionMock.mockResolvedValue(null);
+    getDatabaseHealthMock.mockReset();
+    getDatabaseHealthMock.mockResolvedValue({ status: "ok" });
+    getRedisHealthMock.mockReset();
+    getRedisHealthMock.mockResolvedValue({ status: "ok" });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const get = (path: string) => handleOpenApiRequest(new Request(`http://localhost/api/v1${path}`));
+
+  describe("/health/live", () => {
+    it("answers 200 while the parser answers, Postgres and Redis down or not", async () => {
+      parserAnswers(200);
+      getDatabaseHealthMock.mockResolvedValue({ status: "error" });
+      getRedisHealthMock.mockResolvedValue({ status: "error" });
+
+      const response = await get("/health/live");
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        status: "ok",
+        parser: { status: "ok", recipeScrapersVersion: "15.10.0" },
+      });
+      expect(getDatabaseHealthMock).not.toHaveBeenCalled();
+      expect(getRedisHealthMock).not.toHaveBeenCalled();
+    });
+
+    it("answers 503 when the parser does not answer", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED")));
+
+      const response = await get("/health/live");
+
+      expect(response.status).toBe(503);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({ message: "Parser service is unreachable" })
+      );
+    });
+  });
+
+  describe("/health/ready", () => {
+    it("answers 200 with the parser down, reporting it", async () => {
+      parserAnswers(503);
+
+      const response = await get("/health/ready");
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        status: "ok",
+        db: { status: "ok" },
+        redis: { status: "ok" },
+        parser: { status: "error", statusCode: 503 },
+      });
+    });
+
+    it("answers 503 when Postgres is down", async () => {
+      parserAnswers(200);
+      getDatabaseHealthMock.mockResolvedValue({ status: "error" });
+
+      const response = await get("/health/ready");
+
+      expect(response.status).toBe(503);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({ message: "Database is error" })
+      );
+    });
+
+    it("answers 503 when Redis does not answer its ping", async () => {
+      parserAnswers(200);
+      getRedisHealthMock.mockResolvedValue({ status: "error" });
+
+      const response = await get("/health/ready");
+
+      expect(response.status).toBe(503);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({ message: "Redis is error" })
+      );
+    });
+  });
+
+  it("are both documented as public", () => {
+    const { paths } = getOpenApiDocument();
+
+    for (const path of ["/health/live", "/health/ready"]) {
+      expect(paths[path]?.get?.tags, path).toEqual(["Health"]);
+      expect(paths[path]?.get?.security, path).toBeUndefined();
+    }
+  });
 });
