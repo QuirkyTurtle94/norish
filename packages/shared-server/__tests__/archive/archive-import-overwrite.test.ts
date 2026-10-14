@@ -164,7 +164,7 @@ describe("archive importer overwrite behavior", () => {
   });
 
   it("overwrites existing imported recipes instead of skipping them", async () => {
-    mockFindExistingRecipe.mockResolvedValue({ recipeId: "existing-recipe-id", by: "name" });
+    mockFindExistingRecipe.mockResolvedValue("existing-recipe-id");
     mockDashboardRecipe.mockResolvedValue({ id: "existing-recipe-id", name: "Updated Soup" });
 
     const zip = new JSZip();

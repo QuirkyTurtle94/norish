@@ -1,5 +1,18 @@
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { and, asc, desc, eq, ilike, inArray, isNull, like, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  like,
+  lte,
+  notInArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import z from "zod";
 
 import type { RecipePermissionPolicy } from "@norish/config/zod/server-config";
@@ -197,20 +210,21 @@ export async function recipeExistsByUrlForPolicy(
   return { exists: existing !== null, existingRecipeId: existing?.id };
 }
 
-/** The recipe an archive entry overwrites, and how it was found. */
-export type ExistingRecipeMatch = { recipeId: string; by: "url" | "name" };
-
 /**
  * Check if a recipe already exists within a household context.
  * First checks by URL (if provided), then falls back to exact title match.
  * A title match never crosses URLs: where both recipes carry one and they
- * differ, they are two recipes sharing a name (ADR-0022).
+ * differ, they are two recipes sharing a name. Nor is a title ever matched
+ * to one of `notByName`: an archive import passes the recipes it already
+ * wrote, so it never overwrites its own recipes by name (ADR-0022).
+ * Returns the existing recipe ID if found, null otherwise.
  */
 export async function findExistingRecipe(
   userIds: string[],
   url: string | null | undefined,
-  title: string
-): Promise<ExistingRecipeMatch | null> {
+  title: string,
+  notByName: readonly string[] = []
+): Promise<string | null> {
   const trimmedUrl = url?.trim();
 
   // First try to find by URL if provided (most reliable)
@@ -223,7 +237,7 @@ export async function findExistingRecipe(
     if (byUrl) {
       dbLogger.debug({ url, recipeId: byUrl.id }, "Found existing recipe by URL");
 
-      return { recipeId: byUrl.id, by: "url" };
+      return byUrl.id;
     }
   }
 
@@ -231,13 +245,18 @@ export async function findExistingRecipe(
   const trimmedTitle = title.trim();
 
   if (trimmedTitle) {
-    const titleMatch = and(inArray(recipes.userId, userIds), ilike(recipes.name, trimmedTitle));
     const byTitle = await db.query.recipes.findFirst({
-      // Any URL a stored recipe carries here differs from this one, or the
-      // URL lookup above would have found it.
-      where: trimmedUrl
-        ? and(titleMatch, or(isNull(recipes.url), eq(recipes.url, "")))
-        : titleMatch,
+      where: and(
+        inArray(recipes.userId, userIds),
+        ilike(recipes.name, trimmedTitle),
+        // Any URL a stored recipe carries here differs from this one, or the
+        // URL lookup above would have found it.
+        trimmedUrl ? or(isNull(recipes.url), eq(recipes.url, "")) : undefined,
+        // ponytail: one bound parameter per recipe already written, so a run
+        // of tens of thousands of recipes nears Postgres's parameter limit;
+        // a temporary table is the way past it.
+        notByName.length > 0 ? notInArray(recipes.id, [...notByName]) : undefined
+      ),
       columns: { id: true },
     });
 
@@ -247,7 +266,7 @@ export async function findExistingRecipe(
         "Found existing recipe by title"
       );
 
-      return { recipeId: byTitle.id, by: "name" };
+      return byTitle.id;
     }
   }
 

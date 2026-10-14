@@ -172,6 +172,19 @@ describe("Recipe Keeper import", () => {
       expect((await getArchiveInfo(zip)).format).toBe(ArchiveFormat.RECIPE_KEEPER);
     });
 
+    it("counts a block whose recipeId itemprop is unquoted, as a browser reads it", async () => {
+      const zip = await exportZip([
+        recipeBlock().replace('itemprop="recipeId"', "itemprop=recipeId"),
+        // A details block carrying no recipe id is not a recipe.
+        `<div class="recipe-details"><h2 itemprop="name">Not a recipe</h2></div>`,
+      ]);
+
+      expect(await getArchiveInfo(zip)).toEqual({
+        format: ArchiveFormat.RECIPE_KEEPER,
+        count: 1,
+      });
+    });
+
     it("does not claim a recipes.html that is not Recipe Keeper's", async () => {
       const zip = new JSZip();
 
@@ -291,6 +304,15 @@ describe("Recipe Keeper import", () => {
     expect(dtos[0].images).toEqual([
       { image: `/recipes/${id}/0.jpg`, order: 0 },
       { image: `/recipes/${id}/1.jpg`, order: 1 },
+    ]);
+  });
+
+  it("says so when a recipe has more photos than the gallery holds", async () => {
+    const { result, dtos } = await importBlocks([recipeBlock({ photos: 12 })]);
+
+    expect(dtos[0].images).toHaveLength(10);
+    expect(result.notes).toEqual([
+      { file: "recipe_Alici gratinate", note: "Photos beyond the first 10 dropped: 2" },
     ]);
   });
 

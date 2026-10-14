@@ -643,6 +643,8 @@ describe("Tandoor Parser", () => {
             ingredients: [
               { food: food("onion", "onions"), amount: 3 },
               { food: food("lemon", "lemons"), amount: 1 },
+              // An amount of 0 is no amount, so nothing is counted.
+              { food: food("lime", "limes"), amount: 0 },
             ],
             order: 0,
           },
@@ -654,6 +656,7 @@ describe("Tandoor Parser", () => {
           // The line reads as Tandoor shows it and resolves from the food's name.
           { ingredientName: "onions", foodText: "onion" },
           { ingredientName: "lemon", foodText: "lemon" },
+          { ingredientName: "lime", amount: null },
         ]);
       });
 

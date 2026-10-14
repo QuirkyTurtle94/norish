@@ -1,7 +1,8 @@
 // @vitest-environment node
 /**
  * How an archive import finds the recipe an entry overwrites (ADR-0022): by
- * URL first, then by name, and a name never crosses two different URLs.
+ * URL first, then by name, and a name never crosses two different URLs nor
+ * reaches a recipe the import already wrote.
  */
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -29,14 +30,14 @@ describe("findExistingRecipe", () => {
     await testBase.teardown();
   });
 
-  it("matches by URL first, and says so", async () => {
+  it("matches by URL first", async () => {
     const recipe = await createTestRecipe(userId, {
       name: "Pollo al curry",
       url: "https://a.example/curry",
     });
 
-    expect(await findExistingRecipe([userId], "https://a.example/curry", "Something else")).toEqual(
-      { recipeId: recipe.id, by: "url" }
+    expect(await findExistingRecipe([userId], "https://a.example/curry", "Something else")).toBe(
+      recipe.id
     );
   });
 
@@ -55,13 +56,28 @@ describe("findExistingRecipe", () => {
       url: "https://a.example/panettone",
     });
 
-    expect(await findExistingRecipe([userId], "https://b.example/t", "tiramisù")).toEqual({
-      recipeId: stored.id,
-      by: "name",
+    expect(await findExistingRecipe([userId], "https://b.example/t", "tiramisù")).toBe(stored.id);
+    expect(await findExistingRecipe([userId], undefined, "Panettone")).toBe(withUrl.id);
+  });
+
+  it("finds a same-named recipe the import has not written yet, past one it has", async () => {
+    const written = await createTestRecipe(userId, { name: "Quiche", url: null });
+    const other = await createTestRecipe(userId, { name: "Quiche", url: null });
+
+    expect(await findExistingRecipe([userId], undefined, "Quiche", [written.id])).toBe(other.id);
+    expect(await findExistingRecipe([userId], undefined, "Quiche", [written.id, other.id])).toBe(
+      null
+    );
+  });
+
+  it("still matches a recipe the import wrote by its URL", async () => {
+    const written = await createTestRecipe(userId, {
+      name: "Quiche",
+      url: "https://a.example/quiche",
     });
-    expect(await findExistingRecipe([userId], undefined, "Panettone")).toEqual({
-      recipeId: withUrl.id,
-      by: "name",
-    });
+
+    expect(
+      await findExistingRecipe([userId], "https://a.example/quiche", "Quiche", [written.id])
+    ).toBe(written.id);
   });
 });

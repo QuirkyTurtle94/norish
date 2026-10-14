@@ -8,7 +8,12 @@ import { inferSystemUsedFromParsed } from "@norish/shared/lib/determine-recipe-s
 import { parseIngredientWithDefaults } from "@norish/shared/lib/helpers";
 
 import { saveImageBytes } from "../media/storage";
-import { parseHumanDurationToMinutes } from "./parser-helpers";
+import {
+  parseHumanDurationToMinutes,
+  parseNutritionValue,
+  sumMinutes,
+  withLineFoodTexts,
+} from "./parser-helpers";
 
 export type MealieDatabase = {
   recipes: MealieRecipe[];
@@ -218,11 +223,14 @@ export function idKey(id: string): string {
   return id.replaceAll("-", "").toLowerCase();
 }
 
-function groupBy<T>(rows: T[], key: (row: T) => string, value: (row: T) => string) {
-  const groups = new Map<string, string[]>();
+function groupBy<T, V>(rows: T[], key: (row: T) => string, value: (row: T) => V) {
+  const groups = new Map<string, V[]>();
 
   for (const row of rows) {
-    groups.set(key(row), [...(groups.get(key(row)) ?? []), value(row)]);
+    const group = groups.get(key(row));
+
+    if (group) group.push(value(row));
+    else groups.set(key(row), [value(row)]);
   }
 
   return groups;
@@ -237,25 +245,16 @@ export function buildMealieLookups(database: MealieDatabase): MealieLookups {
   const tags = new Map(database.tags.map((t) => [t.id, t]));
   const categories = new Map(database.categories.map((c) => [c.id, c]));
 
-  // Build recipe -> tag_ids map
-  const recipeTags = new Map<string, string[]>();
-
-  for (const rt of database.recipes_to_tags) {
-    const existing = recipeTags.get(rt.recipe_id) || [];
-
-    existing.push(rt.tag_id);
-    recipeTags.set(rt.recipe_id, existing);
-  }
-
-  // Build recipe -> category_ids map
-  const recipeCategories = new Map<string, string[]>();
-
-  for (const rc of database.recipes_to_categories) {
-    const existing = recipeCategories.get(rc.recipe_id) || [];
-
-    existing.push(rc.category_id);
-    recipeCategories.set(rc.recipe_id, existing);
-  }
+  const recipeTags = groupBy(
+    database.recipes_to_tags,
+    (rt) => rt.recipe_id,
+    (rt) => rt.tag_id
+  );
+  const recipeCategories = groupBy(
+    database.recipes_to_categories,
+    (rc) => rc.recipe_id,
+    (rc) => rc.category_id
+  );
 
   // Build recipe -> ratings[] map (from users_to_recipes)
   const recipeRatings = new Map<string, number[]>();
@@ -274,12 +273,6 @@ export function buildMealieLookups(database: MealieDatabase): MealieLookups {
 
   for (const nutr of database.recipe_nutrition) {
     recipeNutrition.set(nutr.recipe_id, nutr);
-  }
-
-  const recipeNotes = new Map<string, MealieNote[]>();
-
-  for (const note of database.notes) {
-    recipeNotes.set(note.recipe_id, [...(recipeNotes.get(note.recipe_id) ?? []), note]);
   }
 
   return {
@@ -301,7 +294,11 @@ export function buildMealieLookups(database: MealieDatabase): MealieLookups {
       (rt) => rt.recipe_id,
       (rt) => rt.tool_id
     ),
-    recipeNotes,
+    recipeNotes: groupBy(
+      database.notes,
+      (note) => note.recipe_id,
+      (note) => note
+    ),
     instructionReferences: groupBy(
       database.recipe_ingredient_ref_link,
       (link) => idKey(link.instruction_id),
@@ -403,29 +400,6 @@ function resolveUnitName(ing: MealieIngredient, unitsMap: Map<string, MealieUnit
   }
 
   return unit.name || null;
-}
-
-/**
- * Parse a nutrition value string to a number.
- * Handles values like "300", "300 kcal", "25g", "25 grams", etc.
- */
-function parseNutritionValue(value: string | null | undefined): number | null {
-  if (value == null) return null;
-
-  const str = value.toString().trim();
-
-  if (!str) return null;
-
-  // Extract numeric portion (handles "300 kcal", "25g", "25 grams", etc.)
-  const match = str.match(/^[\d.,]+/);
-
-  if (match) {
-    const parsed = parseFloat(match[0].replace(",", "."));
-
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-
-  return null;
 }
 
 /**
@@ -629,16 +603,12 @@ export async function parseMealieRecipeToDTO(
   const parsedPerformTime = parseTime(recipe.perform_time);
   const cookMinutes =
     minutesFromSeconds(recipe.perform_time_seconds) ??
-    (parsedCookTime !== undefined || parsedPerformTime !== undefined
-      ? (parsedCookTime ?? 0) + (parsedPerformTime ?? 0)
-      : undefined);
+    sumMinutes(parsedCookTime, parsedPerformTime);
   // If total_time is not provided, calculate from prep + cook
   const totalMinutes =
     minutesFromSeconds(recipe.total_time_seconds) ??
     parseTime(recipe.total_time) ??
-    (prepMinutes !== undefined || cookMinutes !== undefined
-      ? (prepMinutes ?? 0) + (cookMinutes ?? 0)
-      : undefined);
+    sumMinutes(prepMinutes, cookMinutes);
 
   // Normalize servings (must be an integer for the schema)
   let servings: number | undefined = undefined;
@@ -650,16 +620,16 @@ export async function parseMealieRecipeToDTO(
   }
 
   // Tags, categories and tools all become tags
-  const named = (ids: string[] | undefined, byId: Map<string, { name: string }>) =>
+  const tagsFrom = (ids: string[] | undefined, byId: Map<string, { name: string }>) =>
     (ids ?? []).flatMap((id) => {
       const name = byId.get(id)?.name?.trim();
 
       return name ? [{ name }] : [];
     });
   const allTags = [
-    ...named(lookups.recipeTags.get(recipe.id), lookups.tags),
-    ...named(lookups.recipeCategories.get(recipe.id), lookups.categories),
-    ...named(lookups.recipeTools.get(recipe.id), lookups.tools),
+    ...tagsFrom(lookups.recipeTags.get(recipe.id), lookups.tags),
+    ...tagsFrom(lookups.recipeCategories.get(recipe.id), lookups.categories),
+    ...tagsFrom(lookups.recipeTools.get(recipe.id), lookups.tools),
   ];
 
   // Combine tags and categories, removing duplicates by name
@@ -732,16 +702,10 @@ export async function parseMealieRecipeToDTO(
     throw new Error(`Schema validation failed for recipe "${title}": ${parsed.error.message}`);
   }
 
-  return {
-    ...parsed.data,
-    // The food each line names travels to the resolver past the schema, which
-    // knows nothing of it: it is read there and never stored (`foodText` in
-    // `withResolvedIngredients`).
-    recipeIngredients: parsed.data.recipeIngredients.map((line, i) => ({
-      ...line,
-      foodText: lines[i]?.foodText,
-    })),
-  };
+  return withLineFoodTexts(
+    parsed.data,
+    lines.map((line) => line.foodText)
+  );
 }
 
 /**

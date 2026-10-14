@@ -28,7 +28,7 @@ Every newly inserted archive recipe gets Automatic Recipe Enrichment, and an arc
 
 ### The shared import loop
 
-- **Matching** (ADR-0022, amended): a name match never wins where both recipes carry a URL and the URLs differ, and a recipe the running import created is matched by URL only. Exact copies (same URL) still collapse into one. Applies to every format.
+- **Matching** (ADR-0022, amended): a name match never wins where both recipes carry a URL and the URLs differ, and a recipe the running import has already written (inserted or overwritten) is matched by URL only. Exact copies (same URL) still collapse into one. Applies to every format.
 - **Enrichment**: the loop tells its caller which recipes it inserted, and the archive router announces each one as usable, as the URL import worker does. An overwritten match is not announced, the same as for every other import path. The administrator's automatic-enrichment settings decide what runs.
 - **Cookbooks**: an import item may name cookbook titles. Once its recipe lands, inserted or overwritten, it is filed into the importer's own cookbook with that title (case-insensitive, trimmed), and a cookbook is made where none exists. Filing only ever adds a membership. A failure to file never fails the import, the same rule as the imported rating and favourite.
 

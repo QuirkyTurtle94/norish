@@ -67,12 +67,6 @@ export enum ArchiveFormat {
 
 export type ImportResult = {
   imported: RecipeDashboardDTO[];
-  /**
-   * The creation results of the recipes this run inserted, for the enrichment
-   * hand-off. A recipe the run overwrote is not here: like every other import
-   * path, an existing recipe is not announced again.
-   */
-  inserted: CreateRecipeResult[];
   errors: Array<{ file: string; error: string }>; // keep going on partial failures
   /** Recipes that landed, minus something — an unknown cuisine name, say */
   notes: Array<{ file: string; note: string }>;
@@ -254,14 +248,12 @@ export async function getArchiveInfo(rawZip: JSZip): Promise<ArchiveInfo> {
     };
   }
 
-  // Check for Recipe Keeper format (recipes.html beside an images folder)
+  // Check for Recipe Keeper format (recipes.html holding its recipe blocks)
   const recipeKeeperHtml = await readRecipeKeeperHtml(zip);
+  const recipeKeeperCount = recipeKeeperHtml ? countRecipeKeeperRecipes(recipeKeeperHtml) : 0;
 
-  if (recipeKeeperHtml) {
-    return {
-      format: ArchiveFormat.RECIPE_KEEPER,
-      count: countRecipeKeeperRecipes(recipeKeeperHtml),
-    };
+  if (recipeKeeperCount > 0) {
+    return { format: ArchiveFormat.RECIPE_KEEPER, count: recipeKeeperCount };
   }
 
   // Check for Tandoor format (nested .zip files containing recipe.json)
@@ -408,6 +400,20 @@ function createCookbookFiler(userId: string | undefined) {
 }
 
 /**
+ * Told about each entry as the loop finishes it. `inserted` is the creation
+ * result of a recipe the run newly inserted, for the enrichment hand-off, the
+ * moment it lands; a recipe the run overwrote carries none, since like every
+ * other import path an existing recipe is not announced again.
+ */
+export type ImportProgressListener = (
+  current: number,
+  recipe?: RecipeDashboardDTO,
+  error?: { file: string; error: string },
+  note?: { file: string; note: string },
+  inserted?: CreateRecipeResult
+) => void;
+
+/**
  * Generic import loop that handles duplicate detection, persistence, and progress reporting.
  * Takes an async generator that yields parsed recipe DTOs or parsing errors.
  */
@@ -415,21 +421,15 @@ export async function importRecipeItems(
   items: AsyncGenerator<RecipeImportItemOrError, void, unknown>,
   userId: string | undefined,
   userIds: string[],
-  onProgress?: (
-    current: number,
-    recipe?: RecipeDashboardDTO,
-    error?: { file: string; error: string },
-    note?: { file: string; note: string }
-  ) => void
+  onProgress?: ImportProgressListener
 ): Promise<ImportResult> {
   const imported: RecipeDashboardDTO[] = [];
-  const inserted: CreateRecipeResult[] = [];
   const errors: Array<{ file: string; error: string }> = [];
   const notes: Array<{ file: string; note: string }> = [];
   // Every recipe this run has written. A second entry sharing its name is a
   // different recipe, never a correction, so it is found again by URL only:
   // an archive never overwrites its own recipes by name (ADR-0022).
-  const landed = new Set<string>();
+  const writtenThisRun = new Set<string>();
   const fileIntoCookbooks = createCookbookFiler(userId);
   let current = 0;
 
@@ -456,9 +456,7 @@ export async function importRecipeItems(
 
     try {
       // Check for duplicates
-      const match = await findExistingRecipe(userIds, dto.url, dto.name);
-      const existingId =
-        match && (match.by === "url" || !landed.has(match.recipeId)) ? match.recipeId : null;
+      const existingId = await findExistingRecipe(userIds, dto.url, dto.name, [...writtenThisRun]);
 
       if (existingId) {
         const overwriteUserId = userId ?? userIds[0];
@@ -478,7 +476,7 @@ export async function importRecipeItems(
           { userId: overwriteUserId }
         );
 
-        landed.add(existingId);
+        writtenThisRun.add(existingId);
         await applyImportedMarks(userId, existingId, importedRating, importedFavorite);
         await fileIntoCookbooks(existingId, cookbooks);
 
@@ -504,8 +502,7 @@ export async function importRecipeItems(
       });
 
       if (created) {
-        landed.add(created.recipeId);
-        if (created.status === "inserted") inserted.push(created);
+        writtenThisRun.add(created.recipeId);
         await applyImportedMarks(userId, created.recipeId, importedRating, importedFavorite);
         await fileIntoCookbooks(created.recipeId, cookbooks);
       }
@@ -516,7 +513,13 @@ export async function importRecipeItems(
       if (recipe) {
         imported.push(recipe);
         recordNote();
-        onProgress?.(current, recipe, undefined, note);
+        onProgress?.(
+          current,
+          recipe,
+          undefined,
+          note,
+          created?.status === "inserted" ? created : undefined
+        );
       }
     } catch (e: unknown) {
       const error = { file: fileName, error: String((e as Error)?.message || e) };
@@ -526,7 +529,7 @@ export async function importRecipeItems(
     }
   }
 
-  return { imported, inserted, errors, notes };
+  return { imported, errors, notes };
 }
 
 /** The receiving instance's cuisine vocabulary, by lowercased name. */
@@ -770,10 +773,20 @@ async function* generateRecipeKeeperRecipes(
     const fileName = `recipe_${recipe.name}`;
 
     try {
-      const { dto, importedRating, importedFavorite, cookbooks } =
+      const { dto, importedRating, importedFavorite, cookbooks, droppedPhotos } =
         await parseRecipeKeeperRecipeToDTO(recipe, createArchiveRecipeId(), zip);
 
-      yield { dto, fileName, importedRating, importedFavorite, cookbooks };
+      yield {
+        dto,
+        fileName,
+        importedRating,
+        importedFavorite,
+        cookbooks,
+        note:
+          droppedPhotos > 0
+            ? { file: fileName, note: `Photos beyond the first 10 dropped: ${droppedPhotos}` }
+            : undefined,
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -789,12 +802,7 @@ export async function importArchive(
   userId: string | undefined,
   userIds: string[],
   zipBytes: Buffer,
-  onProgress?: (
-    current: number,
-    recipe?: RecipeDashboardDTO,
-    error?: { file: string; error: string },
-    note?: { file: string; note: string }
-  ) => void
+  onProgress?: ImportProgressListener
 ): Promise<ImportResult> {
   const arrayBuffer = zipBytes.buffer.slice(
     zipBytes.byteOffset,

@@ -5,7 +5,13 @@ import { matchCategory } from "@norish/shared-server/ai/enrichment/category-matc
 import { FullRecipeInsertDTO } from "@norish/shared/contracts";
 import { parseIsoDuration } from "@norish/shared/lib/helpers";
 
-import { buildRecipeDTO, parseServings, saveBufferImage } from "./parser-helpers";
+import {
+  buildRecipeDTO,
+  parseNutritionValue,
+  parseServings,
+  saveBufferImage,
+  sumMinutes,
+} from "./parser-helpers";
 
 /**
  * A Recipe Keeper export is a zip of one HTML page and a folder of photos.
@@ -14,7 +20,7 @@ import { buildRecipeDTO, parseServings, saveBufferImage } from "./parser-helpers
  * never by its label: the labels are translated ("Portate", "Porzioni") and
  * the itemprops are not.
  */
-export const RECIPE_KEEPER_HTML = "recipes.html";
+const RECIPE_KEEPER_HTML = "recipes.html";
 
 /** A photo the page points at: a file in the export's own `images/` folder. */
 const PHOTO_PATH = /^images\/[^/\\]+$/;
@@ -38,8 +44,9 @@ export type RecipeKeeperRecipe = {
   nutrition: { calories: string; fat: string; carbs: string; protein: string };
   /** Photo paths inside the export, in Recipe Keeper's order */
   photos: string[];
-  rating: string;
-  favourite: string;
+  /** 1–5, or undefined when unrated (Recipe Keeper writes 0) */
+  rating?: number;
+  favorite: boolean;
 };
 
 export type ParsedRecipeKeeperRecipe = {
@@ -48,21 +55,25 @@ export type ParsedRecipeKeeperRecipe = {
   importedFavorite?: boolean;
   /** The recipe's collections, filed as the importer's cookbooks */
   cookbooks: string[];
+  /** How many photos the gallery had no room for */
+  droppedPhotos: number;
 };
 
-/** The export's page, or null when the zip holds none that is Recipe Keeper's. */
+/** The export's page at the zip root, or null when there is none. */
 export async function readRecipeKeeperHtml(zip: JSZip): Promise<string | null> {
-  const file = zip.file(RECIPE_KEEPER_HTML);
-
-  if (!file) return null;
-
-  const html = await file.async("string");
-
-  return html.includes('itemprop="recipeId"') ? html : null;
+  return zip.file(RECIPE_KEEPER_HTML)?.async("string") ?? null;
 }
 
+/** Each recipe block on the page: a `div.recipe-details` carrying its `recipeId`. */
+function recipeBlocks($: cheerio.CheerioAPI) {
+  return $("div.recipe-details").filter(
+    (_, block) => $(block).find('[itemprop="recipeId"]').length > 0
+  );
+}
+
+/** How many recipes the page holds; none means it is not Recipe Keeper's. */
 export function countRecipeKeeperRecipes(html: string): number {
-  return cheerio.load(html)("div.recipe-details").length;
+  return recipeBlocks(cheerio.load(html)).length;
 }
 
 /**
@@ -73,7 +84,7 @@ export function countRecipeKeeperRecipes(html: string): number {
 export function extractRecipeKeeperRecipes(html: string): RecipeKeeperRecipe[] {
   const $ = cheerio.load(html);
 
-  return $("div.recipe-details")
+  return recipeBlocks($)
     .toArray()
     .map((block) => {
       const $block = $(block);
@@ -91,6 +102,7 @@ export function extractRecipeKeeperRecipes(html: string): RecipeKeeperRecipe[] {
           )
           .filter((value) => value.length > 0);
       const value = (prop: string) => values(prop)[0] ?? "";
+      const rating = parseInt(value("recipeRating"), 10);
       const paragraphs = (prop: string) =>
         $block
           .find(`[itemprop="${prop}"] p`)
@@ -129,8 +141,8 @@ export function extractRecipeKeeperRecipes(html: string): RecipeKeeperRecipe[] {
           }))
           .sort((a, b) => a.order - b.order)
           .map((photo) => photo.src),
-        rating: value("recipeRating"),
-        favourite: value("recipeIsFavourite"),
+        rating: rating >= 1 && rating <= 5 ? rating : undefined,
+        favorite: value("recipeIsFavourite") === "True",
       };
     });
 }
@@ -140,12 +152,6 @@ function minutesOf(iso: string): number | undefined {
   const minutes = parseIsoDuration(iso);
 
   return minutes ? minutes : undefined;
-}
-
-function nutritionValue(value: string): number | null {
-  const parsed = parseFloat(value);
-
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 /** Each name once, matched case-insensitively, as written the first time. */
@@ -178,10 +184,7 @@ export async function parseRecipeKeeperRecipeToDTO(
     servings: parseServings(recipe.yield || null),
     prepMinutes,
     cookMinutes,
-    totalMinutes:
-      prepMinutes !== undefined || cookMinutes !== undefined
-        ? (prepMinutes ?? 0) + (cookMinutes ?? 0)
-        : undefined,
+    totalMinutes: sumMinutes(prepMinutes, cookMinutes),
     ingredientsText: recipe.ingredients.join("\n"),
     instructionsText: recipe.directions.join("\n"),
     categories: distinct([...recipe.courses, ...recipe.categories]),
@@ -196,11 +199,10 @@ export async function parseRecipeKeeperRecipeToDTO(
     if (saved) images.push({ image: saved, order: images.length });
   }
 
-  const calories = nutritionValue(recipe.nutrition.calories);
-  const fat = nutritionValue(recipe.nutrition.fat);
-  const carbs = nutritionValue(recipe.nutrition.carbs);
-  const protein = nutritionValue(recipe.nutrition.protein);
-  const rating = parseInt(recipe.rating, 10);
+  const calories = parseNutritionValue(recipe.nutrition.calories);
+  const fat = parseNutritionValue(recipe.nutrition.fat);
+  const carbs = parseNutritionValue(recipe.nutrition.carbs);
+  const protein = parseNutritionValue(recipe.nutrition.protein);
 
   return {
     dto: {
@@ -222,8 +224,9 @@ export async function parseRecipeKeeperRecipeToDTO(
       image: images[0]?.image,
       images,
     },
-    importedRating: rating >= 1 && rating <= 5 ? rating : undefined,
-    importedFavorite: recipe.favourite === "True" || undefined,
+    importedRating: recipe.rating,
+    importedFavorite: recipe.favorite || undefined,
     cookbooks: recipe.collections,
+    droppedPhotos: Math.max(0, recipe.photos.length - MAX_PHOTOS),
   };
 }

@@ -7,6 +7,8 @@ import { saveImageBytes } from "@norish/shared-server/media/storage";
 import { FullRecipeInsertDTO } from "@norish/shared/contracts";
 import { inferSystemUsedFromParsed } from "@norish/shared/lib/determine-recipe-system";
 
+import { sumMinutes, withLineFoodTexts } from "./parser-helpers";
+
 // Zod schemas for Tandoor recipe structure
 const TandoorFoodSchema = z.object({
   name: z
@@ -107,9 +109,14 @@ export type TandoorRecipe = z.infer<typeof TandoorRecipeSchema>;
 export type TandoorStep = z.infer<typeof TandoorStepSchema>;
 export type TandoorIngredient = z.infer<typeof TandoorIngredientSchema>;
 
+/** No amount when Tandoor says so, or when the amount is 0. */
+function amountOf(ingredient: TandoorIngredient): number | null {
+  return ingredient.no_amount || !ingredient.amount ? null : ingredient.amount;
+}
+
 /**
- * A food's name as Tandoor shows it: plural when there is an amount other
- * than 1 and the food has a plural (Tandoor's template helper rule).
+ * A food's or unit's name as Tandoor shows it: plural when there is an amount
+ * other than 1 and it has a plural (Tandoor's template helper rule).
  */
 function shownName(
   named: { name: string; plural_name?: string | null } | null | undefined,
@@ -117,15 +124,9 @@ function shownName(
 ): string {
   const name = named?.name?.trim() ?? "";
   const plural = named?.plural_name?.trim();
+  const amount = amountOf(ingredient);
 
-  if (!name || !plural || ingredient.no_amount || ingredient.amount === 1) return name;
-
-  return plural;
-}
-
-/** No amount when Tandoor says so, or when the amount is 0. */
-function amountOf(ingredient: TandoorIngredient): number | null {
-  return ingredient.no_amount || !ingredient.amount ? null : ingredient.amount;
+  return name && plural && amount !== null && amount !== 1 ? plural : name;
 }
 
 type TandoorLine = {
@@ -163,8 +164,13 @@ function readTandoorLine(ingredient: TandoorIngredient): TandoorLine | null {
   };
 }
 
+type TemplateField = "amount" | "unit" | "food" | "note";
+
 /** "amount unit food", as Tandoor writes `{{ ingredients[i] }}` into a step. */
-function templateText(ingredient: TandoorIngredient | undefined, field?: string): string {
+function templateText(
+  ingredient: TandoorIngredient | undefined,
+  field: TemplateField | undefined
+): string {
   if (!ingredient) return "";
 
   const amount = amountOf(ingredient);
@@ -175,7 +181,7 @@ function templateText(ingredient: TandoorIngredient | undefined, field?: string)
     note: ingredient.note?.trim() ?? "",
   };
 
-  if (field) return parts[field as keyof typeof parts];
+  if (field) return parts[field];
 
   return [parts.amount, parts.unit, parts.food].filter(Boolean).join(" ");
 }
@@ -190,7 +196,7 @@ function renderTandoorTemplate(instruction: string, ingredients: TandoorIngredie
   return instruction
     .replace(
       /\{\{\s*ingredients\[(\d+)\](?:\.(amount|unit|food|note))?\s*\}\}/g,
-      (_, index: string, field?: string) => templateText(ingredients[Number(index)], field)
+      (_, index: string, field?: TemplateField) => templateText(ingredients[Number(index)], field)
     )
     .replace(/\{\{\s*scale\(\s*([\d.]+)\s*\)\s*\}\}/g, "$1")
     .replace(/[{}]/g, "");
@@ -330,10 +336,7 @@ export async function parseTandoorRecipeToDTO(
   // empty and the wait shows as Other Time within the total.
   const prepMinutes = parseTime(validated.working_time);
   const waitingMinutes = parseTime(validated.waiting_time);
-  const totalMinutes =
-    prepMinutes !== undefined || waitingMinutes !== undefined
-      ? (prepMinutes || 0) + (waitingMinutes || 0)
-      : undefined;
+  const totalMinutes = sumMinutes(prepMinutes, waitingMinutes);
 
   // Build DTO
   const dto: FullRecipeInsertDTO = {
@@ -359,16 +362,10 @@ export async function parseTandoorRecipeToDTO(
     throw new Error(`Schema validation failed: ${parsed.error.message}`);
   }
 
-  return {
-    ...parsed.data,
-    // The food each line names travels to the resolver past the schema, which
-    // knows nothing of it: it is read there and never stored (`foodText` in
-    // `withResolvedIngredients`).
-    recipeIngredients: parsed.data.recipeIngredients.map((line, i) => ({
-      ...line,
-      foodText: allIngredients[i]?.foodText,
-    })),
-  };
+  return withLineFoodTexts(
+    parsed.data,
+    allIngredients.map((line) => line.foodText)
+  );
 }
 
 /**

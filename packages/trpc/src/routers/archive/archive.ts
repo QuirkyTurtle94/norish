@@ -1,3 +1,4 @@
+import type { ImportProgressListener } from "@norish/shared-server/archive/parser";
 import type {
   ArchiveImportError,
   ArchiveImportNote,
@@ -143,13 +144,17 @@ async function runArchiveImportAsync(
 
   let current = 0;
 
-  const onProgress = (
-    currentCount: number,
-    recipe?: RecipeDashboardDTO,
-    error?: ArchiveImportError,
-    note?: ArchiveImportNote
-  ) => {
+  const onProgress: ImportProgressListener = (currentCount, recipe, error, note, inserted) => {
     current = currentCount;
+
+    // An archive recipe enters the same automatic flow as one from any other
+    // import path, as soon as it lands; what it overwrote was announced when
+    // it was first made. A failed announcement never fails the import.
+    if (inserted) {
+      announceUsableRecipe(inserted, { userId, householdKey, householdUserIds }).catch((err) =>
+        log.warn({ err, recipeId: inserted.recipeId }, "Failed to announce archive recipe")
+      );
+    }
 
     if (recipe) {
       batchRecipes.push(recipe);
@@ -208,12 +213,6 @@ async function runArchiveImportAsync(
   try {
     // Import archive (auto-detects format)
     const result = await runArchiveImport(userId, userIds, buffer, onProgress);
-
-    // An archive recipe enters the same automatic flow as one from any other
-    // import path; what it overwrote was announced when it was first made.
-    for (const created of result.inserted) {
-      await announceUsableRecipe(created, { userId, householdKey, householdUserIds });
-    }
 
     log.info(
       {

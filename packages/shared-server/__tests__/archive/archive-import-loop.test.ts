@@ -95,38 +95,29 @@ describe("the archive import loop", () => {
   });
 
   describe("matching", () => {
-    it("never overwrites a recipe it created this run by name", async () => {
-      const first = item("Pollo al curry", "https://a.example/curry");
-      const second = item("Pollo al curry", undefined);
+    it("never matches a recipe it wrote this run by name, inserted or overwritten", async () => {
+      const first = item("Tiramisù", undefined);
 
-      // The stored lookup finds the first recipe by its name.
       mockFindExistingRecipe
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ recipeId: first.dto.id, by: "name" });
+        .mockResolvedValueOnce("existing-1")
+        .mockResolvedValueOnce(null);
 
-      const result = await runLoop([first, second]);
+      await runLoop([first, item("Tiramisù", undefined), item("Tiramisù", undefined)]);
 
-      expect(mockCreateRecipeWithRefs).toHaveBeenCalledTimes(2);
-      expect(mockUpdateRecipeWithRefs).not.toHaveBeenCalled();
-      expect(result.imported).toHaveLength(2);
-    });
-
-    it("never overwrites a recipe it overwrote this run by name", async () => {
-      mockFindExistingRecipe.mockResolvedValue({ recipeId: "existing-1", by: "name" });
-
-      await runLoop([item("Tiramisù", undefined), item("Tiramisù", undefined)]);
-
-      expect(mockUpdateRecipeWithRefs).toHaveBeenCalledTimes(1);
-      expect(mockCreateRecipeWithRefs).toHaveBeenCalledTimes(1);
+      // The lookup itself leaves them out of its name match (ADR-0022).
+      expect(mockFindExistingRecipe.mock.calls.map((call) => call[3])).toEqual([
+        [],
+        [first.dto.id],
+        [first.dto.id, "existing-1"],
+      ]);
     });
 
     it("collapses an exact copy (same URL twice) into one recipe", async () => {
       const first = item("Pollo al curry", "https://a.example/curry");
       const copy = item("Pollo al curry", "https://a.example/curry");
 
-      mockFindExistingRecipe
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ recipeId: first.dto.id, by: "url" });
+      mockFindExistingRecipe.mockResolvedValueOnce(null).mockResolvedValueOnce(first.dto.id);
 
       await runLoop([first, copy]);
 
@@ -139,7 +130,7 @@ describe("the archive import loop", () => {
     });
 
     it("still overwrites a same-named recipe that was there before the run", async () => {
-      mockFindExistingRecipe.mockResolvedValue({ recipeId: "existing-1", by: "name" });
+      mockFindExistingRecipe.mockResolvedValue("existing-1");
 
       await runLoop([item("Tiramisù", undefined)]);
 
@@ -153,17 +144,25 @@ describe("the archive import loop", () => {
   });
 
   describe("the enrichment hand-off", () => {
-    it("reports the recipes it inserted and not the ones it overwrote", async () => {
+    it("reports each recipe it inserted as it lands, and none it overwrote", async () => {
       const fresh = item("Risotto", undefined);
+      const onProgress = vi.fn();
 
-      mockFindExistingRecipe
-        .mockResolvedValueOnce({ recipeId: "existing-1", by: "url" })
-        .mockResolvedValueOnce(null);
+      mockFindExistingRecipe.mockResolvedValueOnce("existing-1").mockResolvedValueOnce(null);
 
-      const result = await runLoop([item("Tiramisù", "https://a.example/t"), fresh]);
+      const { importRecipeItems } = await import("@norish/shared-server/archive/parser");
 
-      expect(result.imported).toHaveLength(2);
-      expect(result.inserted).toEqual([{ status: "inserted", recipeId: fresh.dto.id }]);
+      await importRecipeItems(
+        itemsOf([item("Tiramisù", "https://a.example/t"), fresh]) as never,
+        "user-1",
+        ["user-1"],
+        onProgress
+      );
+
+      expect(onProgress.mock.calls.map((call) => call[4])).toEqual([
+        undefined,
+        { status: "inserted", recipeId: fresh.dto.id },
+      ]);
     });
   });
 
@@ -194,7 +193,7 @@ describe("the archive import loop", () => {
     });
 
     it("files an overwritten recipe too", async () => {
-      mockFindExistingRecipe.mockResolvedValue({ recipeId: "existing-1", by: "url" });
+      mockFindExistingRecipe.mockResolvedValue("existing-1");
 
       await runLoop([item("Tiramisù", "https://a.example/t", { cookbooks: ["Dolci"] })]);
 

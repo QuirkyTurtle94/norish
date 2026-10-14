@@ -177,7 +177,7 @@ describe("archive import loop favourite extra", () => {
   });
 
   it("applies the favourite to the matched-and-overwritten recipe for the importing user", async () => {
-    mockFindExistingRecipe.mockResolvedValue({ recipeId: "existing-recipe-id", by: "name" });
+    mockFindExistingRecipe.mockResolvedValue("existing-recipe-id");
     mockDashboardRecipe.mockResolvedValue({ id: "existing-recipe-id", name: "Marked Soup" });
 
     const { importRecipeItems } = await import("@norish/shared-server/archive/parser");

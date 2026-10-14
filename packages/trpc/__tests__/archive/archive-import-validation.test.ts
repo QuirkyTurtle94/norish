@@ -8,7 +8,7 @@ import { archive } from "../mocks/realtime/archive";
 import { recipes } from "../mocks/realtime/recipes";
 
 const mockArchiveParser = vi.hoisted(() => ({
-  importArchive: vi.fn().mockResolvedValue({ imported: [], inserted: [], errors: [], notes: [] }),
+  importArchive: vi.fn().mockResolvedValue({ imported: [], errors: [], notes: [] }),
   calculateBatchSize: vi.fn(() => 10),
   getArchiveInfo: vi.fn().mockResolvedValue({ format: "paprika", count: 1 }),
   ArchiveFormat: {
@@ -157,7 +157,7 @@ describe("archiveRouter.importArchive", () => {
       ) => {
         onProgress(1, recipe);
 
-        return { imported: [recipe], inserted: [], errors: [], notes: [] };
+        return { imported: [recipe], errors: [], notes: [] };
       }
     );
 
@@ -212,12 +212,20 @@ describe("archiveRouter.importArchive", () => {
     const inserted = { status: "inserted", recipeId: "recipe-new" };
 
     mockArchiveParser.getArchiveInfo.mockResolvedValue({ format: "paprika", count: 2 });
-    mockArchiveParser.importArchive.mockResolvedValue({
-      imported: [{ id: "recipe-new" }, { id: "recipe-overwritten" }],
-      inserted: [inserted],
-      errors: [],
-      notes: [],
-    });
+    mockArchiveParser.importArchive.mockImplementation(
+      async (
+        _userId: string,
+        _userIds: string[],
+        _buffer: Buffer,
+        onProgress: (...args: unknown[]) => void
+      ) => {
+        onProgress(1, { id: "recipe-overwritten" });
+        onProgress(2, { id: "recipe-new" }, undefined, undefined, inserted);
+
+        return { imported: [], errors: [], notes: [] };
+      }
+    );
+    mockAnnounceUsableRecipe.mockResolvedValue(undefined);
 
     const caller = archiveRouter.createCaller({
       user: { id: "user-1" },

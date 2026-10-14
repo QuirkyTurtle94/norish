@@ -299,7 +299,7 @@ describe("norish archive rides the shared import loop", () => {
   });
 
   it("overwrites a matching recipe instead of duplicating it", async () => {
-    mockFindExistingRecipe.mockResolvedValue({ recipeId: "existing-recipe-id", by: "name" });
+    mockFindExistingRecipe.mockResolvedValue("existing-recipe-id");
     mockDashboardRecipe.mockResolvedValue({ id: "existing-recipe-id", name: "Archived Soup" });
 
     const zipBytes = await buildArchiveBytes([

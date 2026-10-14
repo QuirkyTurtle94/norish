@@ -8,9 +8,9 @@
 
 - [ ] `findExistingRecipe` says how it matched, by URL or by name. Its only caller is the archive loop.
 - [ ] A name match is refused when both recipes carry a URL and the URLs differ. This holds against existing recipes too.
-- [ ] The loop remembers the recipes this run created, and matches one of them by URL only.
+- [ ] The loop remembers the recipes this run wrote (inserted or overwritten), and matches one of them by URL only.
 - [ ] Tests beside `archive-import-overwrite.test.ts`:
   - [ ] same name, different URLs: two recipes
-  - [ ] same name, one or both without a URL, created earlier in the same run: two recipes
+  - [ ] same name, one or both without a URL, written earlier in the same run: two recipes
   - [ ] same URL twice in one run: one recipe, overwritten
   - [ ] a same-named existing recipe with no URL is still overwritten, as before

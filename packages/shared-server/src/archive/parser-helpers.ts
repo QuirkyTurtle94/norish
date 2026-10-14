@@ -40,6 +40,54 @@ export function parseHumanDurationToMinutes(s?: string | null): number | undefin
   return Number.isFinite(total) && total > 0 ? total : undefined;
 }
 
+/** Minutes added up, or undefined when none of them is known. */
+export function sumMinutes(...minutes: Array<number | undefined>): number | undefined {
+  const known = minutes.filter((value): value is number => value !== undefined);
+
+  return known.length > 0 ? known.reduce((total, value) => total + value, 0) : undefined;
+}
+
+/**
+ * Parse a nutrition value string to a number.
+ * Handles values like "300", "300 kcal", "25g", "25 grams", etc.
+ */
+export function parseNutritionValue(value: string | null | undefined): number | null {
+  if (value == null) return null;
+
+  const str = value.toString().trim();
+
+  if (!str) return null;
+
+  // Extract numeric portion (handles "300 kcal", "25g", "25 grams", etc.)
+  const match = str.match(/^[\d.,]+/);
+
+  if (match) {
+    const parsed = parseFloat(match[0].replace(",", "."));
+
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+/**
+ * Hand each line the food it resolves from, past the insert schema, which
+ * knows nothing of it: the resolver reads it (`foodText` in
+ * `withResolvedIngredients`) and it is never stored.
+ */
+export function withLineFoodTexts(
+  dto: FullRecipeInsertDTO,
+  foodTexts: ReadonlyArray<string | undefined>
+): FullRecipeInsertDTO {
+  return {
+    ...dto,
+    recipeIngredients: dto.recipeIngredients?.map((line, i) => ({
+      ...line,
+      foodText: foodTexts[i],
+    })),
+  };
+}
+
 /**
  * Split text by newlines and filter out empty lines
  */
