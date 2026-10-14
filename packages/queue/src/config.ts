@@ -29,8 +29,8 @@ export interface LazyWorkerController {
  * Base worker options shared across all workers.
  */
 export const baseWorkerOptions: Partial<WorkerOptions> = {
-  // Delay between job completions when draining (reduces CPU churn)
-  drainDelay: 5_000, // 5 seconds
+  // Seconds, not milliseconds: how long an idle worker blocks on Redis per wait.
+  drainDelay: 5,
 
   // Limit stalled job retries to prevent infinite loops
   maxStalledCount: 1,
