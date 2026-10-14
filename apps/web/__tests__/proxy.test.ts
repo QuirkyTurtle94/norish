@@ -46,6 +46,14 @@ describe("proxy share access", () => {
     expect(config.matcher[0]).toContain("serwist/");
   });
 
+  it("leaves the brand icons and the N mark out of the proxy, so installs fetch them signed out", () => {
+    const proxied = new RegExp(`^${config.matcher[0]}$`);
+
+    expect(proxied.test("/brand/apple-touch-icon.png")).toBe(false);
+    expect(proxied.test("/brand/splash/light-1206x2622.png")).toBe(false);
+    expect(proxied.test("/logo-small.svg")).toBe(false);
+  });
+
   it("leaves Ingredient Icons out of the proxy, so a shared recipe shows them signed out", () => {
     const proxied = new RegExp(`^${config.matcher[0]}$`);
 
