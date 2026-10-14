@@ -1,6 +1,6 @@
 # 01 — The plugin runs SonarQube's default profile with type information
 
-Status: ready-for-agent
+Status: resolved
 
 Spec: `.scratch/sonarjs-lint/spec.md`.
 
@@ -21,10 +21,19 @@ Spec: `.scratch/sonarjs-lint/spec.md`.
 
 ## Acceptance criteria
 
-- [ ] `pnpm lint` passes with the plugin on, and `@norish/eslint-config` typechecks.
-- [ ] No parsing error in any workspace.
-- [ ] With the temporary block lifted, lint reports the baseline: 14 rules, about 210 findings, nothing from a rule outside the profile.
-- [ ] Each rule in the temporary block has findings today and names its ticket.
-- [ ] Lint time before and after is recorded here, for `apps/web` and for the whole `pnpm lint`.
+- [x] `pnpm lint` passes with the plugin on, and `@norish/eslint-config` typechecks.
+- [x] No parsing error in any workspace.
+- [x] With the temporary block lifted, lint reports the baseline: 14 rules, about 210 findings, nothing from a rule outside the profile.
+- [x] Each rule in the temporary block has findings today and names its ticket.
+- [x] Lint time before and after is recorded here, for `apps/web` and for the whole `pnpm lint`.
 
 ## Comments
+
+- 2026-10-14 (implemented).
+  - The profile is `tooling/eslint/sonarjs.ts`: three lists generated from SonarJS's rule metadata at the 4.2.2 commit (122 for every file, plus `deprecation`; 8 for JavaScript; 1 for TypeScript). `base.ts` applies it after the existing rules, then the temporary block of 14 rules.
+  - The plugin is a CommonJS module. Its default import types as `ESLint.Plugin`, which goes straight into `plugins`; its `recommended` preset is not used, so its `settings.react.version` doesn't leak into the shared settings either.
+  - `apps/web/eslint.config.ts` lints `app/sw.ts` against `tsconfig.sw.json` with the project service off for that file.
+  - With the block lifted, lint reports exactly the baseline: 210 findings in the 14 rules, no parsing error, nothing from another rule.
+  - Lint time, measured on this machine with nothing cached:
+    - the whole `pnpm lint` (`turbo run lint --force`): about 11 s before, 40 s after;
+    - `apps/web` alone: 3.7 s before, 16.0 s after.
