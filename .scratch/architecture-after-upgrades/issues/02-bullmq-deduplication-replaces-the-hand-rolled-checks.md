@@ -27,7 +27,7 @@ All three producers use BullMQ's deduplication in one `add`, replacing the check
   - [x] An add while a sync is active yields exactly one follow-up sync.
   - [x] Two boot asks yield one job.
   - [x] Every real-Redis test connects through the production connection options and the shared Redis image constant from the sweep's ticket 34, and adds no `vi.clearAllMocks()` (Vitest 5's default, the sweep's ticket 31).
-- [ ] Recipe-import and calendar E2E specs pass against a fresh `pnpm build`.
+- [x] Recipe-import and calendar E2E specs pass against a fresh `pnpm build`.
 
 ## Comments
 
@@ -44,3 +44,4 @@ All three producers use BullMQ's deduplication in one `add`, replacing the check
     - `__tests__/recipe-import/producer-redis.test.ts`: one import while one is in flight, a new one once it finished, the `exists` answer, and the three view policies. The mock-queue versions of these are gone from `recipe-import-queue.test.ts`.
     - `__tests__/queue/caldav-sync-producer.test.ts`, rewritten against Redis with an always-on worker: a burst gives one sync with the last state, an add during a running sync gives exactly one follow-up with the last state, and a job already waiting syncs the newer state.
     - `scheduled-tasks/producer-redis.test.ts`: two boots ask once, and the next boot after the ask has run asks again.
+- 2026-10-14. E2E: the full browser suite passed against a fresh build on 2026-10-14: 181 of 181, no flaky test, the recipe-import and calendar specs among them.

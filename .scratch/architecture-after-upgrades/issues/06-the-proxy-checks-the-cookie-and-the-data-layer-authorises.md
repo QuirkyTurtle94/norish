@@ -27,12 +27,12 @@ See `.scratch/architecture-after-upgrades/spec.md`, Page loads and the auth gate
 - [x] The proxy's unreachable WebSocket branch is deleted (moved here from ticket 07, since this ticket rewrites the proxy).
 - [x] A structural test fails if any route handler under the signed-in app does not perform the session check.
 - [x] A test of the layout's gate: a session whose user row is gone is revoked and redirected to the login page.
-- [ ] Browser E2E:
-  - [ ] A signed-out reader opening a recipe lands on login and returns to the recipe after signing in.
-  - [ ] A recipe image requested without a session is not served.
-  - [ ] A share link's images load signed out.
+- [x] Browser E2E:
+  - [x] A signed-out reader opening a recipe lands on login and returns to the recipe after signing in.
+  - [x] A recipe image requested without a session is not served.
+  - [x] A share link's images load signed out.
 - [x] Measure time to skeleton on a cold load (phone profile) before and after, and record both here. The after number is ticket 08's baseline.
-- [ ] The auth E2E specs pass against a fresh `pnpm build`.
+- [x] The auth E2E specs pass against a fresh `pnpm build`.
 
 ## Comments
 
@@ -52,19 +52,19 @@ See `.scratch/architecture-after-upgrades/spec.md`, Page loads and the auth gate
   - **Measurements.** Production build on this Mac against the local stack, signed in as the dev owner. Before: `2d5b3215` (tickets 01 to 04 and 11, the proxy unchanged). After: this commit.
     - Phone profile: Playwright Pixel 7 with CPU throttling ×4 and a slow-4G throughput cap, service worker blocked, one warm-up load, then the median of 15 cold loads. Chromium's emulated latency does not reach `responseStart`, so the TTFB column is the server's own time.
 
-      | Page             | TTFB before | TTFB after | First paint before | First paint after |
-      | ---------------- | ----------- | ---------- | ------------------ | ----------------- |
-      | `/`              | 17 ms       | 11 ms      | 1,600 ms           | 1,608 ms          |
-      | `/recipes/<id>`  | 15 ms       | 12 ms      | 1,544 ms           | 1,540 ms          |
-      | `/groceries`     | 13 ms       | 13 ms      | 1,552 ms           | 1,548 ms          |
+      | Page            | TTFB before | TTFB after | First paint before | First paint after |
+      | --------------- | ----------- | ---------- | ------------------ | ----------------- |
+      | `/`             | 17 ms       | 11 ms      | 1,600 ms           | 1,608 ms          |
+      | `/recipes/<id>` | 15 ms       | 12 ms      | 1,544 ms           | 1,540 ms          |
+      | `/groceries`    | 13 ms       | 13 ms      | 1,552 ms           | 1,548 ms          |
 
     - Server time to response headers (Node `fetch`, 100 sequential requests after 10 warm-ups, median / p90):
 
-      | Request          | Before         | After          |
-      | ---------------- | -------------- | -------------- |
-      | `/`              | 11.4 / 13.9 ms | 10.2 / 16.1 ms |
-      | `/recipes/<id>`  | 9.1 / 10.8 ms  | 7.5 / 9.2 ms   |
-      | an image (404)   | 1.5 / 1.8 ms   | 1.0 / 1.2 ms   |
+      | Request         | Before         | After          |
+      | --------------- | -------------- | -------------- |
+      | `/`             | 11.4 / 13.9 ms | 10.2 / 16.1 ms |
+      | `/recipes/<id>` | 9.1 / 10.8 ms  | 7.5 / 9.2 ms   |
+      | an image (404)  | 1.5 / 1.8 ms   | 1.0 / 1.2 ms   |
 
     - Reading it:
       - Locally, Redis and Postgres answer in well under a millisecond, so the proxy's read cost 1 to 1.5 ms per page and 0.5 ms per image.
@@ -72,3 +72,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, Page loads and the auth gate
       - Each saved round trip grows with the distance to Postgres and Redis, so the gain is larger on a deployment where they sit on another host.
       - **The baseline for ticket 08 is the "after" columns.**
   - **Left as it was, for a decision:** recipe, step and cookbook images are still served `Cache-Control: public, max-age=31536000, immutable`. A shared cache (a CDN in front of Norish) may keep such an image and serve it to anyone with the URL, past the new session check. Avatars use `private`. Making the others `private` is one word per route, but it changes how a CDN in front of Norish caches, so it is the maintainer's call.
+- 2026-10-14. E2E: the full browser suite passed against a fresh build on 2026-10-14: 181 of 181, no flaky test. `ai/auth-gate.e2e.ts` holds the three browser scenarios.

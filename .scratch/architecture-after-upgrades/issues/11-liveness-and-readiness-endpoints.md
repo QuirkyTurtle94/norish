@@ -23,7 +23,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, Health checks.
   - [x] ready fails on Postgres or Redis, and stays 200 with the parser down
   - [x] the deprecated `/health` answers as before
 - [x] `openapi.json` is regenerated, so the docs' API reference shows both endpoints and `/health` as deprecated.
-- [ ] The image builds and boots: its healthcheck reports healthy, and stays healthy with Redis stopped.
+- [x] The image builds and boots: its healthcheck reports healthy, and stays healthy with Redis stopped.
 - [x] Release notes, under Upgrade notes: `/api/v1/health/live` is for restarts and `/api/v1/health/ready` is for traffic (Kubernetes readiness probes, load balancers), and the image's healthcheck now calls live. `/api/v1/health` still works but is deprecated and will be removed in a later release.
 
 ## Comments
@@ -35,3 +35,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, Health checks.
   - The README's compose snippet calls live, like the example compose.
   - Docs: a "Health checks" table on the Server & runtime page, which the Upgrade note links to.
   - **Still open:** the image boot check (healthy, and still healthy with Redis stopped). The Dockerfile changes again in ticket 12, so it is verified with that image.
+- 2026-10-14. **Image boot check done** on arm64 and amd64 (the final image, with tickets 07 and 13): the healthcheck reports healthy, and stays healthy with Redis stopped while `/api/v1/health/ready` answers 503.

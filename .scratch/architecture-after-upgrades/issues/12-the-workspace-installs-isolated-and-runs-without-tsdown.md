@@ -38,7 +38,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
   - Type-only imports, tests and config files are allowed.
   - In apps/web only `server/**` is held to it, because Next bundles the rest at build time.
   - Whatever it flags is fixed by moving the declaration.
-- [ ] The image (`docker/Dockerfile`):
+- [x] The image (`docker/Dockerfile`):
   - [x] `pnpm deploy --filter @norish/web --prod` runs isolated, with no linker override.
   - [x] The clean-up after the deploy works inside `.pnpm`, whose folders are named `<name>@<version>[_<peers>]`.
     - It removes the build-time packages that reach the prod closure through peers: TypeScript as tRPC's peer, drizzle-kit as better-auth's optional peer, Babel, `@types`, tailwindcss and `ffmpeg-static`.
@@ -48,7 +48,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
   - [x] The image copies `apps/web/server/` and `apps/web/package.json` (for its `"type": "module"`), and `CMD` is `node --import tsx /app/apps/web/server/index.ts`.
   - [x] The deploy stays at `/app/node_modules`. Next's links in `.next/node_modules` (pg, pino, sharp) point at `../../../../node_modules/.pnpm/…`, which resolves only from there.
   - [x] No `tsconfig.json` is copied to `/app` or `/app/apps/web`. From there, tsx would apply apps/web's `@norish/queue/*` alias into `/app/packages` and load a second queue registry.
-  - [ ] The image builds on amd64 and arm64 and boots against Postgres and Redis: health 200, `/login` renders, and the log has no module errors.
+  - [x] The image builds on amd64 and arm64 and boots against Postgres and Redis: health 200, `/login` renders, and the log has no module errors.
 - [x] Every `CONTRIBUTING.md` gate passes, plus `pnpm deps:cycles` and `pnpm format:check`. Test counts match before apart from the moved db tests. The E2E suite passes against a fresh `pnpm build`.
 - [x] Release notes, under Upgrade notes: "The image starts the server with `node --import tsx /app/apps/web/server/index.ts`. If you override the container's command, update it."
 
@@ -98,3 +98,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
     - The fix is in its own commit, `1462ec82`: the refetch now follows the fresh subscription's Cursor Mark, which the server sends only after registering on the hub. tsx's slower server widened the window enough to show it.
     - After the fix: realtime `--repeat-each 10` gave 90 of 90, twice, and the full suite gave **181 of 181**.
   - **Seen once, not explained.** In a `--repeat-each 3` run before the fix, one server-restart scenario logged "Shutdown step is slow" for "HTTP server close" (1 of 3 repeats). It did not come back in the 180 realtime repeats or the full run after.
+- 2026-10-14. **Image verified.** 12's own image (with 07) built on arm64 in 343 s and booted: live in 13 s, ready, `/login` and `/serwist/sw.js` 200, no module errors, migrations ran. The final image (with 13) built and booted the same on arm64 (218 s) and amd64 (456 s under emulation on this Mac).

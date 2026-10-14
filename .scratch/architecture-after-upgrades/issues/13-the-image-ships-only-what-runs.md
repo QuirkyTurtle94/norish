@@ -44,7 +44,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
     - Gain: 23 / 34 MB (next-intl's plugin, serwist, glob and two `@swc/core` builds no longer ship), and the config loads in 2 ms instead of 260 ms.
     - Cost: a private variable, the one Next's own standalone server sets.
   - [x] Record next trimmed to its trace as a further lead: 21.6 of next's 63.2 MB kept, compressed size not measured.
-- [ ] The image builds on amd64 and arm64 and boots against Postgres and Redis: health 200, `/login` renders, `/serwist/sw.js` 200, and the log has no module errors. It is about 275 MB compressed or less; the verified repack was 274.9 MB / 1.07 GB, against 405.5 MB / 1.87 GB for 12's image. Record the before and after sizes and the build time here.
+- [x] The image builds on amd64 and arm64 and boots against Postgres and Redis: health 200, `/login` renders, `/serwist/sw.js` 200, and the log has no module errors. It is about 275 MB compressed or less; the verified repack was 274.9 MB / 1.07 GB, against 405.5 MB / 1.87 GB for 12's image. Record the before and after sizes and the build time here.
 - [ ] The maintainer's pre-release test includes a URL import, a video import, an image upload including HEIC, and an AI job. The store-folder cut rests on static analysis and Next's traces, and the boot check reaches none of those paths.
 - [x] Release notes, under Fixes and Improvements: "The Docker image is about 30% smaller to download."
 
@@ -88,3 +88,5 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
   - **Further lead:** the image build spends about 10 s writing Turbopack's filesystem cache, which the image then deletes.
   - **Boot check, arm64** (fresh Postgres 17 and Redis 8.10.1): live in 12 to 15 s, ready 200, `/login` 200, `/serwist/sw.js` 200, no module errors; the container stays healthy with Redis stopped while ready answers 503.
   - **Still open:** the amd64 build and boot, and the maintainer's pre-release test (a URL import, a video import, a HEIC upload and an AI job).
+
+- 2026-10-14. **Final image, both architectures** (HEAD after review): arm64 260.9 MB / 0.72 GB, amd64 259.5 MB / 0.74 GB, against 409.1 MB / 1.27 GB before. Both boot against Postgres 17 and Redis: live, ready, `/login`, `/serwist/sw.js` and the manifest 200, `/_next/image` 404 (the built config is the one running), the data files resolve, migrations run, no module errors, healthy with Redis stopped. Build time 218 s arm64, 456 s amd64 under emulation. Still open: the maintainer's pre-release test.

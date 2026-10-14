@@ -30,8 +30,8 @@ Shutdown bounds its close by force-closing the workers once the budget runs out.
   - [x] Every real-Redis test connects through the production connection options and the shared Redis image constant from the sweep's ticket 34, and adds no `vi.clearAllMocks()` (Vitest 5's default, the sweep's ticket 31).
 - [x] Shutdown closes every worker. The shutdown step still names itself in the log if it runs slow.
 - [x] Once the shutdown budget runs out, the workers are force-closed (`worker.close(true)`). No BullMQ connection sets `commandTimeout`; if the sweep's ticket 35 landed one, it is replaced by the force-close.
-- [ ] The sweep's ticket 35 regression still passes: `realtime.e2e.ts` runs the Redis restart before the server restart, and the shutdown log names no step over budget.
-- [ ] The E2E suite passes against a fresh `pnpm build`, including the job monitor's AI-model chip in the decision-model spec.
+- [x] The sweep's ticket 35 regression still passes: `realtime.e2e.ts` runs the Redis restart before the server restart, and the shutdown log names no step over budget.
+- [x] The E2E suite passes against a fresh `pnpm build`, including the job monitor's AI-model chip in the decision-model spec.
 - [x] Release notes, under Fixes and Improvements: "A recipe import or calendar sync that failed and is due to retry now retries as soon as its wait is over. Before, the retry did not run until another import or sync was started, even after a restart." The maintainer will rewrite it.
 
 ## Comments
@@ -43,3 +43,4 @@ Shutdown bounds its close by force-closing the workers once the budget runs out.
   - The one `Queue` built outside a factory the registry calls was the lazy manager's own, which is deleted. The scheduled-tasks and store-lookup factories still build a plain `Queue`, but only the registry calls them; ticket 04 routes their options through one place.
   - `CLIENT LIST` on an idle dev server (`tsx server/index.ts` against the local stack), 15 s after "Server ready": **19 connections.** That is the publisher, the Realtime Hub, the shared BullMQ client (`norish:<pid>:bull`) and 16 blocking `bzpopmin` connections, one per queue, with no QueueEvents. SIGTERM then shut it down in 0.2 s with no slow step logged.
   - Tests: `__tests__/queue/create-worker-redis.test.ts` covers the retry after its backoff, the error log, the signal with the context and ledger, the wait within the budget, and the force-close after it. `__tests__/redis/bullmq-redis.test.ts` (half-open close) now goes through `createWorker` and `closeWorkers`. The two hand-built workers' "wraps its own processor" tests are deleted, because `createWorker` now owns that property.
+- 2026-10-14. Both E2E items: the full browser suite passed against a fresh build on 2026-10-14: 181 of 181, no flaky test. `realtime.e2e.ts` runs the Redis restart before the server restart, and asserts the captured server log has no "Shutdown step is slow" line; the decision-model spec with the job monitor's AI-model chip is in the `ai` project.
