@@ -37,7 +37,7 @@ export function EditPlannedRecipePanel({
   slot,
 }: EditPlannedRecipePanelProps) {
   const { deletePlanned, moveItem, planMeal } = useCalendarContext();
-  const [selectedDate, setSelectedDate] = useState<DateValue>(parseDate(date));
+  const [selectedDate, setSelectedDate] = useState<DateValue>(() => parseDate(date));
   const [selectedSlot, setSelectedSlot] = useState<Slot>(slot);
   const t = useTranslations("calendar.editPlannedRecipe");
   const tSlots = useTranslations("common.slots");

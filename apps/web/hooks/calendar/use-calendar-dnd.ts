@@ -65,7 +65,7 @@ export function useCalendarDnd() {
   // Persistent local state - syncs with external data only when not dragging
   const [items, setItems] = useState<CalendarItemsState>(() => buildItemsState(plannedItemsByDate));
 
-  const clonedItems = useRef<CalendarItemsState | null>(null);
+  const clonedItemsRef = useRef<CalendarItemsState | null>(null);
 
   // Track previous plannedItemsByDate to detect external changes
   const prevPlannedItemsRef = useRef<Record<string, PlannedItemFromQuery[]>>(plannedItemsByDate);
@@ -159,7 +159,7 @@ export function useCalendarDnd() {
       const id = active.id as string;
 
       setActiveId(id);
-      clonedItems.current = JSON.parse(JSON.stringify(items));
+      clonedItemsRef.current = JSON.parse(JSON.stringify(items));
 
       const containerId = findContainerForItem(id, items);
 
@@ -238,11 +238,11 @@ export function useCalendarDnd() {
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
-      const originalItems = clonedItems.current;
+      const originalItems = clonedItemsRef.current;
 
       setActiveId(null);
       setOverContainerId(null);
-      clonedItems.current = null;
+      clonedItemsRef.current = null;
 
       if (!over || !originalItems) {
         if (originalItems) setItems(originalItems);
@@ -298,12 +298,12 @@ export function useCalendarDnd() {
   );
 
   const handleDragCancel = useCallback(() => {
-    if (clonedItems.current) {
-      setItems(clonedItems.current);
+    if (clonedItemsRef.current) {
+      setItems(clonedItemsRef.current);
     }
     setActiveId(null);
     setOverContainerId(null);
-    clonedItems.current = null;
+    clonedItemsRef.current = null;
   }, []);
 
   return {

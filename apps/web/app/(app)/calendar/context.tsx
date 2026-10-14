@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCalendarMutations } from "@/hooks/calendar/use-calendar-mutations";
 import { useCalendarQuery } from "@/hooks/calendar/use-calendar-query";
 import { useCalendarSubscription } from "@/hooks/calendar/use-calendar-subscription";
@@ -158,11 +150,11 @@ export function CalendarContextProvider({
     ]
   );
 
-  return <CalendarContext.Provider value={value}>{children}</CalendarContext.Provider>;
+  return <CalendarContext value={value}>{children}</CalendarContext>;
 }
 
 export function useCalendarContext() {
-  const ctx = useContext(CalendarContext);
+  const ctx = use(CalendarContext);
 
   if (!ctx) throw new Error("useCalendarContext must be used within CalendarContextProvider");
 

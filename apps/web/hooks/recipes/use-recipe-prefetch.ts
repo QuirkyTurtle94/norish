@@ -21,6 +21,7 @@ export function useRecipePrefetch(recipeId: string, enabled = true) {
   useEffect(() => {
     if (!enabled || !recipeId || typeof window === "undefined") return;
 
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -32,7 +33,7 @@ export function useRecipePrefetch(recipeId: string, enabled = true) {
               // Retry prefetch once on failure (network blip)
               if (retryCountRef.current < MAX_RETRIES) {
                 retryCountRef.current++;
-                setTimeout(() => {
+                retryTimer = setTimeout(() => {
                   queryClient.prefetchQuery(trpc.recipes.get.queryOptions({ id: recipeId }));
                 }, 1000); // Retry after 1s
               }
@@ -55,6 +56,7 @@ export function useRecipePrefetch(recipeId: string, enabled = true) {
     }
 
     return () => {
+      clearTimeout(retryTimer);
       if (element) {
         observer.unobserve(element);
       }

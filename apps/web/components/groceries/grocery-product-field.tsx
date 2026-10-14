@@ -1,7 +1,7 @@
 "use client";
 
 import type { PackSizeWords } from "@/lib/format-price";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FIELD_CLASS, FIELD_STYLE } from "@/components/groceries/grocery-field";
 import { GroceryPurchaseAmount } from "@/components/groceries/grocery-purchase-amount";
 import { ProductDetailsPanel } from "@/components/groceries/product-details-panel";
@@ -266,15 +266,15 @@ export function GroceryProductField({
   // opened the way the recurrence editor is: what a shopper touches every
   // time stays on the panel, what they correct once a year does not.
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const heldByHand = useRef("");
+  const heldByHandRef = useRef("");
   // The name the field itself put in the box. That is an answer, not a
   // question: writing a choice into the input must never send the household
   // back to the shop to ask about the product they have just chosen.
-  const answeredWith = useRef<string | null>(null);
+  const answeredWithRef = useRef<string | null>(null);
   // A row the field took by itself, and whether it took it for the grocery's
   // own name rather than for something the shopper typed here.
-  const autoPicked = useRef<{ key: string; forName: boolean } | null>(null);
-  const lastName = useRef(groceryName);
+  const autoPickedRef = useRef<{ key: string; forName: boolean } | null>(null);
+  const lastNameRef = useRef(groceryName);
 
   // Until the shopper types, the question is the grocery's own name, which the
   // panel above may still be being filled in; after they type it is what they
@@ -285,7 +285,7 @@ export function GroceryProductField({
   useEffect(() => {
     const next = typed ? term.trim() || groceryName.trim() : groceryName.trim();
 
-    if (typed && answeredWith.current === term) return;
+    if (typed && answeredWithRef.current === term) return;
     if (next === searchedTerm) return;
     const timer = setTimeout(() => setSearchedTerm(next), SEARCH_DEBOUNCE_MS);
 
@@ -393,7 +393,7 @@ export function GroceryProductField({
       setManualPackQuantity(pack ? String(pack.quantity) : "");
       setManualPackUnit(pack?.unit ?? "");
       setManualUrl(productPage ?? "");
-      heldByHand.current = "";
+      heldByHandRef.current = "";
     },
     []
   );
@@ -401,7 +401,7 @@ export function GroceryProductField({
   /** This row is the answer, however it came to be: tapped, or unmistakable. */
   const take = useCallback(
     (row: ProductRow) => {
-      answeredWith.current = row.name;
+      answeredWithRef.current = row.name;
       setUnlinked(false);
       setPicked(row.key);
       setTerm(row.name);
@@ -431,7 +431,7 @@ export function GroceryProductField({
 
   useEffect(() => {
     if (!unmistakable) return;
-    autoPicked.current = { key: unmistakable.key, forName: !typed };
+    autoPickedRef.current = { key: unmistakable.key, forName: !typed };
     take(unmistakable);
   }, [unmistakable, take, typed]);
 
@@ -440,9 +440,9 @@ export function GroceryProductField({
    * so is the question itself, until the typing stops and a new one is asked.
    */
   const untake = useCallback(() => {
-    autoPicked.current = null;
-    answeredWith.current = null;
-    heldByHand.current = "";
+    autoPickedRef.current = null;
+    answeredWithRef.current = null;
+    heldByHandRef.current = "";
     setPicked(null);
     setTerm("");
     setSearchedTerm("");
@@ -473,9 +473,9 @@ export function GroceryProductField({
   // against the rows afresh — or the shop is asked again. A row the shopper
   // tapped, or one taken for a term they typed here, is theirs and stays.
   useEffect(() => {
-    if (lastName.current === groceryName) return;
-    lastName.current = groceryName;
-    if (autoPicked.current?.forName) untake();
+    if (lastNameRef.current === groceryName) return;
+    lastNameRef.current = groceryName;
+    if (autoPickedRef.current?.forName) untake();
   }, [groceryName, untake]);
 
   useEffect(() => {
@@ -540,10 +540,14 @@ export function GroceryProductField({
   const pageUrl = trimmedUrl !== "" && !urlInvalid ? trimmedUrl : null;
   // The pack the fields hold: an amount and a unit, prefilled from the product
   // they describe or typed, and by weight where that product was.
-  const typedPack: PackSize | null =
-    quantityTyped && unitTyped && !packInvalid && isUnitId(manualPackUnit)
-      ? { quantity: typedQuantity, unit: manualPackUnit, byWeight: selectedPack?.byWeight ?? false }
-      : null;
+  const typedByWeight = selectedPack?.byWeight ?? false;
+  const typedPack = useMemo<PackSize | null>(
+    () =>
+      quantityTyped && unitTyped && !packInvalid && isUnitId(manualPackUnit)
+        ? { quantity: typedQuantity, unit: manualPackUnit, byWeight: typedByWeight }
+        : null,
+    [quantityTyped, unitTyped, packInvalid, manualPackUnit, typedQuantity, typedByWeight]
+  );
 
   // A price typed over a by-hand product corrects that product — the one the
   // shopper made earlier for this name, or one they picked from what the Store
@@ -572,8 +576,8 @@ export function GroceryProductField({
       ? `${manualTarget}|${manualName}|${typedPrice}|${currency}|${selectedSize ?? ""}|${packWords}|${pageUrl ?? ""}|${selectedRegularPrice ?? ""}|${selectedDealWords ?? ""}`
       : `picked|${picked ?? ""}`;
 
-    if (heldByHand.current === held) return;
-    heldByHand.current = held;
+    if (heldByHandRef.current === held) return;
+    heldByHandRef.current = held;
     onChoice(
       hasTypedPrice
         ? {
@@ -659,7 +663,7 @@ export function GroceryProductField({
           const row = rows.find((candidate) => candidate.key === String(key));
 
           if (!row) return;
-          autoPicked.current = null;
+          autoPickedRef.current = null;
           take(row);
         }}
       >

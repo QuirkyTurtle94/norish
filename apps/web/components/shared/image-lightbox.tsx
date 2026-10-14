@@ -173,6 +173,9 @@ export default function ImageLightbox({
                   <Carousel.Content className="items-center">
                     {images.map((image, index) => (
                       <Carousel.Item
+                        // The same picture can sit here twice (uploads are named by content hash), so
+                        // only its place tells the two apart; the list keeps its stored order.
+                        // eslint-disable-next-line @eslint-react/no-array-index-key
                         key={`${image.src}-${index}`}
                         className="flex items-center justify-center"
                       >
@@ -208,6 +211,9 @@ export default function ImageLightbox({
                 >
                   {images.map((image, index) => (
                     <Carousel.Thumbnail
+                      // The same picture can sit here twice (uploads are named by content hash), so
+                      // only its place tells the two apart; the list keeps its stored order.
+                      // eslint-disable-next-line @eslint-react/no-array-index-key
                       key={`${image.src}-thumbnail-${index}`}
                       alt={image.alt || `Image ${index + 1}`}
                       index={index}

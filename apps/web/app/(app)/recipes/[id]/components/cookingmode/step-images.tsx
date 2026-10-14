@@ -69,7 +69,12 @@ export function StepImages({ className = "", step }: StepImagesProps) {
           <Carousel className="[--carousel-gap:0px]" opts={{ loop: true }}>
             <Carousel.Content>
               {step.images.map((image, index) => (
-                <Carousel.Item key={`${image.image}-${index}`}>
+                <Carousel.Item
+                  // The same picture can sit here twice (uploads are named by content hash), so
+                  // only its place tells the two apart; the list keeps its stored order.
+                  // eslint-disable-next-line @eslint-react/no-array-index-key
+                  key={`${image.image}-${index}`}
+                >
                   <div className="bg-surface-secondary relative aspect-video overflow-hidden rounded-xl">
                     {hasError(image.image) ? (
                       <FallbackPlaceholder className="h-full w-full rounded-xl" />

@@ -2,7 +2,7 @@
 
 import type { EmblaCarouselType, EmblaOptionsType, EmblaPluginType } from "embla-carousel";
 import type { ComponentPropsWithoutRef, KeyboardEvent, ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, use, useCallback, useEffect, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/16/solid";
 import { Button, ScrollShadow } from "@heroui/react";
 import useEmblaCarousel from "embla-carousel-react";
@@ -26,7 +26,7 @@ type CarouselContextValue = {
 const CarouselContext = createContext<CarouselContextValue | null>(null);
 
 export function useCarousel() {
-  const context = useContext(CarouselContext);
+  const context = use(CarouselContext);
 
   if (!context) {
     throw new Error("useCarousel must be used within a <Carousel>");
@@ -91,7 +91,7 @@ function CarouselRoot({ children, className, opts, plugins, setApi, ...props }: 
   );
 
   return (
-    <CarouselContext.Provider
+    <CarouselContext
       value={{
         api,
         canScrollNext,
@@ -116,7 +116,7 @@ function CarouselRoot({ children, className, opts, plugins, setApi, ...props }: 
       >
         {children}
       </div>
-    </CarouselContext.Provider>
+    </CarouselContext>
   );
 }
 

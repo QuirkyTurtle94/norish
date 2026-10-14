@@ -103,7 +103,7 @@ function ReadonlyIngredientsListContent({
             const headingText = it.ingredientName.trim().replace(/^#+\s*/, "");
 
             return (
-              <li key={`heading-${idx}`} className="list-none">
+              <li key={it.order} className="list-none">
                 <div className="px-3 py-2">
                   <h3 className="text-foreground text-base font-semibold">{headingText}</h3>
                 </div>
@@ -121,7 +121,7 @@ function ReadonlyIngredientsListContent({
             : "flex items-start gap-2 rounded-xl px-3 py-2.5 md:gap-3";
 
           return (
-            <li key={`${it.ingredientName}-${idx}`}>
+            <li key={it.order}>
               <div
                 aria-pressed={interactive ? isChecked : undefined}
                 className={wrapperClassName}

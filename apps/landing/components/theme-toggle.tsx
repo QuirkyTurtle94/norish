@@ -19,7 +19,7 @@ type DocumentWithViewTransition = Document & {
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const button = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -33,14 +33,14 @@ export function ThemeToggle() {
     const doc = document as DocumentWithViewTransition;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (!doc.startViewTransition || reduced || !button.current) {
+    if (!doc.startViewTransition || reduced || !buttonRef.current) {
       setTheme(next);
 
       return;
     }
 
     // The circle grows from the button itself, reaching the farthest corner.
-    const { left, top, width, height } = button.current.getBoundingClientRect();
+    const { left, top, width, height } = buttonRef.current.getBoundingClientRect();
     const x = left + width / 2;
     const y = top + height / 2;
     const radius = Math.hypot(
@@ -63,7 +63,7 @@ export function ThemeToggle() {
 
   return (
     <button
-      ref={button}
+      ref={buttonRef}
       aria-label={label}
       className="text-muted hover:text-foreground hover:bg-default grid size-9 place-items-center rounded-full transition-colors"
       type="button"

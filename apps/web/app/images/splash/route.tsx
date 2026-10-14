@@ -54,8 +54,8 @@ export function GET(request: NextRequest) {
         width={wordmarkWidth}
         xmlns="http://www.w3.org/2000/svg"
       >
-        {WORDMARK_PATHS.map((d, index) => (
-          <path key={index} d={d} fill={colors.wordmark} />
+        {WORDMARK_PATHS.map((d) => (
+          <path key={d} d={d} fill={colors.wordmark} />
         ))}
       </svg>
     </div>,

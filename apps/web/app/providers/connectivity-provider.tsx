@@ -4,8 +4,8 @@ import type { ConnectivitySnapshot, ConnectivityState } from "@/lib/connectivity
 import type { ReactNode } from "react";
 import {
   createContext,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -64,7 +64,7 @@ const ConnectivityContext = createContext<ConnectivityValue>({
 });
 
 export function useConnectivity(): ConnectivityValue {
-  return useContext(ConnectivityContext);
+  return use(ConnectivityContext);
 }
 
 const serverForcedSnapshot = () => false;
@@ -227,5 +227,5 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
     };
   }, [snapshot.state, forced, probeNow, subscribeLiveProbes]);
 
-  return <ConnectivityContext.Provider value={value}>{children}</ConnectivityContext.Provider>;
+  return <ConnectivityContext value={value}>{children}</ConnectivityContext>;
 }

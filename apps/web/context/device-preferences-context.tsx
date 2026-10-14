@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, use, useCallback, useMemo, useRef, useState } from "react";
 import { useConnectivity } from "@/app/providers/connectivity-provider";
 import { useTRPC } from "@/app/providers/trpc-provider";
 import { useUserCacheHelpers } from "@/hooks/user/use-user-cache";
@@ -131,13 +131,11 @@ export function DevicePreferencesProvider({
 
   const value = useMemo(() => ({ kind, values, set }), [kind, values, set]);
 
-  return (
-    <DevicePreferencesContext.Provider value={value}>{children}</DevicePreferencesContext.Provider>
-  );
+  return <DevicePreferencesContext value={value}>{children}</DevicePreferencesContext>;
 }
 
 function useDevicePreferences(): DevicePreferencesValue {
-  const context = useContext(DevicePreferencesContext);
+  const context = use(DevicePreferencesContext);
 
   if (!context) {
     throw new Error("Device Preferences must be read within DevicePreferencesProvider");

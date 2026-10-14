@@ -97,11 +97,11 @@ export default function LibraryHeading({ id }: { id: string }) {
   // Which way the word travels: forward along the chips rolls up, back rolls
   // down, so the heading moves with the control the reader just used.
   const position = LIBRARY_TYPE_FILTERS.indexOf(filters.libraryType);
-  const previousPosition = useRef(position);
-  const isRising = position >= previousPosition.current;
+  const previousPositionRef = useRef(position);
+  const isRising = position >= previousPositionRef.current;
 
   useEffect(() => {
-    previousPosition.current = position;
+    previousPositionRef.current = position;
   }, [position]);
 
   if (prefersReducedMotion) {

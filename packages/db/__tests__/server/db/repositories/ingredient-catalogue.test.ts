@@ -159,7 +159,9 @@ describe("ingredient uses", () => {
       )
     ).toEqual({
       recipes: [{ id: recipeId, name: "Saté" }],
-      groceries: [{ name: "kipfilet met de hand", done: true, recurring: false }],
+      groceries: [
+        { id: expect.any(String), name: "kipfilet met de hand", done: true, recurring: false },
+      ],
       pantry: true,
       elsewhere: 1,
     });

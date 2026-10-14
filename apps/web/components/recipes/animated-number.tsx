@@ -33,11 +33,11 @@ function magnitude(value: string): number {
  */
 export function AnimatedNumber({ value, className = "" }: AnimatedNumberProps) {
   const prefersReducedMotion = useReducedMotion();
-  const previous = useRef(value);
-  const isRising = magnitude(value) >= magnitude(previous.current);
+  const previousRef = useRef(value);
+  const isRising = magnitude(value) >= magnitude(previousRef.current);
 
   useEffect(() => {
-    previous.current = value;
+    previousRef.current = value;
   }, [value]);
 
   if (prefersReducedMotion) {

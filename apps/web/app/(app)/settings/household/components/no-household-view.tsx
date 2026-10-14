@@ -74,6 +74,8 @@ export default function NoHouseholdView() {
                         against the white card. */}
                   {Array.from({ length: 6 }).map((_, index) => (
                     <InputOTP.Slot
+                      // A code slot is its position.
+                      // eslint-disable-next-line @eslint-react/no-array-index-key
                       key={index}
                       className="border-field-border bg-default text-foreground hover:bg-default data-[active=true]:bg-default data-[filled=true]:bg-default h-12 w-10 flex-none shadow-none"
                       index={index}

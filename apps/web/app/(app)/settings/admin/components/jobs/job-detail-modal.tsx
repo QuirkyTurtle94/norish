@@ -72,6 +72,9 @@ function StepList({ steps, t }: { steps: AdminJobStepDTO[]; t: Translate }) {
         const meta = stepMeta(step);
 
         return (
+          // A step can run twice in one attempt, so its place in the timeline is
+          // what tells the two apart; the timeline only grows.
+          // eslint-disable-next-line @eslint-react/no-array-index-key
           <li key={`${step.id}-${index}`} className="flex gap-3 py-2">
             <div className="mt-0.5 shrink-0">
               <StepIcon status={step.status} />

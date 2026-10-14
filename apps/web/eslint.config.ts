@@ -45,6 +45,12 @@ export default defineConfig(
     },
   },
   {
+    // A skeleton's rows are placeholders: they have no identity and never
+    // reorder, so their position is the only key they have.
+    files: ["components/skeleton/**/*.tsx"],
+    rules: { "@eslint-react/no-array-index-key": "off" },
+  },
+  {
     // The browser scenarios drive a harness served from localhost, which is a
     // secure context, and their `page.evaluate` bodies cannot import from the
     // app anyway. The secure-context restriction is about shipped client code.

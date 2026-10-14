@@ -130,7 +130,7 @@ export default function TagInput({ value, onChange, placeholder, className = "" 
 
     if (!trimmed) return [];
 
-    return trimmed.split(/\s+/).filter((w) => w.length >= 2);
+    return [...new Set(trimmed.split(/\s+/).filter((w) => w.length >= 2))];
   }, [rawInput]);
 
   // Get the current word being typed (last word)
@@ -306,7 +306,7 @@ export default function TagInput({ value, onChange, placeholder, className = "" 
         <div className="mt-3 flex flex-wrap gap-2">
           <AnimatePresence mode="popLayout">
             {/* Non-matching typed words (potential new tags) */}
-            {typedWords.map((word, idx) => {
+            {typedWords.map((word) => {
               const lower = word.toLowerCase();
               // Only hide if it's an EXACT match with a suggestion (avoid true duplicates)
               const isExactMatch = suggestions.some((s) => s.toLowerCase() === lower);
@@ -316,7 +316,7 @@ export default function TagInput({ value, onChange, placeholder, className = "" 
 
               return (
                 <motion.button
-                  key={`new-tag-${word}-${idx}`}
+                  key={`new-tag-${word}`}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   className="bg-surface text-muted border-border inline-flex items-center rounded-full border-2 border-dashed px-2.5 py-1 text-xs font-medium opacity-70 transition-opacity hover:opacity-100"
                   exit={{ opacity: 0, scale: 0.9, x: -10 }}

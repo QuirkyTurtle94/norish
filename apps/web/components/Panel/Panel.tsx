@@ -4,8 +4,8 @@ import React, {
   createContext,
   ReactElement,
   ReactNode,
+  use,
   useCallback,
-  useContext,
   useMemo,
   useState,
 } from "react";
@@ -22,7 +22,6 @@ export interface PanelProps {
   /** Beside the title, outside it: a status chip, say. The dialog's name stays the title. */
   titleAddon?: ReactNode;
   children: ReactNode;
-  trigger?: ReactElement;
   open?: boolean;
   nested?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -44,7 +43,7 @@ const PanelContext = createContext<{
 }>({ open: false, close: () => {}, toggle: () => {}, portalContainer: null });
 
 export function usePanel() {
-  return useContext(PanelContext);
+  return use(PanelContext);
 }
 
 /**
@@ -69,12 +68,6 @@ export function usePanelPortalContainer(): HTMLElement | undefined {
 type PanelSectionProps = {
   children: ReactNode;
   className?: string;
-};
-
-type PanelTriggerProps = {
-  "aria-expanded"?: boolean;
-  "aria-haspopup"?: "dialog";
-  onClick?: (event: unknown) => void;
 };
 
 const PANEL_MAX_HEIGHT_CLASS = "max-h-[80dvh]";
@@ -110,7 +103,6 @@ const PanelRoot: React.FC<PanelProps> = ({
   titleAddon,
   nested = false,
   children,
-  trigger,
   open: controlledOpen,
   onOpenChange,
 }) => {
@@ -136,6 +128,9 @@ const PanelRoot: React.FC<PanelProps> = ({
     const footer: ReactNode[] = [];
     const footerClasses: string[] = [];
 
+    // The slot API: Panel.Body and Panel.Footer are placed by type into fixed
+    // regions of the drawer, so the panel has to read its own children.
+    // eslint-disable-next-line @eslint-react/no-children-for-each
     React.Children.forEach(children, (child) => {
       if (React.isValidElement(child) && child.type === PanelFooter) {
         const element = child as ReactElement<PanelSectionProps>;
@@ -169,30 +164,13 @@ const PanelRoot: React.FC<PanelProps> = ({
   const bodyClasses = twMerge("flex min-h-0 flex-1 flex-col", bodyClassName);
   const footerClasses = twMerge("shrink-0", footerClassName);
 
-  const panelTrigger = trigger as ReactElement<PanelTriggerProps> | undefined;
-  const triggerElement =
-    panelTrigger &&
-    React.cloneElement(panelTrigger, {
-      "aria-haspopup": "dialog",
-      "aria-expanded": open,
-      onClick: (event: unknown) => {
-        const original = panelTrigger.props.onClick;
-
-        if (typeof original === "function") original(event);
-        toggle();
-      },
-    });
   const Root = nested ? Drawer.NestedRoot : Drawer.Root;
 
   return (
     <div data-panel className={className}>
-      {trigger && <span className="inline-flex">{triggerElement}</span>}
-
       {/* vaul keeps the content mounted after close, so gate on `open` — a
           closed panel must not capture overlays. */}
-      <PanelContext.Provider
-        value={{ open, close, toggle, portalContainer: open ? contentElement : null }}
-      >
+      <PanelContext value={{ open, close, toggle, portalContainer: open ? contentElement : null }}>
         {/* repositionInputs resizes the sheet and force-scrolls the focused field to
             the top of its scroll container on iOS, which throws a scrolled panel body
             out of view; Radix's RemoveScroll still locks the page behind the sheet. */}
@@ -268,7 +246,7 @@ const PanelRoot: React.FC<PanelProps> = ({
             </Drawer.Content>
           </Drawer.Portal>
         </Root>
-      </PanelContext.Provider>
+      </PanelContext>
     </div>
   );
 };

@@ -80,26 +80,26 @@ export function OfflineCacheController({ children }: { children: ReactNode }) {
 
   // Recovery runs for startup, Offline→Live and WebSocket reconnection. Calls
   // coalesce with manual sync and retry continuation inside the same instance.
-  const wasOffline = useRef(false);
-  const startedForOwner = useRef<string | null>(null);
-  const previousWsStatus = useRef(wsStatus);
-  const hasEverConnected = useRef(false);
+  const wasOfflineRef = useRef(false);
+  const startedForOwnerRef = useRef<string | null>(null);
+  const previousWsStatusRef = useRef(wsStatus);
+  const hasEverConnectedRef = useRef(false);
 
   useEffect(() => {
-    const socketConnected = previousWsStatus.current !== "connected" && wsStatus === "connected";
+    const socketConnected = previousWsStatusRef.current !== "connected" && wsStatus === "connected";
     // Only a *re*connection can have missed anything. The first connect of a
     // page load happens alongside the page's own first fetches, which already
     // read the live server.
-    const socketReconnected = socketConnected && hasEverConnected.current;
+    const socketReconnected = socketConnected && hasEverConnectedRef.current;
 
-    previousWsStatus.current = wsStatus;
+    previousWsStatusRef.current = wsStatus;
 
     if (wsStatus === "connected") {
-      hasEverConnected.current = true;
+      hasEverConnectedRef.current = true;
     }
 
     if (isOffline) {
-      wasOffline.current = true;
+      wasOfflineRef.current = true;
 
       return;
     }
@@ -108,16 +108,16 @@ export function OfflineCacheController({ children }: { children: ReactNode }) {
       return;
     }
 
-    const returningLive = wasOffline.current;
-    const starting = startedForOwner.current !== owner;
+    const returningLive = wasOfflineRef.current;
+    const starting = startedForOwnerRef.current !== owner;
 
-    wasOffline.current = false;
+    wasOfflineRef.current = false;
 
     if (!starting && !returningLive && !socketReconnected) {
       return;
     }
 
-    startedForOwner.current = owner;
+    startedForOwnerRef.current = owner;
     // Startup follows the page's own fetches, so recovery does not refresh the
     // reads again unless Replay actually sent something. Coming back online or
     // reconnecting always refreshes — those genuinely may have missed changes.
@@ -129,7 +129,7 @@ export function OfflineCacheController({ children }: { children: ReactNode }) {
   // the loop already probes on those. Only a growing pending count is an
   // admission; Replay's own removals and parks change the queue too. While
   // Offline the backoff loop is probing already.
-  const pendingCount = useRef<number | null>(null);
+  const pendingCountRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!owner) return;
@@ -141,14 +141,14 @@ export function OfflineCacheController({ children }: { children: ReactNode }) {
 
       if (cancelled) return;
 
-      const previous = pendingCount.current;
+      const previous = pendingCountRef.current;
 
-      pendingCount.current = pending;
+      pendingCountRef.current = pending;
 
       if (previous !== null && pending > previous && !isOffline) probeNow();
     };
 
-    pendingCount.current = null;
+    pendingCountRef.current = null;
     void check();
     const unsubscribe = outboxStore.subscribe(() => void check());
 

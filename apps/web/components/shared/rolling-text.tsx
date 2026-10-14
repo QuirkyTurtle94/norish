@@ -99,6 +99,9 @@ export function RollingText({
 
       {characters.map((character, index) => (
         <span
+          // A slot is its place in the row, counted from the side the value grows on,
+          // so a changing character rolls in place rather than the row re-mounting.
+          // eslint-disable-next-line @eslint-react/no-array-index-key
           key={keyFrom === "right" ? characters.length - index : index}
           aria-hidden={hideSlots || undefined}
           className="relative inline-flex overflow-hidden"

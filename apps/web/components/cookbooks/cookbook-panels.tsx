@@ -131,7 +131,7 @@ export function CookbookEditPanel({
   const [preview, setPreview] = useState<string | null>(null);
   const [clearImage, setClearImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const picker = useRef<HTMLInputElement>(null);
+  const pickerRef = useRef<HTMLInputElement>(null);
   const { isOffline } = useConnectivity();
   // Every staged edit commits through the same seam: routing only the rename
   // back out through a prop would give one panel two ways to write.
@@ -246,7 +246,7 @@ export function CookbookEditPanel({
                   isDisabled={isOffline}
                   size="sm"
                   variant="secondary"
-                  onPress={() => picker.current?.click()}
+                  onPress={() => pickerRef.current?.click()}
                 >
                   <PhotoIcon className="size-4" />
                   {shownImage ? t("changeImage") : t("chooseImage")}
@@ -268,7 +268,7 @@ export function CookbookEditPanel({
               {isOffline ? <p className="text-muted text-sm">{t("imageNeedsConnection")}</p> : null}
             </div>
             <input
-              ref={picker}
+              ref={pickerRef}
               accept={ALLOWED_IMAGE_MIME_TYPES.join(",")}
               className="hidden"
               data-testid="cookbook-image-file"

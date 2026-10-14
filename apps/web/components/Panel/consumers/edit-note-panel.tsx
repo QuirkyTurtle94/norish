@@ -31,7 +31,7 @@ export function EditNotePanel({
 }: EditNotePanelProps) {
   const { deletePlanned, moveItem, updateItem, planNote } = useCalendarContext();
   const [title, setTitle] = useState(initialTitle);
-  const [selectedDate, setSelectedDate] = useState<DateValue>(parseDate(date));
+  const [selectedDate, setSelectedDate] = useState<DateValue>(() => parseDate(date));
   const [selectedSlot, setSelectedSlot] = useState<Slot>(slot);
   const t = useTranslations("calendar.editNote");
   const tActions = useTranslations("common.actions");

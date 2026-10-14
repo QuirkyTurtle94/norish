@@ -80,15 +80,15 @@ export default function StepInput({
   ingredients = [],
 }: StepInputProps) {
   const t = useTranslations("recipes.stepInput");
-  const [items, setItems] = useState<StepItem[]>([createStepItem("", [])]);
+  const [items, setItems] = useState<StepItem[]>(() => [createStepItem("", [])]);
   // A freshly mentioned line whose chip should ask for its amount: the row
   // it landed on, and the line's order for the chips to open once rendered.
   const [pendingMentionEntry, setPendingMentionEntry] = useState<{
     index: number;
     order: number;
   } | null>(null);
-  const textareaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
-  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const textareasRef = useRef<(HTMLTextAreaElement | null)[]>([]);
+  const fileInputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const dragConstraintsRef = useRef<HTMLUListElement>(null);
   const { uploadStepImage, deleteStepImage } = useRecipeImages();
@@ -245,13 +245,13 @@ export default function StepInput({
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (index < items.length - 1) {
-          textareaRefs.current[index + 1]?.focus();
+          textareasRef.current[index + 1]?.focus();
         } else {
           const updated = [...items, createStepItem("", [])];
 
           setItems(updated);
           setTimeout(() => {
-            textareaRefs.current[items.length]?.focus();
+            textareasRef.current[items.length]?.focus();
           }, 0);
         }
       } else if (e.key === "Backspace" && !items[index]?.text && index > 0) {
@@ -261,7 +261,7 @@ export default function StepInput({
         setItems(updated);
         emitChanges(updated);
         setTimeout(() => {
-          textareaRefs.current[index - 1]?.focus();
+          textareasRef.current[index - 1]?.focus();
         }, 0);
       }
     },
@@ -360,7 +360,7 @@ export default function StepInput({
     [items, emitChanges, deleteStepImage]
   );
   const handleFileSelect = (index: number) => {
-    fileInputRefs.current[index]?.click();
+    fileInputsRef.current[index]?.click();
   };
   const handleReorder = useCallback(
     (newOrder: StepItem[]) => {
@@ -396,11 +396,11 @@ export default function StepInput({
           key={item.id}
           autoEntryOrder={pendingMentionEntry?.index === index ? pendingMentionEntry.order : null}
           dragConstraintsRef={dragConstraintsRef}
-          fileInputRefs={fileInputRefs}
+          fileInputsRef={fileInputsRef}
           index={index}
           ingredientSuggestions={ingredientSuggestions}
           ingredients={chipLines}
-          textareaRefs={textareaRefs}
+          textareasRef={textareasRef}
           isLast={index === items.length - 1}
           item={item}
           recipeId={recipeId}
@@ -448,8 +448,8 @@ interface StepRowProps {
   showRemove: boolean;
   recipeId?: string;
   uploadingIndex: number | null;
-  fileInputRefs: React.RefObject<(HTMLInputElement | null)[]>;
-  textareaRefs: React.RefObject<(HTMLTextAreaElement | null)[]>;
+  fileInputsRef: React.RefObject<(HTMLInputElement | null)[]>;
+  textareasRef: React.RefObject<(HTMLTextAreaElement | null)[]>;
   dragConstraintsRef: React.RefObject<HTMLUListElement | null>;
   stepPlaceholder: string;
   stepPlaceholderShort: string;
@@ -478,8 +478,8 @@ function StepRow({
   showRemove,
   recipeId,
   uploadingIndex,
-  fileInputRefs,
-  textareaRefs,
+  fileInputsRef,
+  textareasRef,
   dragConstraintsRef,
   stepPlaceholder,
   stepPlaceholderShort,
@@ -539,7 +539,7 @@ function StepRow({
         <div className="flex flex-1 flex-col gap-2">
           <SmartTextInput
             ref={(element) => {
-              textareaRefs.current[index] = element;
+              textareasRef.current[index] = element;
             }}
             ingredientSuggestions={ingredientSuggestions}
             minRows={2}
@@ -558,7 +558,7 @@ function StepRow({
               refs={item.stepIngredients}
               onAutoEntryHandled={onAutoEntryHandled}
               onChange={onStepIngredientsChange}
-              onEntryKeyboardClose={() => textareaRefs.current[index]?.focus()}
+              onEntryKeyboardClose={() => textareasRef.current[index]?.focus()}
             />
           )}
 
@@ -566,7 +566,13 @@ function StepRow({
           {item.images.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {item.images.map((img, imgIndex) => (
-                <div key={imgIndex} className="relative h-18 w-18 md:h-20 md:w-20">
+                <div
+                  // The same picture can sit here twice (uploads are named by content hash), so
+                  // only its place tells the two apart; the list keeps its stored order.
+                  // eslint-disable-next-line @eslint-react/no-array-index-key
+                  key={imgIndex}
+                  className="relative h-18 w-18 md:h-20 md:w-20"
+                >
                   <img
                     alt={`Step ${index + 1}, attachment ${imgIndex + 1}`}
                     className="h-14 w-14 rounded-lg object-cover md:h-16 md:w-16"
@@ -592,7 +598,7 @@ function StepRow({
             <>
               <input
                 ref={(el) => {
-                  fileInputRefs.current[index] = el;
+                  fileInputsRef.current[index] = el;
                 }}
                 accept="image/*"
                 className="hidden"

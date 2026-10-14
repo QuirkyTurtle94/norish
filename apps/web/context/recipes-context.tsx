@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo } from "react";
+import { createContext, use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useRecipesFiltersContext } from "@/context/recipes-filters-context";
 import { useFavoritesMutation, useFavoritesQuery } from "@/hooks/favorites";
@@ -115,11 +115,11 @@ function RecipesContextAdapter({ children }: { children: React.ReactNode }) {
     [base, allergies]
   );
 
-  return <RecipesContext.Provider value={value}>{children}</RecipesContext.Provider>;
+  return <RecipesContext value={value}>{children}</RecipesContext>;
 }
 
 export function useRecipesContext() {
-  const ctx = useContext(RecipesContext);
+  const ctx = use(RecipesContext);
 
   if (!ctx) throw new Error("useRecipesContext must be used within RecipesContextProvider");
 

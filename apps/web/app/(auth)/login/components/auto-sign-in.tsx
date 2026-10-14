@@ -15,11 +15,11 @@ interface AutoSignInProps {
 }
 
 export function AutoSignIn({ provider, callbackUrl }: AutoSignInProps) {
-  const redirectInitiated = useRef(false);
+  const redirectInitiatedRef = useRef(false);
 
   useEffect(() => {
-    if (redirectInitiated.current) return;
-    redirectInitiated.current = true;
+    if (redirectInitiatedRef.current) return;
+    redirectInitiatedRef.current = true;
 
     signIn.social({
       provider: provider.id.toLowerCase(),

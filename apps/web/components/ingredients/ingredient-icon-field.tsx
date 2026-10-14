@@ -45,7 +45,7 @@ export function IngredientIconField({
   const tIngredients = useTranslations("settings.ingredients");
   const trpc = useTRPC();
   const portalContainer = usePanelPortalContainer();
-  const picker = useRef<HTMLInputElement>(null);
+  const pickerRef = useRef<HTMLInputElement>(null);
   const upload = useMutation(trpc.ingredients.uploadIcon.mutationOptions());
   const generate = useMutation(trpc.ingredients.generateIcon.mutationOptions());
   const { canDrawImages } = usePermissionsContext();
@@ -107,7 +107,7 @@ export function IngredientIconField({
   return (
     <>
       <input
-        ref={picker}
+        ref={pickerRef}
         accept={ICON_PICTURE_MIME_TYPES.join(",")}
         className="hidden"
         data-testid="ingredient-icon-file"
@@ -133,7 +133,7 @@ export function IngredientIconField({
             <Dropdown.Item
               id="upload"
               textValue={t("upload")}
-              onAction={() => picker.current?.click()}
+              onAction={() => pickerRef.current?.click()}
             >
               <ArrowUpTrayIcon className="size-4" />
               <Label>{t("upload")}</Label>

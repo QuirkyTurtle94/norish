@@ -114,7 +114,7 @@ export default function FiltersPanel({ open, onOpenChange }: FiltersPanelProps) 
   const [workingTags, setWorkingTags] = useState<string[]>(filters.searchTags);
   const [workingCategories, setWorkingCategories] = useState<RecipeCategory[]>(filters.categories);
   const [localFilterMode, setLocalFilterMode] = useState<FilterMode>(filters.filterMode);
-  const [localSortMode, setLocalSortMode] = useState<SortOrder>(
+  const [localSortMode, setLocalSortMode] = useState<SortOrder>(() =>
     normalizeSortMode(filters.sortMode)
   );
   const [localInput, setLocalInput] = useState(filters.rawInput);

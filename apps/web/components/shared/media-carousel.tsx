@@ -143,7 +143,14 @@ function MediaCarouselSlides({
   return (
     <Carousel.Content className="h-full">
       {sortedItems.map((item, index) => (
-        <Carousel.Item key={`${item.id ?? item.src}-${index}`} className="h-full">
+        <Carousel.Item
+          // Public pages carry no ids, and the same picture can sit here twice
+          // (uploads are named by content hash), so only its place tells the two
+          // apart; the list keeps its stored order.
+          // eslint-disable-next-line @eslint-react/no-array-index-key
+          key={`${item.id ?? item.src}-${index}`}
+          className="h-full"
+        >
           <div className={mediaBoxClassName}>
             {item.type === "video" ? (
               <VideoPlayer

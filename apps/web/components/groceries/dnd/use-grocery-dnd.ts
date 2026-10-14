@@ -50,9 +50,9 @@ export function useGroceryDnd({
   const [items, setItems] = useState<ItemsState>(() =>
     buildItemsState(groceries, stores, aisleFor)
   );
-  const clonedItems = useRef<ItemsState | null>(null);
-  const lastOverId = useRef<string | null>(null);
-  const recentlyMovedToNewContainer = useRef(false);
+  const clonedItemsRef = useRef<ItemsState | null>(null);
+  const lastOverIdRef = useRef<string | null>(null);
+  const recentlyMovedToNewContainerRef = useRef(false);
 
   // Sync items state when groceries, stores or filings change from an external
   // source: a housemate's filing moves a row between containers too.
@@ -80,7 +80,7 @@ export function useGroceryDnd({
 
   useEffect(() => {
     requestAnimationFrame(() => {
-      recentlyMovedToNewContainer.current = false;
+      recentlyMovedToNewContainerRef.current = false;
     });
   }, [items]);
 
@@ -89,8 +89,8 @@ export function useGroceryDnd({
       createMultiContainerCollisionDetection(
         items,
         activeId,
-        lastOverId,
-        recentlyMovedToNewContainer
+        lastOverIdRef,
+        recentlyMovedToNewContainerRef
       ),
     [items, activeId]
   );
@@ -134,7 +134,7 @@ export function useGroceryDnd({
       const id = active.id as string;
 
       setActiveId(id);
-      clonedItems.current = JSON.parse(JSON.stringify(items));
+      clonedItemsRef.current = JSON.parse(JSON.stringify(items));
       const containerId = findContainerForItem(id, items);
 
       setOverContainerId(containerId);
@@ -181,7 +181,7 @@ export function useGroceryDnd({
             newIndex = overIndex >= 0 ? overIndex + modifier : overItems.length;
           }
 
-          recentlyMovedToNewContainer.current = true;
+          recentlyMovedToNewContainerRef.current = true;
 
           return {
             ...prevItems,
@@ -217,13 +217,13 @@ export function useGroceryDnd({
 
   const handleDragEnd = useCallback(
     ({ active, over }: DragEndEvent) => {
-      const originalItems = clonedItems.current;
+      const originalItems = clonedItemsRef.current;
       const currentContainer = findContainer(active.id as string);
 
       if (!currentContainer) {
         setActiveId(null);
         setOverContainerId(null);
-        clonedItems.current = null;
+        clonedItemsRef.current = null;
 
         return;
       }
@@ -237,7 +237,7 @@ export function useGroceryDnd({
         }
         setActiveId(null);
         setOverContainerId(null);
-        clonedItems.current = null;
+        clonedItemsRef.current = null;
 
         return;
       }
@@ -268,18 +268,18 @@ export function useGroceryDnd({
 
       setActiveId(null);
       setOverContainerId(null);
-      clonedItems.current = null;
+      clonedItemsRef.current = null;
     },
     [findContainer, items, groceries, stores, aisleFor, onReorderInStore, onFileGroceryName]
   );
 
   const handleDragCancel = useCallback(() => {
-    if (clonedItems.current) {
-      setItems(clonedItems.current);
+    if (clonedItemsRef.current) {
+      setItems(clonedItemsRef.current);
     }
     setActiveId(null);
     setOverContainerId(null);
-    clonedItems.current = null;
+    clonedItemsRef.current = null;
   }, []);
 
   return {

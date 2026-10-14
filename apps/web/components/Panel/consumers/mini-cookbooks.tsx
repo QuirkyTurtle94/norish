@@ -51,7 +51,7 @@ export default function MiniCookbooks({ open, onOpenChange, recipeId }: MiniCook
   const [staged, setStaged] = useState<Record<string, boolean>>({});
   const [pending, setPending] = useState<PendingCookbook[]>([]);
   // Monotonic, so removing a row cannot hand its key to the next one.
-  const nextKey = useRef(0);
+  const nextKeyRef = useRef(0);
 
   useEffect(() => {
     if (!open) {
@@ -66,7 +66,7 @@ export default function MiniCookbooks({ open, onOpenChange, recipeId }: MiniCook
 
     if (!title) return;
     setNewTitle("");
-    setPending((previous) => [...previous, { key: nextKey.current++, title }]);
+    setPending((previous) => [...previous, { key: nextKeyRef.current++, title }]);
   }, [newTitle]);
 
   const toggle = useCallback((cookbookId: string, isMember: boolean) => {

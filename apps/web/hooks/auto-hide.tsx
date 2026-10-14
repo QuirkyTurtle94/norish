@@ -41,14 +41,14 @@ export function useAutoHide({
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const [isVisible, setIsVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollYRef = useRef(0);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isHoveringRef = useRef(false);
   // Use ref instead of state to avoid re-renders when scrollability changes
   const isScrollableRef = useRef(true);
 
   // Brief pause after route change to ignore scroll restoration
-  const ignoreScrollUntil = useRef(0);
+  const ignoreScrollUntilRef = useRef(0);
 
   // Store disabled in ref to avoid callback dependency changes
   const disabledRef = useRef(disabled);
@@ -93,7 +93,7 @@ export function useAutoHide({
   const show = useCallback(() => {
     if (disabledRef.current) return;
     setIsVisible(true);
-    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
   }, []);
 
   const hide = useCallback(() => {
@@ -109,36 +109,36 @@ export function useAutoHide({
   // Reset state on route change - show nav and ignore scroll events briefly
   useEffect(() => {
     setIsVisible(true);
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-      scrollTimeout.current = null;
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
     }
     // Reset lastScrollY immediately to current position to prevent
     // scroll events from previous page affecting the new page
-    lastScrollY.current = scrollY.get();
+    lastScrollYRef.current = scrollY.get();
     // Ignore scroll events for 1000ms to let virtual list content settle
-    ignoreScrollUntil.current = Date.now() + 1000;
+    ignoreScrollUntilRef.current = Date.now() + 1000;
 
     return () => {
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, [pathname, scrollY]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    const prev = lastScrollY.current;
+    const prev = lastScrollYRef.current;
     const diff = latest - prev;
 
     if (disabledRef.current || !isScrollableRef.current) {
-      lastScrollY.current = latest;
+      lastScrollYRef.current = latest;
 
       return;
     }
 
     // Ignore scroll events during route change scroll restoration
-    if (Date.now() < ignoreScrollUntil.current) {
-      lastScrollY.current = latest;
+    if (Date.now() < ignoreScrollUntilRef.current) {
+      lastScrollYRef.current = latest;
 
       return;
     }
@@ -146,7 +146,7 @@ export function useAutoHide({
     // Always visible near top
     if (latest < topOffset) {
       show();
-      lastScrollY.current = latest;
+      lastScrollYRef.current = latest;
 
       return;
     }
@@ -155,7 +155,7 @@ export function useAutoHide({
     // is in nobody's way. `show()` also drops any idle hide already pending.
     if (isAtPageBottom(latest)) {
       show();
-      lastScrollY.current = latest;
+      lastScrollYRef.current = latest;
 
       return;
     }
@@ -165,12 +165,12 @@ export function useAutoHide({
       else show();
     }
 
-    lastScrollY.current = latest;
+    lastScrollYRef.current = latest;
 
     // Only set idle timeout if idleDelay is a valid finite number > 0
     if (idleDelay > 0 && isFinite(idleDelay)) {
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-      scrollTimeout.current = setTimeout(() => {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = setTimeout(() => {
         if (latest > topOffset) hide();
       }, idleDelay);
     }
@@ -179,9 +179,9 @@ export function useAutoHide({
   // Clear timeout and stay visible when disabled
   useEffect(() => {
     if (disabled) {
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-        scrollTimeout.current = null;
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
       }
       setIsVisible(true);
     }
@@ -189,7 +189,7 @@ export function useAutoHide({
 
   useEffect(() => {
     return () => {
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
   }, []);
 
@@ -203,7 +203,7 @@ export function useAutoHide({
     const currentScroll = scrollY.get();
 
     if (currentScroll > topOffset && isScrollableRef.current) {
-      scrollTimeout.current = setTimeout(() => hide(), idleDelay);
+      scrollTimeoutRef.current = setTimeout(() => hide(), idleDelay);
     }
   }, [hide, idleDelay, scrollY, topOffset]);
 

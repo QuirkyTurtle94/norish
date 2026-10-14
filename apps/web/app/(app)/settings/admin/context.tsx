@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext } from "react";
+import { createContext, use, useCallback } from "react";
 import { useAdminConfigsQuery, useAdminMutations } from "@/hooks/admin";
 
 import type {
@@ -392,11 +392,11 @@ export function AdminSettingsProvider({ children }: { children: ReactNode }) {
     refresh,
   };
 
-  return <AdminSettingsContext.Provider value={value}>{children}</AdminSettingsContext.Provider>;
+  return <AdminSettingsContext value={value}>{children}</AdminSettingsContext>;
 }
 
 export function useAdminSettingsContext() {
-  const context = useContext(AdminSettingsContext);
+  const context = use(AdminSettingsContext);
 
   if (!context)
     throw new Error("useAdminSettingsContext must be used within AdminSettingsProvider");

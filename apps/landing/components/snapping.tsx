@@ -58,13 +58,13 @@ export function SnapPoints({
   when?: string;
 }) {
   const lenis = useLenis();
-  const marks = useRef<(HTMLSpanElement | null)[]>([]);
+  const marksRef = useRef<(HTMLSpanElement | null)[]>([]);
   const held = useMedia(when);
 
   useEffect(() => {
     if (!lenis || !held) return;
 
-    const nodes = marks.current.filter((node) => node !== null);
+    const nodes = marksRef.current.filter((node) => node !== null);
 
     if (!nodes.length) return;
 
@@ -84,7 +84,7 @@ export function SnapPoints({
         <span
           key={stop}
           ref={(node) => {
-            marks.current[index] = node;
+            marksRef.current[index] = node;
           }}
           aria-hidden
           className="snap-point"

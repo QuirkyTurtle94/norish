@@ -35,7 +35,7 @@ export function CookingStepView({
   const prefersReducedMotion = useReducedMotion();
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const stepsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [wrapperY, setWrapperY] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const [enableTransitions, setEnableTransitions] = useState(false);
@@ -46,12 +46,12 @@ export function CookingStepView({
   }, []);
 
   const measureAndCenter = useCallback(() => {
-    if (!containerRef.current || !stepRefs.current[activeStep]) return;
+    if (!containerRef.current || !stepsRef.current[activeStep]) return;
 
     const currentHeight = containerRef.current.clientHeight;
     setContainerHeight(currentHeight);
 
-    const activeCard = stepRefs.current[activeStep]!;
+    const activeCard = stepsRef.current[activeStep]!;
 
     // offsetTop is relative to the offsetParent (will be the relative wrapper)
     const activeOffsetTop = activeCard.offsetTop;
@@ -69,7 +69,7 @@ export function CookingStepView({
 
   // Handle content size changes
   useEffect(() => {
-    const activeCard = stepRefs.current[activeStep];
+    const activeCard = stepsRef.current[activeStep];
     const container = containerRef.current;
     if (!activeCard || !container) return;
 
@@ -213,7 +213,7 @@ export function CookingStepView({
             <div
               key={i}
               ref={(el) => {
-                stepRefs.current[i] = el;
+                stepsRef.current[i] = el;
               }}
               className="flex w-full shrink-0 flex-col"
               style={{

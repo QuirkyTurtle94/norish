@@ -124,7 +124,7 @@ export function ReadonlyStepsList({
             const headingText = s.step.trim().replace(/^#+\s*/, "");
 
             return (
-              <li key={i} className="list-none">
+              <li key={s.order} className="list-none">
                 <div className="px-3 py-2">
                   <h3 className="text-foreground text-base font-semibold">{headingText}</h3>
                 </div>
@@ -136,7 +136,7 @@ export function ReadonlyStepsList({
           const currentStepNumber = stepNumber;
 
           return (
-            <li key={i}>
+            <li key={s.order}>
               <div
                 aria-pressed={interactive ? isDone : undefined}
                 className={`flex gap-3 rounded-xl p-3 transition-all duration-200 select-none md:gap-4 ${
@@ -196,6 +196,9 @@ export function ReadonlyStepsList({
                     <div className="flex flex-wrap gap-2">
                       {stepImages.map((img, imgIndex) => (
                         <button
+                          // The same picture can sit here twice (uploads are named by content hash), so
+                          // only its place tells the two apart; the list keeps its stored order.
+                          // eslint-disable-next-line @eslint-react/no-array-index-key
                           key={imgIndex}
                           className={`group/img ring-border focus:ring-accent relative h-16 w-16 overflow-hidden rounded-lg shadow-sm ring-1 transition-all duration-200 focus:ring-2 focus:outline-none md:h-20 md:w-20 ${
                             interactive && isDone

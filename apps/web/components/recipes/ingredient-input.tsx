@@ -59,8 +59,8 @@ export default function IngredientInput({
 }: IngredientInputProps) {
   const { units } = useUnitsQuery();
   const t = useTranslations("recipes.ingredientInput");
-  const [items, setItems] = useState<IngredientItem[]>([createItem("")]);
-  const textareaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  const [items, setItems] = useState<IngredientItem[]>(() => [createItem("")]);
+  const textareasRef = useRef<(HTMLTextAreaElement | null)[]>([]);
   const dragConstraintsRef = useRef<HTMLUListElement>(null);
 
   // Initialize from ingredients prop
@@ -153,12 +153,12 @@ export default function IngredientInput({
         e.preventDefault();
         // Move to next input or create new one
         if (index < items.length - 1) {
-          textareaRefs.current[index + 1]?.focus();
+          textareasRef.current[index + 1]?.focus();
         } else {
           const updated = [...items, createItem("")];
           setItems(updated);
           setTimeout(() => {
-            textareaRefs.current[items.length]?.focus();
+            textareasRef.current[items.length]?.focus();
           }, 0);
         }
       } else if (e.key === "Backspace" && !items[index]?.text && index > 0) {
@@ -167,7 +167,7 @@ export default function IngredientInput({
         setItems(updated);
         debouncedParse(updated);
         setTimeout(() => {
-          textareaRefs.current[index - 1]?.focus();
+          textareasRef.current[index - 1]?.focus();
         }, 0);
       }
     },

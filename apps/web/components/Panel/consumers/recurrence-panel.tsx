@@ -263,7 +263,7 @@ export function RecurrencePanel({
               >
                 {WEEKDAY_KEYS.map((key, index) => (
                   <ToggleButton
-                    key={index}
+                    key={key}
                     className="min-w-0 flex-1 px-2 text-xs font-medium"
                     id={String(index)}
                   >
