@@ -26,7 +26,7 @@ Read each deprecation note in the installed package before replacing; the replac
 
 ## Acceptance criteria
 
-- [ ] `sonarjs/deprecation` is not in the temporary block, and `pnpm lint` passes.
+- [ ] `sonarjs/deprecation` is not in the temporary block, and `pnpm lint` passes. Whichever of 02, 03 and 04 lands last deletes the block.
 - [ ] Screens whose selection or portal props changed are checked in the browser, and the E2E specs that cover them pass.
 
 ## Comments
