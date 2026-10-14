@@ -1,9 +1,7 @@
 /**
  * Queue Module Exports
  *
- * New architecture:
- * - Registry: Central lifecycle management (initializeQueues, getQueues, closeAllQueues)
- * - Queue factories: createXxxQueue() in each queue.ts
+ * - Registry: every queue, built and closed in one place (initializeQueues, getQueues, closeAllQueues)
  * - Producers: addXxxJob(queue, data) in each producer.ts
  */
 
@@ -27,21 +25,6 @@ export { initializeQueues, getQueues, closeAllQueues } from "./registry";
 
 // Start/Stop workers
 export { startWorkers, stopWorkers } from "./start-workers";
-
-// Queue factories
-export { createRecipeImportQueue } from "./recipe-import/queue";
-export { createImageImportQueue } from "./image-import/queue";
-export { createPasteImportQueue } from "./paste-import/queue";
-export { createNutritionEstimationQueue } from "./nutrition-estimation/queue";
-export { createAutoTaggingQueue } from "./auto-tagging/queue";
-export { createAutoCategorizationQueue } from "./auto-categorization/queue";
-export { createAllergyDetectionQueue } from "./allergy-detection/queue";
-export { createCaldavSyncQueue } from "./caldav-sync/queue";
-export { createScheduledTasksQueue } from "./scheduled-tasks/queue";
-export { createStoreLookupQueue } from "./store-lookup/queue";
-export { createIngredientReviewQueue } from "./ingredient-review/queue";
-export { createIngredientIconsQueue } from "./ingredient-icons/queue";
-export { createNewIngredientsQueue } from "./new-ingredients/queue";
 
 // Producers
 export { addImportJob } from "./recipe-import/producer";

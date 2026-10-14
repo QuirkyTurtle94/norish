@@ -124,9 +124,9 @@ export type QueueRemovalOptions = Pick<DefaultJobOptions, "removeOnComplete" | "
 
 /**
  * Build removeOnComplete/removeOnFail options from the admin-configured
- * job retention. Applied to all queues at initialization; jobs keep the
- * options they were enqueued with, so changes require a restart and only
- * affect new jobs.
+ * job retention, the only retention any queue has. Applied to all queues at
+ * initialization; jobs keep the options they were enqueued with, so changes
+ * require a restart and only affect new jobs.
  */
 export function buildRemovalOptions(retention: JobRetentionConfig): QueueRemovalOptions {
   const age = retention.maxAgeDays * 86_400;
@@ -137,17 +137,12 @@ export function buildRemovalOptions(retention: JobRetentionConfig): QueueRemoval
   };
 }
 
-/** Fallback retention when the config cannot be read: keep 100 jobs / 7 days. */
-const FALLBACK_REMOVAL = { count: 100, age: 604_800 } as const;
-
 export const recipeImportJobOptions: DefaultJobOptions = {
   attempts: 3,
   backoff: {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: FALLBACK_REMOVAL,
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const imageImportJobOptions: DefaultJobOptions = {
@@ -156,11 +151,6 @@ export const imageImportJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 5000, // 5s, 10s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const pasteImportJobOptions: DefaultJobOptions = {
@@ -169,11 +159,6 @@ export const pasteImportJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000,
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 1000,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const caldavSyncJobOptions: DefaultJobOptions = {
@@ -181,14 +166,6 @@ export const caldavSyncJobOptions: DefaultJobOptions = {
   backoff: {
     type: "exponential",
     delay: 60000, // 1m, 2m, 4m, 8m... up to 17h
-  },
-  removeOnComplete: {
-    age: 3600,
-    count: 2000,
-  },
-  removeOnFail: {
-    age: 86400, // Failed state also persisted to Postgres
-    count: 1000,
   },
 };
 
@@ -198,14 +175,6 @@ export const scheduledTasksJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 5000, // 5s, 10s, 20s
   },
-  removeOnComplete: {
-    age: 86400, // Keep for 24 hours for audit
-    count: 100,
-  },
-  removeOnFail: {
-    age: 86400,
-    count: 50,
-  },
 };
 
 export const nutritionEstimationJobOptions: DefaultJobOptions = {
@@ -214,11 +183,6 @@ export const nutritionEstimationJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const autoTaggingJobOptions: DefaultJobOptions = {
@@ -227,11 +191,6 @@ export const autoTaggingJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const autoCategorizationJobOptions: DefaultJobOptions = {
@@ -240,11 +199,6 @@ export const autoCategorizationJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const allergyDetectionJobOptions: DefaultJobOptions = {
@@ -253,11 +207,6 @@ export const allergyDetectionJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const recipeProvenanceJobOptions: DefaultJobOptions = {
@@ -266,11 +215,6 @@ export const recipeProvenanceJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const ingredientLinkingJobOptions: DefaultJobOptions = {
@@ -279,11 +223,6 @@ export const ingredientLinkingJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 /**
@@ -293,8 +232,6 @@ export const ingredientLinkingJobOptions: DefaultJobOptions = {
 export const storeLookupJobOptions: DefaultJobOptions = {
   attempts: 2,
   backoff: { type: "exponential", delay: 10_000 },
-  removeOnComplete: { age: 3600, count: 500 },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 export const imageGenerationJobOptions: DefaultJobOptions = {
@@ -303,11 +240,6 @@ export const imageGenerationJobOptions: DefaultJobOptions = {
     type: "exponential",
     delay: 2000, // 2s, 4s, 8s
   },
-  removeOnComplete: {
-    age: 3600,
-    count: 500,
-  },
-  removeOnFail: FALLBACK_REMOVAL,
 };
 
 /**
@@ -319,8 +251,11 @@ export const imageGenerationJobOptions: DefaultJobOptions = {
 export const ingredientReviewJobOptions: DefaultJobOptions = {
   attempts: 2,
   backoff: { type: "exponential", delay: 5_000 },
-  removeOnComplete: { age: 3600, count: 500 },
-  removeOnFail: FALLBACK_REMOVAL,
+};
+
+/** Upkeep of new foods is best-effort: a food it misses is still the Clean names and Draw icons rounds'. */
+export const newIngredientsJobOptions: DefaultJobOptions = {
+  attempts: 1,
 };
 
 /**
@@ -329,16 +264,7 @@ export const ingredientReviewJobOptions: DefaultJobOptions = {
  * is safe: a food the first attempt drew has an icon of its own and is
  * skipped, so the retry only finishes what the crash left.
  */
-/** Upkeep of new foods is best-effort: a food it misses is still the Clean names and Draw icons rounds'. */
-export const newIngredientsJobOptions: DefaultJobOptions = {
-  attempts: 1,
-  removeOnComplete: { age: 3600, count: 500 },
-  removeOnFail: FALLBACK_REMOVAL,
-};
-
 export const ingredientIconsJobOptions: DefaultJobOptions = {
   attempts: 2,
   backoff: { type: "exponential", delay: 5_000 },
-  removeOnComplete: { age: 3600, count: 500 },
-  removeOnFail: FALLBACK_REMOVAL,
 };
