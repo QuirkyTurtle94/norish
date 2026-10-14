@@ -149,9 +149,16 @@ async function setGrouped(on: boolean): Promise<void> {
   const current = await shown.getAttribute("data-grocery-grouping");
 
   if ((current === "grouped") === on) return;
+  // The choice is a device preference written to the profile: a navigation
+  // straight after would abort the write and reload the old choice.
+  const saved = page.waitForResponse(
+    (response) => response.url().includes("user.setDevicePreferences") && response.ok()
+  );
+
   await page.getByRole("button", { name: "View Mode" }).click();
   await page.getByRole("menuitem", { name: /Group ingredients/ }).click();
   await expect(shown).toHaveAttribute("data-grocery-grouping", on ? "grouped" : "flat");
+  await saved;
 }
 
 /** Open the Store in the store editor. */
