@@ -135,11 +135,19 @@ export async function parseTandoorRecipeToDTO(
     }
   }
 
-  // Flatten all ingredients from all steps into a single list
+  // Flatten all ingredients from all steps into a single list. Tandoor nests
+  // ingredients inside the step that uses them; Norish keeps one flat list of
+  // ingredient lines and records the step -> line relation as Step Ingredients,
+  // which reference a line by its `order`. So remember, per Tandoor step, the
+  // order of every line it contributed. Keyed by step object (not index) so the
+  // relation survives the filtering and sorting of steps further down.
   const allIngredients: Array<TandoorIngredient & { globalOrder: number }> = [];
+  const lineOrdersByStep = new Map<TandoorStep, number[]>();
   let globalOrder = 0;
 
   for (const step of validated.steps || []) {
+    const lineOrders: number[] = [];
+
     for (const ingredient of step.ingredients || []) {
       // Skip header ingredients (they're just visual separators)
       if (ingredient.is_header) continue;
@@ -148,11 +156,14 @@ export async function parseTandoorRecipeToDTO(
 
       if (!ingredientName) continue;
 
+      lineOrders.push(globalOrder);
       allIngredients.push({
         ...ingredient,
         globalOrder: globalOrder++,
       });
     }
+
+    lineOrdersByStep.set(step, lineOrders);
   }
 
   const ingredientsForDetection = allIngredients.map((ing) => ({
@@ -192,6 +203,13 @@ export async function parseTandoorRecipeToDTO(
       step: formatStepText(step),
       order: index,
       systemUsed: systemUsed,
+      // Tandoor lists the whole amount of an ingredient under the step that
+      // uses it, so every link carries the full line (share 1).
+      stepIngredients: (lineOrdersByStep.get(step) ?? []).map((ingredientOrder, linkOrder) => ({
+        ingredientOrder,
+        share: 1,
+        order: linkOrder,
+      })),
     }));
 
   // Extract tags from keywords
