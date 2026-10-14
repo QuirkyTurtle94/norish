@@ -15,7 +15,6 @@ See `.scratch/architecture-after-upgrades/spec.md`, The web server.
 
 - [ ] The custom server passes each request to Next's handler without parsing its URL first, and the server log shows no DEP0169 on boot or on a request.
 - [ ] The static file helper, its call and the `mime` dependency are deleted.
-- [ ] The proxy's unreachable WebSocket branch is deleted.
 - [ ] The error page uses the `retry` callback, with copy from the message catalogue in every shipped language.
 - [ ] A global error boundary renders its own document, with copy chosen by the browser's language and an English fallback.
 - [ ] `next typegen` runs before type checking in CI and in the local typecheck script. Hand-written `params: Promise<…>` types use Next's generated page, layout and route-context prop types.

@@ -2,7 +2,9 @@
 
 Status: ready-for-agent
 
-Settled in a `/grill-with-docs` session on 2026-10-13, after the 0.26 dependency sweep moved BullMQ to 6.3, ioredis to 6 and Next.js to 16.4 with React 19.3 (`.scratch/dependency-upgrades/`). Four read-only audits mapped the queue, Redis, web and auth code against the new versions; every claim this spec rests on was re-read in the installed packages. The vocabulary is CONTEXT.md's **Cancelled** (added that day), **Realtime Hub**, **Lagged**, **AI Runtime**, **Outbox**, **Device Preference** and **Device Kind**. Nothing here is expensive to reverse, so it adds no ADR; the closest candidate, the auth gate leaving the proxy, carries its reasoning in its ticket. Target Version: 0.26.0-beta, the open rc. Better Auth is out of scope: another session owns its 1.7 upgrade (`.scratch/dependency-upgrades/issues/09` and `10`).
+Settled in a `/grill-with-docs` session on 2026-10-13, after the 0.26 dependency sweep moved BullMQ to 6.3, ioredis to 6 and Next.js to 16.4 with React 19.3 (`.scratch/dependency-upgrades/`). Four read-only audits mapped the queue, Redis, web and auth code against the new versions; every claim this spec rests on was re-read in the installed packages. The vocabulary is CONTEXT.md's **Cancelled** (added that day), **Realtime Hub**, **Lagged**, **AI Runtime**, **Outbox**, **Device Preference** and **Device Kind**. Nothing here is expensive to reverse, so it adds no ADR; the closest candidate, the auth gate leaving the proxy, carries its reasoning in its ticket. Target Version: 0.26.0-beta, the open rc. Better Auth 1.7 is out of scope; it landed on the sweep branch (`cddffabf`, `.scratch/dependency-upgrades/issues/09` and `10`), and the auth gate below builds on it.
+
+Re-read against the sweep's open tickets in a second `/grill-with-docs` session on 2026-10-14. That session settled the shutdown rules, the leftover-session case, the release-note line for always-on workers and the liveness and readiness endpoints (ticket 11). The dependency-upgrades plan is being worked on and was left untouched: whatever this plan needs from it is written here.
 
 ## Problem Statement
 
@@ -47,6 +49,12 @@ The upgrades landed as version bumps. The code around them still carries workaro
 - CI type-checks before Next has generated its route types.
 - The build uses standalone output, which Next documents as incompatible with a custom server, and the image uses only a fraction of what it produces.
 
+**Health checks.**
+
+- One endpoint, `/api/v1/health`, answers two different questions: whether to restart Norish and whether to send it traffic.
+- It answers 503 when Postgres or the parser is down, and the sweep's ticket 53 adds Redis.
+- The image's `HEALTHCHECK` calls it. An orchestrator that restarts unhealthy containers (Swarm, Kubernetes liveness, autoheal) would therefore restart Norish through every Postgres or Redis outage, and a restart fixes neither.
+
 **The React and Next line.**
 
 - Next 17 makes Cache Components the default. Norish does not know what they would win for it or what they would cost.
@@ -63,7 +71,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
 - Recipe import, the boot catalogue ask and CalDAV sync use BullMQ's deduplication. A burst of calendar edits becomes one sync.
 - An administrator can cancel a running job from the job monitor:
   - The job ends **Cancelled**, never retries, and records that an administrator stopped it.
-  - A restart aborts AI calls in flight but leaves those jobs to run again on the next boot.
+  - A restart aborts AI calls in flight and puts those jobs back to waiting, so the next boot runs them without spending a retry.
 - The events stream is capped, and the administrator's retention setting is the only retention there is.
 
 **Redis.** Moved to the dependency sweep (tickets 34 and 35).
@@ -80,15 +88,23 @@ The upgrades landed as version bumps. The code around them still carries workaro
   - the recipe media helper
   - the avatar route
   - tRPC, unchanged
-- A signed-out or orphaned session still lands on the login page with its destination kept. An image request without a valid session is not served.
+- A signed-out reader, or a session whose account no longer exists, still lands on the login page with its destination kept. An image request without a valid session is not served.
+- The proxy's unreachable WebSocket branch goes with the rewrite.
 
 **The web server.**
 
 - The custom server hands requests straight to Next.
-- The dead static helper and the unreachable proxy branch are deleted.
+- The dead static helper is deleted.
 - The error page is translated and uses the current retry callback, and a global error boundary exists.
 - CI generates Next's route types before it type-checks, and pages use Next's generated prop types.
 - Standalone output is dropped if a trial build shows the image still works and is smaller or faster to build. Otherwise it stays, with the numbers recorded.
+
+**Health checks.**
+
+- `/api/v1/health/live` answers whether to restart Norish. It checks only what a restart can fix: the process and the parser it runs.
+- `/api/v1/health/ready` answers whether to send Norish traffic. It checks Postgres and Redis, and reports the parser without failing on it.
+- `/api/v1/health` keeps working, marked deprecated, until a later release removes it.
+- The image's healthcheck calls live.
 
 **The React and Next line.**
 
@@ -100,7 +116,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
 
 ## User Stories
 
-1. As a self-hosting operator, I want background jobs to pick up again on their own after Redis restarts, so that imports and enrichments never sit stuck until I restart Norish.
+1. As a self-hosting operator, I want background jobs to pick up again on their own after Redis restarts, so that imports and enrichments never sit stuck until I restart Norish. (The reconnect half is delivered by the sweep's ticket 34.)
 2. As a reader whose recipe import failed transiently, I want its retry to run when its backoff ends, so that the import finishes without me queueing another one.
 3. As a household member whose calendar sync hit a CalDAV error, I want the retry to run on time even if nobody edits the calendar again, so that my calendar app catches up by itself.
 4. As a self-hosting operator who restarts Norish while a retry is waiting, I want that retry to run after the restart, so that a restart never strands work.
@@ -117,17 +133,17 @@ The upgrades landed as version bumps. The code around them still carries workaro
 15. As an administrator, I want the cancel button to show "Cancelling…" until the job has actually stopped, so that I know my click was received while the current step finishes.
 16. As an administrator, I want cancel offered on every queue's running jobs, so that I don't have to remember which kinds can be stopped.
 17. As a self-hosting operator who restarts Norish during an AI enrichment, I want the AI call aborted at once, so that the restart doesn't keep paying for a response nobody will read.
-18. As a self-hosting operator who restarts Norish during an AI enrichment, I want that enrichment to run again after the restart, so that a restart is never mistaken for a cancel.
+18. As a self-hosting operator who restarts Norish during an AI enrichment, I want that enrichment to run again after the restart without using up one of its retries, so that a restart is never mistaken for a cancel or a failure.
 19. As a self-hosting operator, I want Redis memory to stay bounded however many progress updates jobs write, so that a large ingredient round can't fill my Redis.
 20. As an administrator, I want the job retention I set to be the only retention in effect, so that what the settings page says is what Norish does.
-21. As a reader, I want realtime updates to keep arriving after Redis restarts, so that a household member's change shows up without a reload.
-22. As a reader whose realtime connection missed events during a Redis restart, I want the page to refetch what it missed, so that I never look at a stale grocery list believing it's live.
-23. As a self-hosting operator, I want Norish to notice a dead Redis connection within seconds, so that a half-open socket after a network hiccup doesn't silently stop realtime for minutes.
-24. As a self-hosting operator, I want Norish's Redis connections named in `CLIENT LIST`, so that I can tell which connection is which when I look.
+21. (Delivered by the sweep's ticket 35.) As a reader, I want realtime updates to keep arriving after Redis restarts, so that a household member's change shows up without a reload.
+22. (Delivered by the sweep's ticket 35.) As a reader whose realtime connection missed events during a Redis restart, I want the page to refetch what it missed, so that I never look at a stale grocery list believing it's live.
+23. (Delivered by the sweep's ticket 35.) As a self-hosting operator, I want Norish to notice a dead Redis connection within seconds, so that a half-open socket after a network hiccup doesn't silently stop realtime for minutes.
+24. (Delivered by the sweep's ticket 35.) As a self-hosting operator, I want Norish's Redis connections named in `CLIENT LIST`, so that I can tell which connection is which when I look.
 25. As a reader on a phone, I want a page's skeleton to appear as soon as possible on a cold load, so that the app feels quick on a slow connection.
 26. As a reader browsing a page of recipe cards, I want the images to load without a database lookup each, so that a full grid appears quickly.
 27. As a reader whose session expired, I want to land on the login page and come back to the page I asked for after signing in, so that an expired session costs me one sign-in, not my place.
-28. As a reader whose account was deleted, I want to be signed out at my next page load, so that a deleted account can't keep browsing.
+28. As a reader whose account was deleted, I want to be signed out at my next page load, so that a deleted account can't keep browsing. (Met by the sweep's ticket 10, which ends a deleted user's sessions at once. Ticket 06 keeps it true for a session that outlived a failed deletion.)
 29. As a household member, I want recipe images, step images, cookbook images and avatars served only to signed-in readers (and to share links for what they share), so that private recipes stay private.
 30. As a reader with a share link, I want the shared recipe's images to keep loading, so that sharing works exactly as before.
 31. As a self-hosting operator, I want a new signed-in page or route added later to be protected without anyone remembering to protect it, so that a forgotten guard is caught by the build, not by a leak.
@@ -147,6 +163,9 @@ The upgrades landed as version bumps. The code around them still carries workaro
 45. As a reader with Norish installed as an app, I want each release to download no more than it needs, so that updates are quick on mobile data.
 46. As a reader, I want screens to re-render only when something on them changed, so that the app stays smooth on an older phone.
 47. As a contributor, I want the React Compiler's lint rules on, so that code the compiler can't optimise is flagged when I write it.
+48. As a self-hosting operator, I want a health check that fails only when restarting Norish would help, so that my orchestrator doesn't restart Norish through a Postgres or Redis outage.
+49. As a self-hosting operator behind a load balancer, I want a health check that says whether Norish can serve requests, so that traffic stops while Postgres or Redis is down and returns when they are back.
+50. As a self-hosting operator whose probes call `/api/v1/health`, I want it to keep working and to be told what replaces it, so that upgrading doesn't break my setup.
 
 ## Implementation Decisions
 
@@ -161,6 +180,10 @@ The upgrades landed as version bumps. The code around them still carries workaro
   - All sixteen workers start through it, including the two built by hand today (scheduled tasks and store lookup).
   - The lazy-worker manager, `defineLazyWorker`, and their tests are deleted, with no alias left behind. The store-lookup "delay trap" guard and the boot-time lazy registration go with them.
   - An idle server holds the same nineteen Redis connections it holds today: the publisher, the hub, the shared BullMQ client and one blocking connection per worker. The fourteen QueueEvents listeners disappear.
+- **Shutdown has a bounded close.**
+  - Once the shutdown budget runs out, the workers are force-closed (`worker.close(true)`).
+  - No BullMQ connection sets `commandTimeout`. In ioredis 6.0.0 it applies to every command (`Redis.js:368`), including the worker's blocking wait for its next job, which lasts up to `drainDelay` (5 s since the sweep's ticket 51). A shorter timeout would fail every idle wait.
+  - The sweep's ticket 35 also bounds BullMQ's close, and its choice between a command timeout and a force-close is still open there. If it lands a command timeout, ticket 01 replaces it with the force-close.
 - **Deduplication.**
   - The boot catalogue ask adds its job with a fixed deduplication id. BullMQ releases the key when the job finishes, so the next boot asks again.
   - Recipe import:
@@ -175,8 +198,9 @@ The upgrades landed as version bumps. The code around them still carries workaro
 - **Cancellation.**
   - The abort signal reaches the AI Runtime as its abort signal. The runtime is the one seam that talks to a model (ADR-0015), so this is one change there.
   - Two callers, two outcomes:
-    - **Admin cancel.** A new admin procedure calls the worker's `cancelJob(jobId, reason)` in process. Norish is one process, so the worker is reachable. The processor wrapper turns that abort into a failure that does not retry, recording that an administrator stopped the job. The job monitor shows it as **Cancelled**.
-    - **Shutdown.** Shutdown calls `cancelAllJobs()` with a reason the wrapper treats as retryable, so the job runs again on the next boot.
+    - **Admin cancel.** A new admin procedure calls the worker's `cancelJob(jobId, reason)` in process. Norish is one process, so the worker is reachable. The processor wrapper turns that abort into BullMQ's `UnrecoverableError`, so the job fails without a retry, with a reason that records that an administrator stopped it. The job monitor shows it as **Cancelled**.
+    - **Shutdown.** Shutdown calls `cancelAllJobs()` with a shutdown reason before closing the workers. The wrapper answers that abort with `job.moveToWait(token)` and throws BullMQ's `WaitingError`. The job goes back to waiting without spending an attempt or waiting out a backoff, and the next boot runs it first, as CONTEXT.md's **Cancelled** promises for work a restart interrupts. A retryable failure would spend an attempt each time: an import with three attempts, restarted three times during its AI step, would fail for good.
+    - If Redis is unreachable at shutdown, `moveToWait` fails and the job stays active. BullMQ's stalled-job check puts it back on the next boot.
   - A processor stops only where it checks the signal, which in practice is the AI Runtime call. Non-AI work (a parser fetch, database writes) finishes its current step.
   - Cancel is offered for running jobs on every queue. The admin router stops refusing active jobs for this one action, and the button reads "Cancelling…" until the job leaves `active`.
 - **Retention.**
@@ -199,19 +223,20 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
 - The signed-in app's layout is the page gate:
   - It already reads the session and the stored preferences once per request.
   - No session means a redirect to the login page with the forwarded destination.
-  - A session whose user row is gone is an orphaned session. It is revoked, as the proxy does today, and redirected the same way.
+  - It reads the session through the existing `getVerifiedSession` (`packages/auth/src/session.ts`). A session whose account no longer exists is revoked there, as the proxy does today, and the layout redirects it the same way. (The spec avoids "orphaned session": **Orphaned** in CONTEXT.md names a recipe or cookbook whose owner is gone.)
+  - Since the sweep's ticket 10, deleting an account ends its sessions at once (`packages/auth/src/account-deletion.ts`). A session can outlive its account only when that deletion fails after the user row is gone, for example with Redis down. The revoke covers that case at no new cost.
   - The settings page's separate session read reuses the layout's per-request read.
 - The recipe media helper's owner path requires a valid session. Its share path keeps its share-token check.
 - The avatar route requires a valid session.
 - An unauthorised media request is answered like a missing file (404, not cached), matching how the recipe editor answers 404 for 403.
 - The exports already check the session themselves, and tRPC and the WebSocket keep their own authentication.
 - A structural test fails the build if any route handler under the signed-in app skips the session check.
+- The proxy's WebSocket branch, which its own matcher makes unreachable, is deleted with the rewrite.
 
 ### The web server
 
 - The custom server passes each request straight to Next's handler without parsing its URL first.
 - The static file helper and its call are deleted, and the `mime` dependency with them.
-- The proxy's WebSocket branch is deleted.
 - The error page:
   - It uses the `retry` callback, with copy from the message catalogue.
   - A global error boundary renders its own document. It takes its copy from the message catalogue by the browser's language with an English fallback, since the root layout and its provider are gone when it renders.
@@ -220,6 +245,19 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
   - Build without `output: "standalone"`, and have the image copy the built output minus its cache.
   - Keep the change only if the image builds and boots against Postgres and Redis (health check, an upload including HEIC, a URL import through the parser, a video import) and is smaller or faster to build.
   - Otherwise standalone stays, and the ticket records the numbers.
+
+### Health checks
+
+- Two new tRPC OpenAPI procedures sit beside `health` in `packages/trpc/src/routers/config/procedures.ts`, under the same Health tag, with `protect: false`:
+  - **`GET /api/v1/health/live`** answers 200 while the process responds and the parser answers its own health check. It checks no Postgres and no Redis.
+    - The parser is included because Norish runs it. The custom server starts it as a child process on the internal parser URL (`apps/web/server/embedded-parser.ts`), and a restart fixes a parser that hangs. A parser that exits already shuts the server down.
+  - **`GET /api/v1/health/ready`** answers 503 when Postgres or Redis fails, reusing the sweep's ticket 53 Redis ping. The parser's state is in the response body, but it doesn't fail the check, because the parser is needed only for URL imports.
+- **`GET /api/v1/health`** keeps exactly the behaviour ticket 53 leaves it with (Postgres, the parser and Redis), and is marked `deprecated: true` (trpc-to-openapi supports the flag). No removal version is named.
+- **Who calls what:**
+  - The image's `HEALTHCHECK` and `docker/docker-compose.example.yml` call live. Docker has only one healthcheck, and Swarm and autoheal restart on it.
+  - `docker/docker-compose.test.yml` and the E2E harness (`apps/web/__tests__/e2e/harness/production-stack.ts`) call ready. Where the harness needs the parser, it checks the parser's own health.
+  - The docs point Kubernetes readiness probes and load balancers at ready.
+- The API reference is drawn from `openapi.json`, so it is regenerated.
 
 ### The Cache Components spike
 
@@ -262,13 +300,17 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
 ## Testing Decisions
 
 - A good test drives behaviour from outside and observes outcomes, never internals. The lazy-worker tests that read the manager's private registry are an example of what not to repeat. The tests of deleted modules are deleted with them.
+- **Rules carried over from the sweep**, which this plan inherits without editing that plan:
+  - Every real-Redis test connects through the production connection options and uses the shared Redis image constant from the sweep's ticket 34, never a bare `{ host, port }` or another Redis version.
+  - Tests rely on Vitest 5's `clearMocks` default (the sweep's ticket 31) and add no `vi.clearAllMocks()`.
+  - The sweep's ticket 35 regression stays green after ticket 01: `realtime.e2e.ts` runs the Redis restart before the server restart, and the shutdown log names no step over budget.
 - **Seam 1: the queue package against a real Redis.** A Redis testcontainer, a producer adding a job, a worker started through `createWorker`, and the job's observed state. Prior art: the scheduled-tasks producer Redis test and the lazy-worker Redis test. It covers:
   - a delayed retry runs when its backoff ends, with no other job on the queue
   - a worker error reaches the logger
   - the processor receives the signal
   - importing the same URL twice yields one job, and importing it again after completion yields a new one
   - a burst of CalDAV adds yields one sync, and an add during a running sync yields exactly one follow-up
-  - admin cancel ends the job failed, without retry, with the administrator's reason; shutdown cancel leaves it retryable
+  - admin cancel ends the job failed, without retry, with the administrator's reason; shutdown cancel puts it back to waiting with its attempts unchanged
   - the events stream stays at its cap
 - **Seam 2: browser E2E against the production-like stack.** The existing `ai` and `realtime` Playwright projects and their fixtures. It covers:
   - the realtime spec back in its original order (a Redis restart that leaves a half-open connection, then a server restart) as the half-open regression test, now in the dependency sweep's ticket 35
@@ -277,6 +319,8 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
   - an administrator cancelling a running job in the job monitor and seeing it Cancelled, next to the existing job monitor coverage in the decision-model spec
   - if Cache Components are adopted: a back-navigation pass, with the existing first-paint fidelity spec staying green
 - **One structural test** asserts that every route handler under the signed-in app performs the session check.
+- The layout's gate has a test for a session whose user row is gone: it is revoked and redirected to the login page. The deleted-account path itself is covered by the sweep's ticket 10 (`auth-handler.test.ts`).
+- The health tests (`packages/trpc/__tests__/openapi/health.test.ts`) cover each endpoint's failure cases: live fails on a parser that doesn't answer and ignores Postgres and Redis; ready fails on Postgres or Redis and ignores the parser; the deprecated `/health` is unchanged.
 - The AI Runtime's existing unit tests, with their mocked transport, gain one assertion that the abort signal reaches the transport.
 - **Measurements, recorded in their tickets, not as tests:**
   - time to skeleton, before and after
@@ -287,7 +331,7 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
 
 ## Out of Scope
 
-- Better Auth 1.7, account linking and anything else in the auth package beyond the session check's placement. Another session owns them.
+- Better Auth 1.7, account linking and anything else in the auth package beyond the session check's placement. Better Auth 1.7 landed in the sweep.
 - The six defects fixed on `chore/dependency-upgrades` before this spec starts (see Further Notes).
 - Client-side caching and Redis auto-pipelining. RESP3 itself lands in the dependency sweep (ticket 34).
 - Deduplication for enrichment.
@@ -314,9 +358,12 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
 - **Order.**
   - `createWorker` comes first; deduplication (because of CalDAV's delay), cancellation and retention build on it.
   - The proxy change lands before the Cache Components baseline is measured.
-  - Everything else is independent.
+  - Everything else is independent. The health endpoints (ticket 11) need only the sweep merged, because ready reuses its ticket 53 Redis ping.
 - **Release notes.**
   - Features: administrators can cancel a running background job.
-  - Fixes and Improvements: background jobs and realtime recover by themselves after a Redis restart. The sweep's ticket 35 writes this line.
+  - Fixes and Improvements:
+    - Background jobs and realtime recover by themselves after a Redis restart. The sweep's ticket 35 writes this line.
+    - Ticket 01 writes: "A recipe import or calendar sync that failed and is due to retry now retries as soon as its wait is over. Before, the retry did not run until another import or sync was started, even after a restart." The maintainer will rewrite it.
+  - Upgrade notes: two new health endpoints. `/api/v1/health/live` is for restarts, `/api/v1/health/ready` is for traffic, and the image's healthcheck now calls live. `/api/v1/health` still works but is deprecated and will be removed in a later release. Ticket 11 writes this.
   - The rest is internal and stays unpublished (ADR-0010).
 - **Docs.** The admin settings page documents cancelling a job, with a screenshot.

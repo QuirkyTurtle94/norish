@@ -8,7 +8,7 @@
   - It never retries.
   - An AI call in flight is aborted at once. Non-AI work finishes its current step first.
   - Cancel is offered for running jobs on every queue.
-- A server restart aborts AI calls in flight too, but those jobs run again on the next boot: a restart is not a cancel.
+- A server restart aborts AI calls in flight too, but those jobs go back to waiting and run first on the next boot, without using up a retry: a restart is neither a cancel nor a failure.
 
 See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Cancellation, and CONTEXT.md's **Cancelled**.
 
@@ -18,12 +18,13 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Cancellatio
 
 - [ ] The AI Runtime accepts an abort signal and passes it to the transport for every entry point (structured generation, transcription, image generation, Decision). Features pass the processor's signal through.
 - [ ] A new admin procedure cancels an active job through the worker's `cancelJob(jobId, reason)`. The existing remove action still refuses active jobs.
-- [ ] The processor wrapper turns an admin-cancel abort into a failure that does not retry, with a reason that records that an administrator stopped the job.
-- [ ] Shutdown calls `cancelAllJobs()` with a reason the wrapper treats as retryable, before closing the workers.
+- [ ] The processor wrapper turns an admin-cancel abort into BullMQ's `UnrecoverableError`, with a reason that records that an administrator stopped the job.
+- [ ] Shutdown calls `cancelAllJobs()` with a shutdown reason, before closing the workers. The wrapper answers that abort with `job.moveToWait(token)` and throws BullMQ's `WaitingError`, so the job goes back to waiting without spending an attempt or waiting out a backoff. If Redis is unreachable and `moveToWait` fails, the job stays active and BullMQ's stalled-job check recovers it on the next boot.
 - [ ] The job monitor shows a Cancelled state, distinct from failed, and a cancel action on active jobs that reads "Cancelling…" until the job leaves `active`. Copy goes through the message catalogue in every shipped language.
 - [ ] Real-Redis tests:
   - [ ] Admin cancel of an active job ends it failed, with no further attempt and with the administrator's reason.
-  - [ ] Shutdown cancel leaves the job retryable.
+  - [ ] Shutdown cancel puts the job back to waiting with `attemptsMade` unchanged, and a worker started afterwards runs it.
+  - [ ] Both connect through the production connection options and the shared Redis image constant from the sweep's ticket 34.
 - [ ] An AI Runtime unit test proves the signal reaches the transport.
 - [ ] A browser E2E (next to the job monitor coverage in the decision-model spec): an administrator cancels a running AI job and sees it Cancelled.
 - [ ] Release notes, under Features: administrators can cancel a running background job. The admin settings docs page shows it, with a screenshot.
