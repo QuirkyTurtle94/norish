@@ -41,6 +41,7 @@ import {
   countNorishRecipes,
   extractNorishRecipes,
   isNorishArchive,
+  matchCuisineNames,
   parseNorishRecipeToDTO,
   readNorishManifest,
 } from "./norish-parser";
@@ -528,6 +529,22 @@ export async function importRecipeItems(
   return { imported, inserted, errors, notes };
 }
 
+/** The receiving instance's cuisine vocabulary, by lowercased name. */
+async function loadCuisineVocabulary(): Promise<Map<string, string>> {
+  const vocabulary = await listCuisines();
+
+  return new Map(vocabulary.map((cuisine) => [cuisine.name.trim().toLowerCase(), cuisine.id]));
+}
+
+function droppedCuisinesNote(
+  fileName: string,
+  droppedCuisines: string[]
+): RecipeImportItem["note"] {
+  return droppedCuisines.length > 0
+    ? { file: fileName, note: `Unknown cuisines dropped: ${droppedCuisines.join(", ")}` }
+    : undefined;
+}
+
 /**
  * Generator for Norish Recipe Archive recipes.
  */
@@ -538,10 +555,7 @@ async function* generateNorishRecipes(
 
   assertSupportedNorishFormatVersion(manifest);
 
-  const vocabulary = await listCuisines();
-  const cuisineIdsByName = new Map(
-    vocabulary.map((cuisine) => [cuisine.name.trim().toLowerCase(), cuisine.id])
-  );
+  const cuisineIdsByName = await loadCuisineVocabulary();
 
   const entries = await extractNorishRecipes(zip);
 
@@ -568,13 +582,7 @@ async function* generateNorishRecipes(
         importedRating,
         importedFavorite,
         cookbooks,
-        note:
-          droppedCuisines.length > 0
-            ? {
-                file: fileName,
-                note: `Unknown cuisines dropped: ${droppedCuisines.join(", ")}`,
-              }
-            : undefined,
+        note: droppedCuisinesNote(fileName, droppedCuisines),
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -617,6 +625,7 @@ async function* generateMealieRecipes(
 
   // Build lookup maps once for efficient resolution
   const lookups = buildMealieLookups(database);
+  const cuisineIdsByName = await loadCuisineVocabulary();
 
   for (const mealieRecipe of recipes) {
     const recipeName = mealieRecipe.name || mealieRecipe.id;
@@ -651,9 +660,18 @@ async function* generateMealieRecipes(
         importedRating = Math.max(1, Math.min(5, Math.round(avg)));
       }
 
-      if (dto) {
-        yield { dto, fileName, importedRating };
-      }
+      const { cuisineIds, droppedCuisines } = matchCuisineNames(
+        mealieRecipe.recipeCuisine ? [mealieRecipe.recipeCuisine] : [],
+        cuisineIdsByName
+      );
+
+      yield {
+        dto: { ...dto, cuisines: cuisineIds },
+        fileName,
+        importedRating,
+        importedFavorite: lookups.favoriteRecipes.has(mealieRecipe.id) || undefined,
+        note: droppedCuisinesNote(fileName, droppedCuisines),
+      };
     } catch (error) {
       // Yield error item instead of throwing to allow import to continue
       const errorMessage = error instanceof Error ? error.message : String(error);
