@@ -1,3 +1,4 @@
+import { dehydrate, hydrate } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -326,6 +327,39 @@ describe("useGroceriesMutations", () => {
       await read;
 
       const data = queryClient.getQueryData<typeof before>(["groceries", "list"]);
+
+      expect(data?.groceries[0]).toMatchObject({ id: "g1", isDone: true, version: 4 });
+    });
+
+    it("keeps a list restored while it waited, as an offline load restores it", () => {
+      const restored = createMockGroceriesData(
+        [createMockGrocery({ id: "g1", isDone: false, version: 3 })],
+        []
+      );
+
+      queryClient.setQueryDefaults(["groceries", "list"], { staleTime: Infinity });
+      // The read starts before the stored list is restored, and waits.
+      void queryClient
+        .query({
+          queryKey: ["groceries", "list"],
+          queryFn: () => new Promise<typeof restored>(() => {}),
+          staleTime: 0,
+        })
+        .catch(() => undefined);
+      // The stored copy, restored the way the persister restores it.
+      const stored = createTestQueryClient();
+
+      stored.setQueryData(["groceries", "list"], restored);
+      hydrate(queryClient, dehydrate(stored));
+      expect(queryClient.getQueryData(["groceries", "list"])).toEqual(restored);
+
+      const { result } = renderHook(() => useGroceriesMutations(), {
+        wrapper: createTestWrapper(queryClient),
+      });
+
+      act(() => result.current.toggleGroceries(["g1"], true));
+
+      const data = queryClient.getQueryData<typeof restored>(["groceries", "list"]);
 
       expect(data?.groceries[0]).toMatchObject({ id: "g1", isDone: true, version: 4 });
     });
