@@ -127,7 +127,6 @@ export function createUseCookbooksMutations({
         invalidateMembership,
         setAllCookbooksData,
         seedCookbook,
-        preserve,
       ]
     );
 

@@ -10,7 +10,7 @@ import { useUnitFormatter } from "@/hooks/use-unit-formatter";
 import { useLocale } from "next-intl";
 
 import type { UnitsMap } from "@norish/config/zod/server-config";
-import { useUnitFormatter as useSharedUnitFormatter } from "@norish/shared-react/hooks";
+import { createUnitFormatter } from "@norish/shared-react/hooks";
 import { formatAmount } from "@norish/shared/lib/format-amount";
 import { namesNoFood } from "@norish/shared/lib/ingredient-text";
 
@@ -198,7 +198,7 @@ function ReadonlyIngredientsListWithConfiguredUnits({
   ...props
 }: ReadonlyIngredientsListProps & { units: UnitsMap }) {
   const locale = useLocale();
-  const { formatUnitOnly } = useSharedUnitFormatter({ locale, units });
+  const { formatUnitOnly } = createUnitFormatter({ locale, units });
 
   return <ReadonlyIngredientsListContent {...props} formatUnitOnly={formatUnitOnly} />;
 }

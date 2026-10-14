@@ -87,6 +87,9 @@ function useExpiredPendingLinks(byKey: Map<string, ResolvedProductLink>): Set<st
       const left = at + PENDING_LINK_MAX_AGE_MS - now;
 
       if (left <= 0) continue;
+      // One timer per pending link, all cleared in the cleanup through `timers`;
+      // the rule only follows a timer kept in its own variable.
+      // eslint-disable-next-line @eslint-react/web-api-no-leaked-timeout
       timers.push(setTimeout(() => setExpired((prev) => new Set(prev).add(key)), left));
     }
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createContext, createElement, useContext, useMemo } from "react";
+import { createContext, createElement, use, useMemo } from "react";
 
 import type { GroceryDto, RecurringGroceryDto } from "@norish/shared/contracts";
 
@@ -88,11 +88,11 @@ export function createGroceriesContext({
       ]
     );
 
-    return createElement(GroceriesContext.Provider, { value }, children);
+    return createElement(GroceriesContext, { value }, children);
   }
 
   function useGroceriesContext() {
-    const ctx = useContext(GroceriesContext);
+    const ctx = use(GroceriesContext);
 
     if (!ctx) throw new Error("useGroceriesContext must be used within GroceriesProvider");
 

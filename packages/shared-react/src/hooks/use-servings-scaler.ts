@@ -23,7 +23,7 @@ export function useServingsScaler<T extends IngredientWithAmount>(
   originalServings: number,
   initialServings?: number
 ): ServingsScalerResult<T> {
-  const [servings, setServingsState] = useState<number>(
+  const [servings, setServings] = useState<number>(
     Math.max(0.125, initialServings ?? originalServings)
   );
 
@@ -45,12 +45,12 @@ export function useServingsScaler<T extends IngredientWithAmount>(
     });
   }, [ingredients, servings, originalServings]);
 
-  const setServings = useCallback((newServings: number) => {
-    setServingsState(Math.max(0.125, newServings));
+  const setClampedServings = useCallback((newServings: number) => {
+    setServings(Math.max(0.125, newServings));
   }, []);
 
   const decrementServings = useCallback(() => {
-    setServingsState((s) => {
+    setServings((s) => {
       if (s <= 1) return Math.max(0.125, s / 2);
       if (s <= 2) return 1;
 
@@ -59,7 +59,7 @@ export function useServingsScaler<T extends IngredientWithAmount>(
   }, []);
 
   const incrementServings = useCallback(() => {
-    setServingsState((s) => {
+    setServings((s) => {
       if (s < 1) return Math.min(1, s * 2);
 
       return s + 1;
@@ -67,13 +67,13 @@ export function useServingsScaler<T extends IngredientWithAmount>(
   }, []);
 
   const resetToOriginal = useCallback(() => {
-    setServingsState(Math.max(0.125, originalServings));
+    setServings(Math.max(0.125, originalServings));
   }, [originalServings]);
 
   return {
     servings,
     scaledIngredients,
-    setServings,
+    setServings: setClampedServings,
     incrementServings,
     decrementServings,
     resetToOriginal,

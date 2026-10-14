@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from "react";
+import { createContext, use, useMemo } from "react";
 
 import type {
   HouseholdAdminSettingsDto,
@@ -35,11 +35,11 @@ export function createHouseholdContext({
       [household, currentUserId, isLoading]
     );
 
-    return <HouseholdContext.Provider value={value}>{children}</HouseholdContext.Provider>;
+    return <HouseholdContext value={value}>{children}</HouseholdContext>;
   }
 
   function useHouseholdContext(): HouseholdContextValue {
-    const context = useContext(HouseholdContext);
+    const context = use(HouseholdContext);
 
     if (!context) {
       throw new Error("useHouseholdContext must be used within HouseholdProvider");
@@ -112,15 +112,11 @@ export function createHouseholdSettingsContext({
       ]
     );
 
-    return (
-      <HouseholdSettingsContext.Provider value={value}>
-        {children}
-      </HouseholdSettingsContext.Provider>
-    );
+    return <HouseholdSettingsContext value={value}>{children}</HouseholdSettingsContext>;
   }
 
   function useHouseholdSettingsContext(): HouseholdSettingsContextValue {
-    const context = useContext(HouseholdSettingsContext);
+    const context = use(HouseholdSettingsContext);
 
     if (!context) {
       throw new Error("useHouseholdSettingsContext must be used within HouseholdSettingsProvider");

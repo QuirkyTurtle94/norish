@@ -80,11 +80,11 @@ export function createUseStoreAisles({ useTRPC }: CreateStoresHooksOptions) {
           .join(","),
       [list]
     );
-    const askedFoods = useRef(listFoods);
+    const askedFoodsRef = useRef(listFoods);
 
     useEffect(() => {
-      if (askedFoods.current === listFoods) return;
-      askedFoods.current = listFoods;
+      if (askedFoodsRef.current === listFoods) return;
+      askedFoodsRef.current = listFoods;
       void queryClient.invalidateQueries({ queryKey: trpc.stores.aisleLinks.queryKey() });
     }, [listFoods, queryClient, trpc]);
 

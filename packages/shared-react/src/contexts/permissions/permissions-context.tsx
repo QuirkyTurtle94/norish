@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, use, useCallback, useMemo } from "react";
 
 import type { RecipePermissionPolicy } from "@norish/config/zod/server-config";
 
@@ -91,11 +91,11 @@ export function createPermissionsContext({
       [data, isLoadingPermissions, canViewRecipe, canEditRecipe, canDeleteRecipe]
     );
 
-    return <PermissionsContext.Provider value={value}>{children}</PermissionsContext.Provider>;
+    return <PermissionsContext value={value}>{children}</PermissionsContext>;
   }
 
   function usePermissionsContext(): PermissionsContextValue {
-    const context = useContext(PermissionsContext);
+    const context = use(PermissionsContext);
 
     if (!context) {
       throw new Error("usePermissionsContext must be used within PermissionsProvider");

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, use, useCallback, useMemo } from "react";
 
 import type { FullRecipeInsertDTO, FullRecipeUpdateDTO } from "@norish/shared/contracts";
 
@@ -241,11 +241,11 @@ export function createRecipesContext({
       ]
     );
 
-    return <RecipesContext.Provider value={value}>{children}</RecipesContext.Provider>;
+    return <RecipesContext value={value}>{children}</RecipesContext>;
   }
 
   function useRecipesContext() {
-    const context = useContext(RecipesContext);
+    const context = use(RecipesContext);
 
     if (!context) {
       throw new Error("useRecipesContext must be used within RecipesProvider");

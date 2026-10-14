@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, use, useCallback, useEffect, useMemo, useState } from "react";
 
 import type {
   CreateRecipeShareInputDto,
@@ -129,7 +129,7 @@ async function noopAsync<T>(): Promise<T | null> {
   return null;
 }
 
-function useDefaultRecipeSharesQuery(): RecipeSharesQueryAdapterResult {
+function defaultRecipeSharesQuery(): RecipeSharesQueryAdapterResult {
   return {
     shares: EMPTY_RECIPE_SHARES,
     isLoading: false,
@@ -138,9 +138,9 @@ function useDefaultRecipeSharesQuery(): RecipeSharesQueryAdapterResult {
   };
 }
 
-function useDefaultRecipeShareSubscription() {}
+function defaultRecipeShareSubscription() {}
 
-function useDefaultRecipeShareMutations(): RecipeShareMutationsAdapterResult {
+function defaultRecipeShareMutations(): RecipeShareMutationsAdapterResult {
   return {
     createShare: noopAsync,
     updateShare: noop,
@@ -159,11 +159,10 @@ function useDefaultRecipeShareMutations(): RecipeShareMutationsAdapterResult {
 
 export function createRecipeDetailContext(adapters: RecipeDetailAdapters) {
   const RecipeContext = createContext<RecipeDetailContextValue | null>(null);
-  const useRecipeSharesQuery = adapters.useRecipeSharesQuery ?? useDefaultRecipeSharesQuery;
+  const useRecipeSharesQuery = adapters.useRecipeSharesQuery ?? defaultRecipeSharesQuery;
   const useRecipeShareSubscription =
-    adapters.useRecipeShareSubscription ?? useDefaultRecipeShareSubscription;
-  const useRecipeShareMutations =
-    adapters.useRecipeShareMutations ?? useDefaultRecipeShareMutations;
+    adapters.useRecipeShareSubscription ?? defaultRecipeShareSubscription;
+  const useRecipeShareMutations = adapters.useRecipeShareMutations ?? defaultRecipeShareMutations;
 
   type ProviderProps = {
     recipeId: string;
@@ -239,12 +238,15 @@ export function createRecipeDetailContext(adapters: RecipeDetailAdapters) {
 
     // Check if error is a 404
     const isNotFound = adapters.isNotFoundError(error);
-    const shareError =
-      shareQueryError instanceof Error
-        ? shareQueryError
-        : shareQueryError
-          ? new Error(String(shareQueryError))
-          : null;
+    const shareError = useMemo(
+      () =>
+        shareQueryError instanceof Error
+          ? shareQueryError
+          : shareQueryError
+            ? new Error(String(shareQueryError))
+            : null,
+      [shareQueryError]
+    );
 
     // Reset servings when navigating to a different recipe
     useEffect(() => {
@@ -428,14 +430,14 @@ export function createRecipeDetailContext(adapters: RecipeDetailAdapters) {
     );
 
     return (
-      <RecipeContext.Provider value={value}>
+      <RecipeContext value={value}>
         {typeof children === "function" ? children(value) : children}
-      </RecipeContext.Provider>
+      </RecipeContext>
     );
   }
 
   function useRecipeContext() {
-    const ctx = useContext(RecipeContext);
+    const ctx = use(RecipeContext);
 
     if (!ctx) throw new Error("useRecipeContext must be used within RecipeDetailProvider");
 

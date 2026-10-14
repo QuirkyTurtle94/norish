@@ -6,7 +6,7 @@ export type UnitFormatterAdapters = {
   units: UnitsMap;
 };
 
-export function useUnitFormatter({ locale, units }: UnitFormatterAdapters) {
+export function createUnitFormatter({ locale, units }: UnitFormatterAdapters) {
   const formatUnitOnly = (
     unit: string | null | undefined,
     amount?: number | null | undefined

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext } from "react";
+import { createContext, use, useCallback } from "react";
 
 import type { User } from "@norish/shared/contracts";
 import type { UserPreferencesDto } from "@norish/shared/contracts/zod/user";
@@ -221,7 +221,7 @@ export function createUserSettingsContext({
     }, [mutations, errorHandler]);
 
     return (
-      <UserSettingsContext.Provider
+      <UserSettingsContext
         value={{
           user: user || null,
           apiKeys: apiKeys || [],
@@ -245,12 +245,12 @@ export function createUserSettingsContext({
         }}
       >
         {children}
-      </UserSettingsContext.Provider>
+      </UserSettingsContext>
     );
   }
 
   function useUserSettingsContext(): UserSettingsContextValue {
-    const context = useContext(UserSettingsContext);
+    const context = use(UserSettingsContext);
 
     if (!context) {
       throw new Error("useUserSettingsContext must be used within UserSettingsProvider");

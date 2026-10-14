@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from "react";
+import { createContext, use, useMemo } from "react";
 
 import type { User } from "@norish/shared/contracts";
 
@@ -44,11 +44,11 @@ export function createUserContext({
       [user, isLoading, signOut]
     );
 
-    return <SharedUserContext.Provider value={value}>{children}</SharedUserContext.Provider>;
+    return <SharedUserContext value={value}>{children}</SharedUserContext>;
   }
 
   function useUserContext(): UserContextValue {
-    const context = useContext(SharedUserContext);
+    const context = use(SharedUserContext);
 
     if (!context) {
       throw new Error("useUserContext must be used within UserProvider");

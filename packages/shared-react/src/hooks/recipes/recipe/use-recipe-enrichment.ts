@@ -124,7 +124,7 @@ export function createUseRecipeEnrichment({ useTRPC }: CreateRecipeHooksOptions)
       recipeId: recipeId ?? "",
     });
     const statusKey = statusOptions.queryKey;
-    const lifecycleVersions = useRef<Record<RecipeEnrichmentKind, number>>({
+    const lifecycleVersionsRef = useRef<Record<RecipeEnrichmentKind, number>>({
       "auto-tagging": 0,
       "allergy-detection": 0,
       "auto-categorization": 0,
@@ -138,7 +138,7 @@ export function createUseRecipeEnrichment({ useTRPC }: CreateRecipeHooksOptions)
       ...statusOptions,
       enabled: !!recipeId,
       queryFn: async (context) => {
-        const versionsAtStart = { ...lifecycleVersions.current };
+        const versionsAtStart = { ...lifecycleVersionsRef.current };
 
         if (typeof statusOptions.queryFn !== "function") {
           throw new Error("Recipe Enrichment status query is unavailable");
@@ -147,7 +147,7 @@ export function createUseRecipeEnrichment({ useTRPC }: CreateRecipeHooksOptions)
         const incoming = await statusOptions.queryFn(context);
         const changedKinds = new Set(
           ENRICHMENT_KINDS.filter(
-            (kind) => versionsAtStart[kind] !== lifecycleVersions.current[kind]
+            (kind) => versionsAtStart[kind] !== lifecycleVersionsRef.current[kind]
           )
         );
 
@@ -255,7 +255,7 @@ export function createUseRecipeEnrichment({ useTRPC }: CreateRecipeHooksOptions)
           };
         });
 
-        if (applied) lifecycleVersions.current[event.kind] += 1;
+        if (applied) lifecycleVersionsRef.current[event.kind] += 1;
 
         return applied;
       },
