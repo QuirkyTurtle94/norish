@@ -45,6 +45,12 @@ import {
   readNorishManifest,
 } from "./norish-parser";
 import { extractPaprikaRecipes, parsePaprikaRecipeToDTO } from "./paprika-parser";
+import {
+  countRecipeKeeperRecipes,
+  extractRecipeKeeperRecipes,
+  parseRecipeKeeperRecipeToDTO,
+  readRecipeKeeperHtml,
+} from "./recipe-keeper-parser";
 import { extractTandoorRecipes, parseTandoorRecipeToDTO } from "./tandoor-parser";
 
 export enum ArchiveFormat {
@@ -54,6 +60,7 @@ export enum ArchiveFormat {
   MEALIE_LEGACY = "mealie-legacy",
   TANDOOR = "tandoor",
   PAPRIKA = "paprika",
+  RECIPE_KEEPER = "recipe-keeper",
   UNKNOWN = "unknown",
 }
 
@@ -77,6 +84,7 @@ export type ImportResult = {
  * - Mealie Legacy: folder-per-recipe with inline JSON
  * - Mela: contains .melarecipe files
  * - Paprika: contains .paprikarecipe files
+ * - Recipe Keeper: recipes.html carrying Recipe Keeper's itemprops
  * - Tandoor: contains nested .zip files with recipe.json inside
  */
 export type ArchiveInfo = {
@@ -242,6 +250,16 @@ export async function getArchiveInfo(rawZip: JSZip): Promise<ArchiveInfo> {
     return {
       format: ArchiveFormat.PAPRIKA,
       count: paprikaFiles.length,
+    };
+  }
+
+  // Check for Recipe Keeper format (recipes.html beside an images folder)
+  const recipeKeeperHtml = await readRecipeKeeperHtml(zip);
+
+  if (recipeKeeperHtml) {
+    return {
+      format: ArchiveFormat.RECIPE_KEEPER,
+      count: countRecipeKeeperRecipes(recipeKeeperHtml),
     };
   }
 
@@ -723,7 +741,31 @@ async function* generatePaprikaRecipes(
 }
 
 /**
- * Import archive (auto-detects Norish, Mela, Mealie, Paprika, or Tandoor format)
+ * Generator for Recipe Keeper recipes
+ */
+async function* generateRecipeKeeperRecipes(
+  zip: JSZip
+): AsyncGenerator<RecipeImportItemOrError, void, unknown> {
+  const html = await readRecipeKeeperHtml(zip);
+
+  for (const recipe of html ? extractRecipeKeeperRecipes(html) : []) {
+    const fileName = `recipe_${recipe.name}`;
+
+    try {
+      const { dto, importedRating, importedFavorite, cookbooks } =
+        await parseRecipeKeeperRecipeToDTO(recipe, createArchiveRecipeId(), zip);
+
+      yield { dto, fileName, importedRating, importedFavorite, cookbooks };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      yield { dto: undefined, fileName, parseError: errorMessage };
+    }
+  }
+}
+
+/**
+ * Import archive (auto-detects Norish, Mela, Mealie, Paprika, Tandoor, or Recipe Keeper format)
  */
 export async function importArchive(
   userId: string | undefined,
@@ -749,7 +791,7 @@ export async function importArchive(
 
   if (format === ArchiveFormat.UNKNOWN) {
     throw new Error(
-      "Unknown archive format. Expected .norishrecipes, .melarecipes, .paprikarecipes, Mealie .zip, or Tandoor .zip export"
+      "Unknown archive format. Expected .norishrecipes, .melarecipes, .paprikarecipes, or a Mealie, Tandoor or Recipe Keeper .zip export"
     );
   }
 
@@ -774,6 +816,9 @@ export async function importArchive(
       break;
     case ArchiveFormat.TANDOOR:
       generator = generateTandoorRecipes(zip);
+      break;
+    case ArchiveFormat.RECIPE_KEEPER:
+      generator = generateRecipeKeeperRecipes(zip);
       break;
   }
 

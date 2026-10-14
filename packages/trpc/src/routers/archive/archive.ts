@@ -22,7 +22,7 @@ import { router } from "../../trpc";
 
 /**
  * Import recipes from an archive (Norish .norishrecipes, Mela .melarecipes,
- * Paprika .paprikarecipes, or Mealie/Tandoor .zip export).
+ * Paprika .paprikarecipes, or Mealie/Tandoor/Recipe Keeper .zip export).
  */
 const importArchive = authedProcedure
   .input(formDataInputSchema)
@@ -80,7 +80,7 @@ const importArchive = authedProcedure
         return {
           success: false,
           error:
-            "Unknown archive format. Expected .norishrecipes, .melarecipes, .paprikarecipes, Mealie .zip, or Tandoor .zip export",
+            "Unknown archive format. Expected .norishrecipes, .melarecipes, .paprikarecipes, or a Mealie, Tandoor or Recipe Keeper .zip export",
         };
       }
 
@@ -117,7 +117,7 @@ const importArchive = authedProcedure
 
 /**
  * Run the archive import asynchronously, emitting progress events.
- * Automatically detects Mela, Mealie or Tandoor format and uses appropriate parser.
+ * The parser detects the format and picks the reader for it.
  */
 async function runArchiveImportAsync(
   ctx: Pick<AuthedProcedureContext, "user" | "userIds" | "householdKey" | "householdUserIds">,

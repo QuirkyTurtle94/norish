@@ -98,6 +98,13 @@ vi.mock("@norish/shared-server/archive/tandoor-parser", () => ({
   parseTandoorRecipeToDTO: vi.fn(),
 }));
 
+vi.mock("@norish/shared-server/archive/recipe-keeper-parser", () => ({
+  readRecipeKeeperHtml: vi.fn().mockResolvedValue(null),
+  countRecipeKeeperRecipes: vi.fn(),
+  extractRecipeKeeperRecipes: vi.fn(),
+  parseRecipeKeeperRecipeToDTO: vi.fn(),
+}));
+
 vi.mock("@norish/shared-server/archive/paprika-parser", () => ({
   extractPaprikaRecipes: mockExtractPaprikaRecipes,
   parsePaprikaRecipeToDTO: mockParsePaprikaRecipeToDTO,
