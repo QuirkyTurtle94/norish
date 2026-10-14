@@ -196,7 +196,27 @@ export const TRANSCRIPTION_AUDIO_FALLBACKS = [
 const ytDlpPath = path.resolve(SERVER_CONFIG.YT_DLP_BIN_DIR, ytDlpFilename);
 const outputDir = path.join(SERVER_CONFIG.UPLOADS_DIR, "video-temp");
 
-async function execYtDlp(args: string[], cwd?: string): Promise<string> {
+/**
+ * The command line for running yt-dlp on one URL.
+ *
+ * The URL comes from imported pages and pasted JSON-LD, so it goes last, behind
+ * `--`: in front of the options, a value starting with `-` was read as one
+ * (`--update-to=<repo>` swapped the binary, GHSA-732x-jh4x-wg8j). Anything but
+ * an http(s) URL never reaches the binary.
+ */
+export function ytDlpArgs(url: string, options: readonly string[]): string[] {
+  const protocol = URL.parse(url)?.protocol;
+
+  if (protocol !== "http:" && protocol !== "https:") {
+    throw new Error("Unsupported URL: yt-dlp only fetches http(s) URLs");
+  }
+
+  return [...options, "--", url];
+}
+
+async function execYtDlp(url: string, options: string[], cwd?: string): Promise<string> {
+  const args = ytDlpArgs(url, options);
+
   try {
     // --dump-json prints a whole info dict per media entry, so a long playlist
     // answers with several megabytes on stdout.
@@ -480,8 +500,8 @@ const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "heic", "gif"]);
  * with newline-delimited objects rather than a single document - both shapes
  * reach `toInfo`, which flattens them.
  */
-async function fetchVideoInfo(args: string[]): Promise<unknown> {
-  const stdout = await execYtDlp([...args, ...METADATA_PROBE_ARGS]);
+async function fetchVideoInfo(url: string, options: string[]): Promise<unknown> {
+  const stdout = await execYtDlp(url, [...options, ...METADATA_PROBE_ARGS]);
 
   try {
     return JSON.parse(stdout) as unknown;
@@ -552,7 +572,7 @@ export async function getVideoMetadata(
 
   try {
     const proxyArgs = await getProxyArgs();
-    const rawInfo = await fetchVideoInfo([url, ...(auth?.args ?? []), ...proxyArgs]);
+    const rawInfo = await fetchVideoInfo(url, [...(auth?.args ?? []), ...proxyArgs]);
     const container = toInfo(rawInfo);
     const primary = selectMediaEntry(container);
 
@@ -628,7 +648,6 @@ export async function downloadVideoAudio(
       const outputFilename = `${outputBase}.${attempt.format}`;
       const outputFile = path.join(outputDir, outputFilename);
       const args = [
-        url,
         "-x", // Extract audio
         "--audio-format",
         attempt.format,
@@ -648,7 +667,7 @@ export async function downloadVideoAudio(
       }
 
       try {
-        await execYtDlp(args, outputDir);
+        await execYtDlp(url, args, outputDir);
 
         const stats = await fs.stat(outputFile);
 
@@ -748,7 +767,6 @@ export async function downloadCaptions(
 
   try {
     const args = [
-      url,
       "--write-auto-sub", // Download auto-generated subtitles
       "--skip-download", // Don't download the video itself
       "--sub-langs",
@@ -763,7 +781,7 @@ export async function downloadCaptions(
       ...(await getProxyArgs()),
     ];
 
-    await execYtDlp(args, outputDir);
+    await execYtDlp(url, args, outputDir);
 
     // Find the downloaded VTT file (yt-dlp adds language suffix)
     const files = await fs.readdir(outputDir);
@@ -883,7 +901,6 @@ export async function downloadVideo(
     log.debug({ ffmpegDir, ffmpegBinary }, "Using ffmpeg for video download");
 
     const args = [
-      url,
       "-o",
       outputTemplate,
       // Prefer progressive MP4 first, then H.264 MP4 DASH, then generic MP4
@@ -900,7 +917,7 @@ export async function downloadVideo(
       args.push("--ffmpeg-location", ffmpegDir);
     }
 
-    await execYtDlp(args, outputDir);
+    await execYtDlp(url, args, outputDir);
 
     // Find the actual output file (yt-dlp fills in the extension)
     const basePattern = `video-${timestamp}-${randomId}`;
