@@ -134,11 +134,13 @@ it("syncs the newer state of a job already waiting behind another item's sync", 
   startWorker();
   const running = holdNextSyncOf("soup");
 
-  // Due together: the worker promotes both when it takes the soup, so the
-  // lasagne's sync waits for the worker, past the point BullMQ replaces it.
   await addCaldavSyncJob(queue, sync("soup", "soup"));
   await addCaldavSyncJob(queue, sync("lasagne", "moved once"));
   await running;
+  // The lasagne's sync has to wait for the worker, past the point BullMQ
+  // replaces it. Added a moment after the soup's, it can still be short of its
+  // delay when the worker takes the soup, so it is promoted rather than timed.
+  await queue.promoteJobs();
   expect(await queue.getWaitingCount()).toBe(1);
 
   await addCaldavSyncJob(queue, sync("lasagne", "moved twice"));
