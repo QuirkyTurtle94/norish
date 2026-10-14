@@ -2,7 +2,6 @@
  * Recipe Import Worker
  *
  * Processes recipe import jobs from the queue.
- * Uses lazy worker pattern - starts on-demand and pauses when idle.
  */
 
 import type { Job } from "bullmq";
@@ -21,7 +20,8 @@ import { ErrorWithDetail } from "@norish/shared/lib/error-extensions";
 import { credentialSetsForUrl, rotateCredentialSet } from "@norish/shared/lib/site-auth-tokens";
 import { withTimeout } from "@norish/shared/lib/with-timeout";
 
-import { defineLazyWorker, QUEUE_NAMES, RECIPE_IMPORT_PROCESSING_TIMEOUT_MS } from "../config";
+import { QUEUE_NAMES, RECIPE_IMPORT_PROCESSING_TIMEOUT_MS } from "../config";
+import { createWorker } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { completeStep, reportStep } from "../job-steps";
 
@@ -197,10 +197,6 @@ async function handleJobFailed(
   }
 }
 
-/**
- * Start the recipe import worker (lazy - starts on demand).
- * Call during server startup.
- */
 // Exported for tests, like the other import workers' processors.
 export const processRecipeImportJob = (job: Job<RecipeImportJobData>) =>
   withTimeout(
@@ -209,11 +205,6 @@ export const processRecipeImportJob = (job: Job<RecipeImportJobData>) =>
     "Recipe import job"
   );
 
-const recipeImportWorker = defineLazyWorker(
-  QUEUE_NAMES.RECIPE_IMPORT,
-  processRecipeImportJob,
-  handleJobFailed
-);
-
-export const startRecipeImportWorker = recipeImportWorker.start;
-export const stopRecipeImportWorker = recipeImportWorker.stop;
+export function startRecipeImportWorker(): void {
+  createWorker(QUEUE_NAMES.RECIPE_IMPORT, processRecipeImportJob, { onFailed: handleJobFailed });
+}

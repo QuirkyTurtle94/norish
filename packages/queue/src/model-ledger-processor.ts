@@ -19,11 +19,11 @@ import {
 import { recordModelUses } from "./job-steps";
 
 export function createModelLedgerProcessor<T>(processor: Processor<T>): Processor<T> {
-  return async (job: Job<T>, token?: string) => {
+  return async (job: Job<T>, token?: string, signal?: AbortSignal) => {
     const ledger = createModelUseLedger();
 
     try {
-      return await runWithModelUseLedger(ledger, () => processor(job, token));
+      return await runWithModelUseLedger(ledger, () => processor(job, token, signal));
     } finally {
       if (ledger.uses.length > 0) {
         await recordModelUses(job, ledger.uses);

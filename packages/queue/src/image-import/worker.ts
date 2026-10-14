@@ -3,7 +3,6 @@
  *
  * Processes image-based recipe import jobs from the queue.
  * Uses AI vision models to extract recipe data from images.
- * Uses lazy worker pattern - starts on-demand and pauses when idle.
  */
 
 import type { Job } from "bullmq";
@@ -18,7 +17,8 @@ import { dishColorForImageUrl } from "@norish/shared-server/media/dish-color";
 import { deleteRecipeImagesDir, saveImageBytes } from "@norish/shared-server/media/storage";
 import { recipes } from "@norish/shared-server/realtime/recipes";
 
-import { defineLazyWorker, QUEUE_NAMES } from "../config";
+import { QUEUE_NAMES } from "../config";
+import { createWorker } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { reportStep } from "../job-steps";
 
@@ -145,14 +145,6 @@ async function handleJobFailed(
   );
 }
 
-/**
- * Start the image import worker (lazy - starts on demand).
- */
-const imageImportWorker = defineLazyWorker(
-  QUEUE_NAMES.IMAGE_IMPORT,
-  processImageImportJob,
-  handleJobFailed
-);
-
-export const startImageImportWorker = imageImportWorker.start;
-export const stopImageImportWorker = imageImportWorker.stop;
+export function startImageImportWorker(): void {
+  createWorker(QUEUE_NAMES.IMAGE_IMPORT, processImageImportJob, { onFailed: handleJobFailed });
+}

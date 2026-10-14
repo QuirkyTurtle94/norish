@@ -13,9 +13,8 @@
  * longer flagged, or one the asker may not edit, is passed over, and a food
  * whose question or edit broke is recorded as failed on its own step, with
  * the cause; neither ends the round. Only the round's own bookkeeping can fail
- * it, and the retry asks again, replacing the suggestions it left. Uses the lazy
- * worker pattern, which wraps the processor so the models each question asks
- * reach the job monitor.
+ * it, and the retry asks again, replacing the suggestions it left. Its worker
+ * wraps the processor so the models each question asks reach the job monitor.
  */
 
 import type { Job } from "bullmq";
@@ -38,7 +37,8 @@ import { ingredients } from "@norish/shared-server/realtime/ingredients";
 
 import type { JobStepEvent } from "../job-steps";
 import type { ReviewStepDetail } from "./progress";
-import { defineLazyWorker, QUEUE_NAMES } from "../config";
+import { QUEUE_NAMES } from "../config";
+import { createWorker } from "../create-worker";
 import { recordCompletedSteps } from "../job-steps";
 import { REVIEW_STEP, summarizeReviewRound } from "./progress";
 
@@ -229,11 +229,8 @@ export async function handleIngredientReviewFailure(
   await announceRound(job, true);
 }
 
-const ingredientReviewWorker = defineLazyWorker<IngredientReviewJobData>(
-  QUEUE_NAMES.INGREDIENT_REVIEW,
-  processIngredientReviewJob,
-  handleIngredientReviewFailure
-);
-
-export const startIngredientReviewWorker = ingredientReviewWorker.start;
-export const stopIngredientReviewWorker = ingredientReviewWorker.stop;
+export function startIngredientReviewWorker(): void {
+  createWorker<IngredientReviewJobData>(QUEUE_NAMES.INGREDIENT_REVIEW, processIngredientReviewJob, {
+    onFailed: handleIngredientReviewFailure,
+  });
+}

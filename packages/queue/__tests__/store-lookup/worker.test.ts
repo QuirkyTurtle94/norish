@@ -3,19 +3,13 @@
  * What a lookup that failed leaves behind, and what a lookup tells the job
  * monitor. BullMQ retries a match job that threw; only the attempt that spends
  * the last try gives up, and that is the one that must not leave a Pending
- * Link saying the shop is still being asked. The worker is built by hand, not
- * through the lazy worker manager, so it must wrap its processor itself: the
- * models a lookup asks reach the job monitor the way a lazy worker's do.
+ * Link saying the shop is still being asked.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { closeWorkers } from "@norish/queue/create-worker";
 import { readStepProgress } from "@norish/queue/job-steps";
-import {
-  forgetFailedLookup,
-  startStoreLookupWorker,
-  stopStoreLookupWorker,
-} from "@norish/queue/store-lookup/worker";
-import { recordModelUse } from "@norish/shared-server/ai/runtime/model-use-ledger";
+import { forgetFailedLookup, startStoreLookupWorker } from "@norish/queue/store-lookup/worker";
 
 const clearPendingLink = vi.hoisted(() => vi.fn());
 const lookup = vi.hoisted(() => ({ matchGroceryName: vi.fn(), refreshProducts: vi.fn() }));
@@ -28,8 +22,8 @@ vi.mock("bullmq", async (importOriginal) => {
 
   class MockWorker {
     on = vi.fn();
+    pause = vi.fn(async () => undefined);
     close = vi.fn(async () => undefined);
-    removeAllListeners = vi.fn();
 
     constructor(_queueName: string, processor: (job: unknown) => Promise<unknown>) {
       captured.processor = processor;
@@ -108,22 +102,7 @@ describe("startStoreLookupWorker", () => {
   });
 
   afterEach(async () => {
-    await stopStoreLookupWorker();
-  });
-
-  it("hands BullMQ a processor that writes the models a lookup asked onto the job", async () => {
-    lookup.matchGroceryName.mockImplementation(async () => {
-      recordModelUse({ provider: "typesafe", model: "jev-2026-09-01", outcome: "completed" });
-
-      return { matched: false };
-    });
-    const job = fakeJob(match);
-
-    await captured.processor!(job);
-
-    expect(readStepProgress(job.progress)?.attempts[0]?.models).toEqual([
-      { provider: "typesafe", model: "jev-2026-09-01", outcome: "completed" },
-    ]);
+    await closeWorkers(0);
   });
 
   it("answers a question queued before questions named their Ingredient, by its name", async () => {

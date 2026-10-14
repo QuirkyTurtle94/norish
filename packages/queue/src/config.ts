@@ -5,7 +5,7 @@
  * Connection management is handled by @norish/queue/redis/bullmq module.
  */
 
-import type { DefaultJobOptions, Job, Processor, WorkerOptions } from "bullmq";
+import type { DefaultJobOptions, WorkerOptions } from "bullmq";
 
 import type { JobRetentionConfig } from "@norish/config/zod/server-config";
 
@@ -13,17 +13,10 @@ import type { JobRetentionConfig } from "@norish/config/zod/server-config";
  * Queue names for all background job queues
  */
 import type { QueueName } from "./queue-names";
-import { createLazyWorker, stopLazyWorker } from "./lazy-worker-manager";
 import { QUEUE_NAMES } from "./queue-names";
-import { getBullClient } from "./redis/bullmq";
 
 export { QUEUE_NAMES };
 export type { QueueName };
-
-export interface LazyWorkerController {
-  start: () => Promise<void>;
-  stop: () => Promise<void>;
-}
 
 /**
  * Base worker options shared across all workers.
@@ -96,34 +89,6 @@ export const WORKER_CONCURRENCY = {
   // request and rate-limited hard, as for Draw icons.
   [QUEUE_NAMES.NEW_INGREDIENTS]: 1,
 } as const;
-
-/**
- * Define the standard lifecycle and configuration for an on-demand worker.
- *
- * Queue-specific modules own only their processor and failure policy. Redis,
- * stalled recovery, concurrency, registration, and shutdown stay consistent.
- */
-export function defineLazyWorker<T>(
-  queueName: QueueName,
-  processor: Processor<T>,
-  onFailed?: (job: Job<T> | undefined, error: Error) => void | Promise<void>
-): LazyWorkerController {
-  return {
-    start: () =>
-      createLazyWorker(
-        queueName,
-        processor,
-        {
-          connection: getBullClient(),
-          ...baseWorkerOptions,
-          stalledInterval: STALLED_INTERVAL[queueName],
-          concurrency: WORKER_CONCURRENCY[queueName],
-        },
-        onFailed
-      ),
-    stop: () => stopLazyWorker(queueName),
-  };
-}
 
 export const RECIPE_IMPORT_PROCESSING_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -324,7 +289,6 @@ export const ingredientLinkingJobOptions: DefaultJobOptions = {
 /**
  * A shop that is down is down; a lookup that failed is retried once and then
  * left alone, because the grocery it was for is unpriced rather than broken.
- * **Never add `delay` when enqueuing on this queue** — see the producer.
  */
 export const storeLookupJobOptions: DefaultJobOptions = {
   attempts: 2,

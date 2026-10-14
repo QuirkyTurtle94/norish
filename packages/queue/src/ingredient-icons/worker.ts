@@ -9,9 +9,9 @@
  * together once every food is drawn. A food
  * the asker may no longer edit, one that is gone or one a person gave an icon
  * meanwhile is passed over, and a food whose drawing broke is recorded as
- * failed on its own step, with the cause; neither ends the round. Uses the
- * lazy worker pattern, which wraps the processor so the image model each
- * drawing asks reaches the job monitor.
+ * failed on its own step, with the cause; neither ends the round. Its worker
+ * wraps the processor so the image model each drawing asks reaches the job
+ * monitor.
  */
 
 import type { Job } from "bullmq";
@@ -24,7 +24,8 @@ import { ingredients } from "@norish/shared-server/realtime/ingredients";
 
 import type { JobStepEvent } from "../job-steps";
 import type { IconStepDetail } from "./progress";
-import { defineLazyWorker, QUEUE_NAMES } from "../config";
+import { QUEUE_NAMES } from "../config";
+import { createWorker } from "../create-worker";
 import { recordCompletedSteps } from "../job-steps";
 import { ICON_STEP, summarizeIconRound } from "./progress";
 
@@ -133,11 +134,8 @@ export async function handleIngredientIconsFailure(
   await announceRound(job, true);
 }
 
-const ingredientIconsWorker = defineLazyWorker<IngredientIconsJobData>(
-  QUEUE_NAMES.INGREDIENT_ICONS,
-  processIngredientIconsJob,
-  handleIngredientIconsFailure
-);
-
-export const startIngredientIconsWorker = ingredientIconsWorker.start;
-export const stopIngredientIconsWorker = ingredientIconsWorker.stop;
+export function startIngredientIconsWorker(): void {
+  createWorker<IngredientIconsJobData>(QUEUE_NAMES.INGREDIENT_ICONS, processIngredientIconsJob, {
+    onFailed: handleIngredientIconsFailure,
+  });
+}

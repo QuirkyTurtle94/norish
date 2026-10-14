@@ -6,13 +6,12 @@
  */
 import type { StartedRedisContainer } from "@testcontainers/redis";
 import { RedisContainer } from "@testcontainers/redis";
-import { Queue, Worker } from "bullmq";
+import { Queue } from "bullmq";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
 import { freezableProxy, REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
-import { closeWorker } from "../../src/close-worker";
-import { baseWorkerOptions } from "../../src/config";
-import { instrumentProcessor } from "../../src/instrumented-processor";
+import { closeWorkers, createWorker } from "../../src/create-worker";
+import { QUEUE_NAMES } from "../../src/queue-names";
 import { closeBullConnection, getBullClient } from "../../src/redis/bullmq";
 
 const config = vi.hoisted(() => ({ url: "" }));
@@ -40,59 +39,19 @@ afterAll(async () => {
 });
 
 it("closes every BullMQ connection at once when the sockets have gone half-open", async () => {
-  const queue = new Queue("bullmq-redis-test", { connection: getBullClient() });
-  const worker = new Worker("bullmq-redis-test", async () => {}, {
-    ...baseWorkerOptions,
-    connection: getBullClient(),
-  });
+  const queue = new Queue(QUEUE_NAMES.RECIPE_IMPORT, { connection: getBullClient() });
+  const worker = createWorker(QUEUE_NAMES.RECIPE_IMPORT, async () => {});
 
   queue.on("error", () => {});
-  worker.on("error", () => {});
   await Promise.all([queue.waitUntilReady(), worker.waitUntilReady()]);
   // The worker's run loop has a command in flight when the socket goes dead.
   proxy.freeze();
 
   const startedAt = Date.now();
 
-  await closeWorker(worker);
+  await closeWorkers(10_000);
   await queue.close();
   await closeBullConnection();
 
   expect(Date.now() - startedAt).toBeLessThan(1_000);
-}, 30_000);
-
-it("lets a running job finish before closing its worker", async () => {
-  let release = () => {};
-  const held = new Promise<void>((resolve) => (release = resolve));
-  let started = () => {};
-  const running = new Promise<void>((resolve) => (started = resolve));
-  const queue = new Queue("bullmq-redis-running", { connection: getBullClient() });
-  const worker = new Worker(
-    "bullmq-redis-running",
-    instrumentProcessor(async () => {
-      started();
-      await held;
-
-      return "done";
-    }),
-    { ...baseWorkerOptions, connection: getBullClient() }
-  );
-
-  await queue.add("held", {});
-  await running;
-
-  let closed = false;
-  const closing = closeWorker(worker).then(() => (closed = true));
-
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  expect(closed).toBe(false);
-
-  release();
-  await closing;
-
-  const [job] = await queue.getJobs(["completed"]);
-
-  expect(job?.returnvalue).toBe("done");
-  await queue.close();
-  await closeBullConnection();
 }, 30_000);

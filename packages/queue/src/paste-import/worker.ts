@@ -2,7 +2,6 @@
  * Paste Import Worker
  *
  * Processes pasted recipe text or pasted JSON-LD.
- * Uses lazy worker pattern - starts on-demand and pauses when idle.
  */
 
 import type { Job } from "bullmq";
@@ -30,7 +29,8 @@ import { MAX_RECIPE_PASTE_CHARS } from "@norish/shared/contracts/uploads";
 import { FullRecipeInsertSchema } from "@norish/shared/contracts/zod";
 import { hasRecipeNameIngredientsAndSteps } from "@norish/shared/lib/helpers";
 
-import { defineLazyWorker, QUEUE_NAMES } from "../config";
+import { QUEUE_NAMES } from "../config";
+import { createWorker } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { completeStep, reportStep } from "../job-steps";
 
@@ -282,11 +282,6 @@ async function handleJobFailed(
   }
 }
 
-const pasteImportWorker = defineLazyWorker(
-  QUEUE_NAMES.PASTE_IMPORT,
-  processPasteImportJob,
-  handleJobFailed
-);
-
-export const startPasteImportWorker = pasteImportWorker.start;
-export const stopPasteImportWorker = pasteImportWorker.stop;
+export function startPasteImportWorker(): void {
+  createWorker(QUEUE_NAMES.PASTE_IMPORT, processPasteImportJob, { onFailed: handleJobFailed });
+}

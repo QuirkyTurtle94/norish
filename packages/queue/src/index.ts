@@ -67,35 +67,6 @@ export { addIngredientIconsJob } from "./ingredient-icons/producer";
 export { addNewIngredientsJob } from "./new-ingredients/producer";
 export { findRunningIconRound } from "./ingredient-icons/progress";
 
-// Workers
-export { startRecipeImportWorker, stopRecipeImportWorker } from "./recipe-import/worker";
-export { startImageImportWorker, stopImageImportWorker } from "./image-import/worker";
-export { startPasteImportWorker, stopPasteImportWorker } from "./paste-import/worker";
-export {
-  startNutritionEstimationWorker,
-  stopNutritionEstimationWorker,
-} from "./nutrition-estimation/worker";
-export { startAutoTaggingWorker, stopAutoTaggingWorker } from "./auto-tagging/worker";
-export {
-  startAutoCategorizationWorker,
-  stopAutoCategorizationWorker,
-} from "./auto-categorization/worker";
-export {
-  startAllergyDetectionWorker,
-  stopAllergyDetectionWorker,
-} from "./allergy-detection/worker";
-export {
-  startRecipeProvenanceWorker,
-  stopRecipeProvenanceWorker,
-} from "./recipe-provenance/worker";
-export {
-  startIngredientLinkingWorker,
-  stopIngredientLinkingWorker,
-} from "./ingredient-linking/worker";
-export { startCaldavSyncWorker, stopCaldavSyncWorker } from "./caldav-sync/worker";
-export { startScheduledTasksWorker, stopScheduledTasksWorker } from "./scheduled-tasks/worker";
-export { startStoreLookupWorker, stopStoreLookupWorker } from "./store-lookup/worker";
-
 // Types from @norish/shared/contracts
 export type {
   RecipeImportJobData,

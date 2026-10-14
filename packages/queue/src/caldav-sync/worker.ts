@@ -13,7 +13,8 @@ import { requireQueueApiHandler } from "@norish/queue/api-handlers";
 import { createLogger } from "@norish/shared-server/logger";
 import { caldav } from "@norish/shared-server/realtime/caldav";
 
-import { defineLazyWorker, QUEUE_NAMES } from "../config";
+import { QUEUE_NAMES } from "../config";
+import { createWorker } from "../create-worker";
 import { reportStep } from "../job-steps";
 
 const log = createLogger("worker:caldav-sync");
@@ -192,20 +193,6 @@ async function handleJobFailed(
   }
 }
 
-/**
- * Start the CalDAV sync worker (lazy - starts on demand).
- * Call during server startup.
- */
-const caldavSyncWorker = defineLazyWorker(
-  QUEUE_NAMES.CALDAV_SYNC,
-  processCaldavSyncJob,
-  handleJobFailed
-);
-
-export const startCaldavSyncWorker = caldavSyncWorker.start;
-
-/**
- * Stop the CalDAV sync worker.
- * Call during server shutdown.
- */
-export const stopCaldavSyncWorker = caldavSyncWorker.stop;
+export function startCaldavSyncWorker(): void {
+  createWorker(QUEUE_NAMES.CALDAV_SYNC, processCaldavSyncJob, { onFailed: handleJobFailed });
+}

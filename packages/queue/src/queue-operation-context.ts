@@ -71,13 +71,13 @@ export function extractJobOperationId<T>(data: T): OperationId | undefined {
  * ```
  */
 export function createContextAwareProcessor<T>(processor: Processor<T>): Processor<T> {
-  return (job: Job<T>, token?: string) => {
+  return (job: Job<T>, token?: string, signal?: AbortSignal) => {
     const operationId = extractJobOperationId(job.data);
 
     if (!operationId) {
-      return processor(job, token);
+      return processor(job, token, signal);
     }
 
-    return runWithOperationContext({ operationId }, () => processor(job, token));
+    return runWithOperationContext({ operationId }, () => processor(job, token, signal));
   };
 }
