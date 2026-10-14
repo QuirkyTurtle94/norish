@@ -13,7 +13,7 @@ import { seedRecipe } from "./cookbooks-support";
 import { expect, OWNER, test } from "./fixture";
 import { seedRecipePhoto } from "./image-generation-support";
 
-const PHOTO = path.join(__dirname, "fixtures", "supplied-photo.jpg");
+const PHOTO = path.join(import.meta.dirname, "fixtures", "supplied-photo.jpg");
 
 test("a signed-out reader opening a recipe signs in and comes back to it", async ({
   browser,
