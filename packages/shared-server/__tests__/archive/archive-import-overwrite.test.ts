@@ -99,8 +99,6 @@ vi.mock("@norish/shared-server/archive/paprika-parser", () => ({
 
 describe("archive importer overwrite behavior", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
     mockParseMelaArchive.mockResolvedValue([{ id: "raw-1" }]);
     mockParseMelaRecipeToDTO.mockImplementation(async (_raw, recipeId) => ({
       id: recipeId,

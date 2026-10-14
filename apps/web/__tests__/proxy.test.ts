@@ -2,7 +2,7 @@
 
 import { NextRequest } from "next/server";
 import { config, proxy } from "@/proxy";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const getSessionMock = vi.hoisted(() => vi.fn());
 
@@ -15,10 +15,6 @@ vi.mock("@norish/auth/auth", () => ({
 }));
 
 describe("proxy share access", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("allows share pages without an authenticated session", async () => {
     const response = await proxy(new NextRequest("http://localhost/share/public-token"));
 

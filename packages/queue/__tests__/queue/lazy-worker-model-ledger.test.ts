@@ -68,7 +68,6 @@ vi.mock("@norish/api/logger", () => ({
 
 describe("createLazyWorker model ledger", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     capturedProcessor = undefined;
     mockWorkerIsPaused.mockReturnValue(false);
     mockQueueGetJobCounts.mockResolvedValue({ waiting: 1 });

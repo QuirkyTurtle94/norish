@@ -85,7 +85,6 @@ function createCaller(admin = true) {
 
 describe("admin job queue procedures", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     registryMock.queues.clear();
     isUserServerAdmin.mockImplementation((userId: string) =>
       Promise.resolve(userId === createMockAdminUser().id)

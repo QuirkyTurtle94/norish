@@ -110,7 +110,6 @@ describe("useRecipesMutations", () => {
   let queryClient: ReturnType<typeof createTestQueryClient>;
 
   beforeEach(() => {
-    vi.clearAllMocks();
     mockMutate.mockReset();
     mockCreateMutationOptions.mockClear();
     mockImportFromUrlMutationOptions.mockClear();

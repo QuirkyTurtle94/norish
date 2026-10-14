@@ -85,7 +85,6 @@ function setConnectivity(posture: "live" | "offline" | "offline-forced") {
 const originalLocation = window.location;
 
 beforeEach(() => {
-  vi.clearAllMocks();
   setConnectivity("live");
   h.owner = "user-1";
   h.outboxEntries = [];

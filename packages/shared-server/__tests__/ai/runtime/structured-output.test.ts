@@ -17,7 +17,7 @@
  */
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
 import type { AIConfig } from "@norish/config/zod/server-config";
@@ -147,10 +147,6 @@ beforeEach(() => {
   replies = [() => tagged()];
   mockGetAIConfig.mockResolvedValue(aiConfig());
   mockGetPrompts.mockResolvedValue({});
-});
-
-afterEach(() => {
-  vi.clearAllMocks();
 });
 
 describe("an endpoint that serves structured output", () => {

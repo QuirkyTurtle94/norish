@@ -145,7 +145,6 @@ async function bootOnce(): Promise<void> {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   vi.resetModules();
   mockStore.clear();
   mockServerConfig = {

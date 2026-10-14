@@ -207,8 +207,6 @@ describe("norish recipe extraction", () => {
 
 describe("parseNorishRecipeToDTO", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
     mockSaveImageBytes.mockResolvedValue(`/recipes/${RECIPE_ID}/saved-image.jpg`);
     mockSaveStepImageBytes.mockResolvedValue(`/recipes/${RECIPE_ID}/steps/saved-step.jpg`);
     mockSaveVideoBytes.mockResolvedValue({
@@ -334,8 +332,6 @@ describe("parseNorishRecipeToDTO media rehoming", () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks();
-
     mockSaveImageBytes.mockResolvedValue(`/recipes/${RECIPE_ID}/saved-image.jpg`);
     mockSaveStepImageBytes.mockResolvedValue(`/recipes/${RECIPE_ID}/steps/saved-step.jpg`);
     mockSaveVideoBytes.mockResolvedValue({

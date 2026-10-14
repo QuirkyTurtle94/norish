@@ -126,7 +126,6 @@ describe("useGroceriesSubscription", () => {
   });
 
   beforeEach(() => {
-    vi.clearAllMocks();
     // Clear subscription callbacks
     Object.keys(subscriptionCallbacks).forEach((key) => {
       delete subscriptionCallbacks[key];

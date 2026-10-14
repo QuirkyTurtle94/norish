@@ -148,7 +148,6 @@ const addedNames = () =>
 
 describe("MiniGroceries with a Pantry", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     pantry = [pantryIngredient("Olive oil", "olive oil"), pantryIngredient("salt", "salt")];
     pantryLoading = false;
     pantryUnavailable = false;

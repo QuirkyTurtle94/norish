@@ -73,7 +73,6 @@ async function settle() {
 let subscriber: FakeSubscriber;
 
 beforeEach(() => {
-  vi.clearAllMocks();
   subscriber = new FakeSubscriber();
   createSubscriberClient.mockResolvedValue(subscriber);
 });

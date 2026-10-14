@@ -66,7 +66,6 @@ describe("migrateGalleryImages", () => {
   const updates: Array<{ table: unknown; values: unknown }> = [];
 
   beforeEach(async () => {
-    vi.clearAllMocks();
     updates.length = 0;
     selectResultsByTable = new Map();
 

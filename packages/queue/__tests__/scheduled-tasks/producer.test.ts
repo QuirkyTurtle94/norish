@@ -6,7 +6,7 @@
  * every one of them until somebody empties the Redis they sit in.
  */
 import type { Job, Queue } from "bullmq";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ScheduledTaskJobData } from "@norish/queue/scheduled-tasks/queue";
 import { initializeScheduledJobs } from "@norish/queue/scheduled-tasks/producer";
@@ -37,10 +37,6 @@ function fakeQueue(queued: FakeJob[]) {
 }
 
 describe("initializeScheduledJobs", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("registers every task this build knows, and only those", async () => {
     const queue = fakeQueue([]);
 

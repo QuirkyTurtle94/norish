@@ -70,7 +70,6 @@ vi.mock("@norish/api/logger", () => ({
 
 describe("createLazyWorker operation context", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     capturedProcessor = undefined;
     mockWorkerIsPaused.mockReturnValue(false);
     mockQueueGetJobCounts.mockResolvedValue({ waiting: 1 });

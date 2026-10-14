@@ -88,7 +88,6 @@ describe("useCalendarMutations", () => {
   const endISO = "2025-01-31";
 
   beforeEach(() => {
-    vi.clearAllMocks();
     queryClient = createTestQueryClient();
   });
 

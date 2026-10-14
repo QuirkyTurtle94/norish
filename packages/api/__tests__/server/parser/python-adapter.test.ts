@@ -44,8 +44,6 @@ vi.mock("@norish/shared-server/logger", () => ({
 
 describe("adaptRecipeScrapersResponse", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
     mockGetUnits.mockResolvedValue({});
     mockParseIngredients.mockReturnValue({
       ingredients: [

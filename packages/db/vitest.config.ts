@@ -26,8 +26,6 @@ export default defineConfig({
     ],
   },
   test: {
-    // Vitest 5 defaults this to true; kept off so the upgrade changes no test.
-    clearMocks: false,
     environment: "node",
     globals: true,
     globalSetup: ["./__tests__/setup/global-setup.ts"],

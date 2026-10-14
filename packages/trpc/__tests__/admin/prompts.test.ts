@@ -90,7 +90,6 @@ describe("prompts procedures", () => {
   const mockAdmin = createMockAdminUser();
 
   beforeEach(() => {
-    vi.clearAllMocks();
     isUserServerAdmin.mockImplementation((userId: string) => {
       return Promise.resolve(userId === mockAdmin.id);
     });

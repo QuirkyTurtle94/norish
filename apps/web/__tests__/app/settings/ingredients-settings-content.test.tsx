@@ -470,7 +470,6 @@ async function showSpellings(opened: HTMLElement) {
 
 describe("IngredientsSettingsContent", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     linkedIngredient = null;
     // The end of the list watches for itself scrolling into view; jsdom has no observer.
     vi.stubGlobal(

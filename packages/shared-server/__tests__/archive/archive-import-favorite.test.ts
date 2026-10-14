@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // @vitest-environment node
 
@@ -131,10 +131,6 @@ async function* itemsOf(items: unknown[]) {
 }
 
 describe("archive import loop favourite extra", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("applies the favourite to a freshly created recipe for the importing user", async () => {
     mockFindExistingRecipe.mockResolvedValue(null);
     mockCreateRecipeWithRefs.mockResolvedValue({ status: "inserted", recipeId: "new-recipe-id" });

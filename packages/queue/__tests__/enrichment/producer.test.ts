@@ -51,7 +51,6 @@ function retained(state: string) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   mocks.publishLifecycle.mockResolvedValue(undefined);
   incr.mockResolvedValue(1);
   getJob.mockResolvedValue(null);

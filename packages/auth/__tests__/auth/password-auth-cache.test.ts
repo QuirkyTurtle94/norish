@@ -19,7 +19,6 @@ vi.mock("@norish/auth/provider-cache", () => ({
 
 describe("Provider Cache - Password Auth", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     mockProviderCache.github = null;
     mockProviderCache.google = null;
     mockProviderCache.oidc = null;
@@ -78,7 +77,6 @@ vi.mock("@norish/config/recurrence-config.default.json", () => ({
 
 describe("Password Auth Seed Config", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     mockServerConfig = {};
   });
 

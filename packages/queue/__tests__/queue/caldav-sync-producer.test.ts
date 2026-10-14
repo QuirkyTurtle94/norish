@@ -46,7 +46,6 @@ function occupying(state: string, data: CaldavSyncJobData) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   remove.mockResolvedValue(undefined);
   add.mockImplementation((_name: string, data: CaldavSyncJobData, opts: { jobId: string }) =>
     Promise.resolve({ id: opts.jobId, data } as Job<CaldavSyncJobData>)

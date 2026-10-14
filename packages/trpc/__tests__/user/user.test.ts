@@ -61,7 +61,6 @@ describe("user procedures", () => {
   const mockUser = createMockUser();
 
   beforeEach(() => {
-    vi.clearAllMocks();
     resetUserMocks();
   });
 

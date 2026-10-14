@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { GET } from "@/app/(app)/avatars/[id]/route";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const readFileMock = vi.hoisted(() => vi.fn());
 
@@ -12,10 +12,6 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 describe("avatars route caching", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("serves avatars with a long-lived immutable cache policy (ADR-0021)", async () => {
     readFileMock.mockResolvedValueOnce(Buffer.from("image-bytes"));
 

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { userProcedures } from "@norish/trpc/routers/user/user";
 
@@ -54,10 +54,6 @@ vi.mock("fs/promises", () => ({
 }));
 
 describe("userProcedures.get", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("returns latest user profile from database instead of stale ctx.user", async () => {
     mockDb.getApiKeysForUser.mockResolvedValue([]);
     mockDb.getUserById.mockResolvedValue({

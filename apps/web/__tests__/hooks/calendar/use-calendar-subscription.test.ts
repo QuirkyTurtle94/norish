@@ -109,7 +109,6 @@ describe("useCalendarSubscription", () => {
   const endISO = "2025-01-31";
 
   beforeEach(() => {
-    vi.clearAllMocks();
     subscriptionCallbacks = {};
     queryClient = createTestQueryClient();
   });

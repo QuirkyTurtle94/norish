@@ -32,7 +32,6 @@ function retained(state: string) {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   getJob.mockResolvedValue(null);
   remove.mockResolvedValue(undefined);
   add.mockImplementation(async (_name: string, _data: unknown, opts: { jobId: string }) => ({

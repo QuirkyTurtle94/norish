@@ -218,7 +218,6 @@ describe("RecipeDetailContext", () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks();
     recipeFixture = baseRecipe;
     convertError = null;
     setRecipeData = null;

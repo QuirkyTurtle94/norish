@@ -121,7 +121,6 @@ describe("openapi health endpoint", () => {
     vi.unstubAllGlobals();
     delete process.env.NORISH_VERSION_REPORT_JSON;
     vi.restoreAllMocks();
-    vi.clearAllMocks();
   });
 
   it("returns ok for anonymous callers when the parser is healthy", async () => {

@@ -155,7 +155,6 @@ describe("useGroceriesMutations", () => {
   });
 
   beforeEach(() => {
-    vi.clearAllMocks();
     queryClient = createTestQueryClient();
   });
 

@@ -79,7 +79,6 @@ function outcome(results: Awaited<ReturnType<typeof enrichRecipe>>, kind: Recipe
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   getRecipeFull.mockResolvedValue(recipe());
   getHouseholdMemberIds.mockResolvedValue(["user-1"]);
   getAllergiesForUsers.mockResolvedValue(["Milk"]);

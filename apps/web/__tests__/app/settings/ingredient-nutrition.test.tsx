@@ -108,7 +108,6 @@ const correction = () => screen.getByRole("dialog", { name: /^correctTitle/ });
 
 describe("an Ingredient's nutrition in its panel", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     mocks.pending = false;
     mocks.measure = null;
     mocks.nutrition = {

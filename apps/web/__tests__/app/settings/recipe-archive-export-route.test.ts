@@ -44,7 +44,6 @@ function requestedContext() {
 
 describe("Recipe Archive export route", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     householdMock.mockResolvedValue(null);
     buildArchiveMock.mockResolvedValue({ stream: Readable.from(["PK"]), recipeCount: 0 });
   });

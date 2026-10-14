@@ -105,7 +105,6 @@ function storedUnits(): { units: unknown; isOverridden: boolean } {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   vi.resetModules();
   mockStore.clear();
   mockServerConfig = {

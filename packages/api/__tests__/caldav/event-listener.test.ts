@@ -105,7 +105,6 @@ async function settle() {
 }
 
 beforeEach(async () => {
-  vi.clearAllMocks();
   hub.handlers.clear();
   await stopCaldavSync();
   db.getCaldavConfigDecrypted.mockResolvedValue({ enabled: true, serverUrl: "https://dav" });

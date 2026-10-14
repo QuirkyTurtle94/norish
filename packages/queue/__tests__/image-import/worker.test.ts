@@ -69,8 +69,6 @@ vi.mock("@norish/shared-server/media/storage", () => ({
 
 describe("processImageImportJob", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
     extractRecipeFromImages.mockResolvedValue({
       id: "recipe-123",
       name: "Extracted Recipe",

@@ -18,7 +18,6 @@ vi.mock("@norish/db/logger", () => ({
 
 describe("isVideoParsingEnabled", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.resetModules();
   });
 
@@ -177,7 +176,6 @@ describe("isVideoParsingEnabled", () => {
 
 describe("isAIEnabled", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.resetModules();
   });
 
@@ -235,7 +233,6 @@ describe("isAIEnabled", () => {
 
 describe("getUnits", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.resetModules();
   });
 
@@ -320,7 +317,6 @@ describe("getUnits", () => {
 
 describe("the Decision Model block (ADR-0035)", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.resetModules();
   });
 

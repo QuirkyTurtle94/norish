@@ -53,7 +53,6 @@ describe("useRatingsMutation", () => {
   ];
 
   beforeEach(() => {
-    vi.clearAllMocks();
     queryClient = createTestQueryClient();
     mockQueryKey.mockReturnValue(userRatingQueryKey);
   });

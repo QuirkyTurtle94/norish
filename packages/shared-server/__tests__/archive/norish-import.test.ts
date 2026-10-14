@@ -170,8 +170,6 @@ async function buildArchiveBytes(
 
 describe("norish archive rides the shared import loop", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-
     mockListCuisines.mockResolvedValue([{ id: FRENCH_CUISINE_ID, name: "French", version: 1 }]);
     mockFindExistingRecipe.mockResolvedValue(null);
     mockCreateRecipeWithRefs.mockImplementation(async (recipeId) => ({

@@ -52,7 +52,6 @@ function household(adminUserId: string, memberIds: readonly string[]) {
 
 describe("deleteUserAccount", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     repositories.getHouseholdForUser.mockResolvedValue(null);
     repositories.transferHouseholdAdmin.mockResolvedValue(undefined);
     repositories.deleteUser.mockResolvedValue(undefined);

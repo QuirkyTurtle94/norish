@@ -79,7 +79,6 @@ vi.mock("@/app/providers/trpc-provider", () => ({
 
 describe("CalDAV Subscription Hook", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     _subscriptionCallback = null;
     mockSubscriptionEmitter.removeAllListeners();
   });

@@ -23,7 +23,6 @@ describe("recipe media share access", () => {
   const recipeId = "123e4567-e89b-12d3-a456-426614174000";
 
   beforeEach(() => {
-    vi.clearAllMocks();
     statMock.mockResolvedValue({ size: 12 });
     readFileMock.mockResolvedValue(Buffer.from("file-bytes"));
   });

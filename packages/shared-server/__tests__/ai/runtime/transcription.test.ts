@@ -123,7 +123,6 @@ function videoConfig(overrides: Partial<VideoConfig>): VideoConfig {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
   captured = [];
   reply = { text: "local transcript" };
   holdResponses = false;

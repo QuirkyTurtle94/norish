@@ -87,7 +87,6 @@ describe("recipe share procedures", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
     isUserServerAdminMock.mockResolvedValue(false);
     getCachedHouseholdForUserMock.mockResolvedValue(household);
     getRecipePermissionPolicyMock.mockResolvedValue({ view: "household" });

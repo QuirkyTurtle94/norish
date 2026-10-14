@@ -34,8 +34,6 @@ describe("norish archive round-trip", () => {
   const ITALIAN_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 
   beforeEach(() => {
-    vi.clearAllMocks();
-
     mockSaveImageBytes.mockResolvedValue(`/recipes/${MINTED_ID}/saved-image.jpg`);
     mockSaveStepImageBytes.mockResolvedValue(`/recipes/${MINTED_ID}/steps/saved-step.jpg`);
     mockSaveVideoBytes.mockResolvedValue({

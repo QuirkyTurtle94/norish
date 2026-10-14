@@ -73,7 +73,6 @@ vi.mock("@norish/api/logger", () => ({
  */
 describe("createLazyWorker with a job left active by a previous process", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     capturedProcessor = undefined;
     mockWorkerIsPaused.mockReturnValue(false);
   });

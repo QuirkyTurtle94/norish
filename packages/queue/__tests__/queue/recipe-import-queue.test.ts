@@ -210,7 +210,6 @@ function importData(overrides: Partial<RecipeImportJobData> = {}): RecipeImportJ
 
 describe("Recipe Import Queue", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     // Default: no existing recipe in DB
     mockRecipeExistsByUrlForPolicy.mockResolvedValue({ exists: false });
   });

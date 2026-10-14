@@ -6,7 +6,7 @@
  * row for the next startup, and nothing that happens here may stop the
  * server from booting.
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { backfillDishColors } from "@norish/api/startup/backfill-dish-color";
 
@@ -33,10 +33,6 @@ vi.mock("@norish/shared-server/logger", () => ({
 }));
 
 describe("backfillDishColors", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("writes a colour for rows with media and skips rows without", async () => {
     listRecipesMissingDishColor.mockResolvedValue([
       { id: "with-gallery", image: null, galleryImages: [{ image: "/recipes/a/1.jpg", order: 0 }] },

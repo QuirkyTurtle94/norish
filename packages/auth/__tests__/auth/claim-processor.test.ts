@@ -256,7 +256,6 @@ describe("processClaimsForUser", () => {
   const userId = "user-123";
 
   beforeEach(() => {
-    vi.clearAllMocks();
     mockGetHouseholdForUser.mockResolvedValue(null);
     mockFindOrCreateHouseholdByName.mockResolvedValue({ id: "household-456", name: "test" });
     mockAddUserToHousehold.mockResolvedValue({
