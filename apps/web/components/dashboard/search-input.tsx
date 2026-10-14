@@ -39,6 +39,7 @@ export default function SearchInput() {
       skipNextDebounceRef.current = true;
       setInputValue(filters.rawInput);
     }
+    // Only a change to the filter from elsewhere syncs in; typing must not.
     // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [filters.rawInput]);
 

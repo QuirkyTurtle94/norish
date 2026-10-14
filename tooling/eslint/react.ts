@@ -36,6 +36,8 @@ export const reactConfig = defineConfig(
     rules: {
       // The preset already leaves refs and immutability off and exhaustive-deps
       // a warning, as Norish wants them.
+      // Off: editors copy data that arrives after mount (a panel opening, a query
+      // resolving) into their draft from an effect. On, it flags 178 of them.
       "@eslint-react/set-state-in-effect": "off",
       "@stylistic/jsx-self-closing-comp": "warn",
       "@stylistic/jsx-sort-props": [

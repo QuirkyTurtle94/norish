@@ -81,6 +81,8 @@ export default function IngredientInput({
       });
       setItems([...formatted, createItem("")]);
     }
+    // Seeds the editor once when the ingredients load; a later change to them
+    // must not overwrite what is being typed.
     // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [ingredients.length]);
   const parseIngredient = useCallback(

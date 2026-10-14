@@ -130,6 +130,8 @@ export default function StepInput({
         createStepItem("", []),
       ]);
     }
+    // Seeds the editor once when the steps load; a later change to them must not
+    // overwrite what is being typed.
     // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [steps.length]);
   const emitChanges = useCallback(

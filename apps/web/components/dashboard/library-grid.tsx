@@ -85,6 +85,7 @@ export default function LibraryGrid({
     const rect = containerRef.current.getBoundingClientRect();
 
     return rect.top + window.scrollY;
+    // The container's offset is read, not tracked; a resize is what moves it.
     // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [_windowHeight]); // Recalculate when window resizes
 
