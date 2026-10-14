@@ -154,7 +154,10 @@ export function DateAndSlotFields({
             </DatePicker.Trigger>
           </DateField.Suffix>
         </DateField.Group>
-        <DatePicker.Popover UNSTABLE_portalContainer={portalContainer}>
+        <DatePicker.Popover
+          // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+          UNSTABLE_portalContainer={portalContainer}
+        >
           <Calendar aria-label={t("date")}>
             <Calendar.Header>
               <Calendar.YearPickerTrigger>
@@ -189,7 +192,10 @@ export function DateAndSlotFields({
           <Select.Value />
           <Select.Indicator />
         </Select.Trigger>
-        <Select.Popover UNSTABLE_portalContainer={portalContainer}>
+        <Select.Popover
+          // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+          UNSTABLE_portalContainer={portalContainer}
+        >
           <ListBox>
             {SLOTS.map((s) => (
               <ListBox.Item key={s} id={s} textValue={tSlots(s.toLowerCase())}>

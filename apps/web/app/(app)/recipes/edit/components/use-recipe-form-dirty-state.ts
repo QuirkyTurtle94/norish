@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import type { UnitsMap } from "@norish/config/zod/server-config";
 import type { FullRecipeDTO, MeasurementSystem, RecipeCategory } from "@norish/shared/contracts";
 import { useDirtyState } from "@norish/shared-react/hooks";
+import { primaryRecipeImage } from "@norish/shared/lib/recipe-media";
 import { formatUnit } from "@norish/shared/lib/unit-localization";
 
 import type { ProvenanceFormValue } from "./provenance-fields";
@@ -43,7 +44,8 @@ interface UseRecipeFormDirtyStateOptions {
   units: UnitsMap;
 }
 
-function buildInitialMedia(initialData?: FullRecipeDTO): RecipeGalleryMedia[] {
+/** A recipe's images and videos as the media editor holds them, in one order. */
+export function buildInitialMedia(initialData?: FullRecipeDTO): RecipeGalleryMedia[] {
   const media: RecipeGalleryMedia[] = [];
 
   if (initialData?.images && initialData.images.length > 0) {
@@ -56,8 +58,11 @@ function buildInitialMedia(initialData?: FullRecipeDTO): RecipeGalleryMedia[] {
         version: img.version,
       });
     });
-  } else if (initialData?.image) {
-    media.push({ type: "image", src: initialData.image, order: 0 });
+  } else if (initialData) {
+    // No gallery: a legacy recipe's primary is its old single image, if any.
+    const primary = primaryRecipeImage(initialData);
+
+    if (primary) media.push({ type: "image", src: primary, order: 0 });
   }
 
   if (initialData?.videos && initialData.videos.length > 0) {

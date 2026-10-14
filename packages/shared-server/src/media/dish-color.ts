@@ -193,6 +193,7 @@ export async function withDishColorForUpdate<T extends PrimaryImageCarrier>(
 ): Promise<Omit<T, "dishColor"> & { dishColor?: string | null }> {
   const { dishColor: _supplied, ...rest } = data as T & { dishColor?: unknown };
 
+  // eslint-disable-next-line sonarjs/deprecation -- only asks whether the update touches media, the legacy scalar included
   if (rest.image === undefined && rest.images === undefined) return rest;
 
   return withDishColor(rest);

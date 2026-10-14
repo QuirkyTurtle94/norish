@@ -241,7 +241,7 @@ export default function ImageGenerationForm({ onDirtyChange }: ImageGenerationFo
           inputValue={model}
           isDisabled={!canFetchModels}
           onInputChange={setModel}
-          onSelectionChange={(key) => key && setModel(key as string)}
+          onChange={(key) => key && setModel(key as string)}
         >
           <Label>{t("model")}</Label>
           <ComboBox.InputGroup>

@@ -184,8 +184,8 @@ export default function GeneralCard() {
           className="w-full"
           isDisabled={isLoading || isSaving}
           placeholder={t("defaultLocale")}
-          selectedKey={defaultLocale || null}
-          onSelectionChange={(selected) => {
+          value={defaultLocale || null}
+          onChange={(selected) => {
             if (typeof selected === "string" && selected) {
               setDefaultLocale(selected);
             }

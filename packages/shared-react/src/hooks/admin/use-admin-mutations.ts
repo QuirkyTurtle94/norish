@@ -290,7 +290,7 @@ export function createUseAdminMutations({
         return mutateRestartServerAsync();
       },
       fetchConfigSecret: async (key, field) => {
-        const result = await queryClient.fetchQuery(
+        const result = await queryClient.query(
           trpc.admin.getSecretField.queryOptions({ key, field })
         );
 

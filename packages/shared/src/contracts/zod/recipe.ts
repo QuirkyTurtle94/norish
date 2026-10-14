@@ -54,6 +54,9 @@ export const RecipeDashboardSchema = RecipeSelectBaseSchema.omit({
   // tints, so the dashboard has no use for it.
   dishColor: true,
 }).extend({
+  // The resolved primary image (gallery first), not the deprecated column it
+  // shares a name with.
+  image: z.string().nullable(),
   tags: z.array(TagSummarySchema).default([]),
   categories: z.array(recipeCategorySchema).default([]),
   author: AuthorSchema,

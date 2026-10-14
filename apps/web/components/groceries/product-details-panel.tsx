@@ -167,16 +167,19 @@ export function ProductDetailsPanel({
             <div className="min-w-0 flex-1" data-testid="product-pack-unit">
               <Select
                 fullWidth
-                selectedKey={packUnit === "" ? NO_UNIT : packUnit}
+                value={packUnit === "" ? NO_UNIT : packUnit}
                 variant="secondary"
-                onSelectionChange={handleUnitChange}
+                onChange={handleUnitChange}
               >
                 <Label>{t("packUnit")}</Label>
                 <Select.Trigger className="min-h-12 items-center">
                   <Select.Value className="flex items-center" />
                   <Select.Indicator />
                 </Select.Trigger>
-                <Select.Popover UNSTABLE_portalContainer={portalContainer}>
+                <Select.Popover
+                  // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+                  UNSTABLE_portalContainer={portalContainer}
+                >
                   <ListBox>
                     <ListBox.Item id={NO_UNIT} textValue="—">
                       <span className="text-muted">—</span>

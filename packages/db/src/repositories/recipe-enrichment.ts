@@ -219,6 +219,7 @@ export async function replaceRecipePrimaryImageWithGenerated(
 ): Promise<GeneratedImageReplacement | null> {
   return await db.transaction(async (tx) => {
     const [recipe] = await tx
+      // eslint-disable-next-line sonarjs/deprecation -- the legacy scalar this write clears, read so its file can be released
       .select({ id: recipes.id, image: recipes.image })
       .from(recipes)
       .where(eq(recipes.id, recipeId))

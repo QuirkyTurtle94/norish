@@ -41,18 +41,16 @@ export function AisleSelector({ aisles, selectedAisleId, onSelectionChange }: Ai
 
   return (
     <div data-testid="aisle-selector">
-      <Select
-        fullWidth
-        selectedKey={selectedKey}
-        variant="secondary"
-        onSelectionChange={handleChange}
-      >
+      <Select fullWidth value={selectedKey} variant="secondary" onChange={handleChange}>
         <Label>{t("aisle")}</Label>
         <Select.Trigger className="min-h-12 items-center">
           <Select.Value className="flex items-center" />
           <Select.Indicator />
         </Select.Trigger>
-        <Select.Popover UNSTABLE_portalContainer={portalContainer}>
+        <Select.Popover
+          // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+          UNSTABLE_portalContainer={portalContainer}
+        >
           <ListBox>
             <ListBox.Item id={NO_AISLE} textValue={t("noAisle")}>
               <span className="text-muted">{t("noAisle")}</span>

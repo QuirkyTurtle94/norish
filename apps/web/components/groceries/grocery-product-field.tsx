@@ -679,13 +679,14 @@ export function GroceryProductField({
         // filtered leaves the collection exactly as this component built it.
         items={rows}
         menuTrigger="focus"
-        selectedKey={picked}
+        value={picked}
         variant="secondary"
         onInputChange={(value) => {
           setAsked(true);
           setTyped(true);
           setTerm(value);
         }}
+        // eslint-disable-next-line sonarjs/deprecation -- onChange misses a tap on the row already picked, which makes an auto-picked row the shopper's own
         onSelectionChange={(key) => {
           const row = rows.find((candidate) => candidate.key === String(key));
 
@@ -720,7 +721,10 @@ export function GroceryProductField({
           />
           <ComboBox.Trigger />
         </ComboBox.InputGroup>
-        <ComboBox.Popover UNSTABLE_portalContainer={portalContainer}>
+        <ComboBox.Popover
+          // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+          UNSTABLE_portalContainer={portalContainer}
+        >
           <ListBox renderEmptyState={() => null}>
             {knownRows.length > 0 && (
               <ListBox.Section>

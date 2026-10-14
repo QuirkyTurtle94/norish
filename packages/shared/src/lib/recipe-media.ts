@@ -39,5 +39,6 @@ function galleryOrder(galleryImage: GalleryImageLike): number {
 export function primaryRecipeImage(carrier: PrimaryImageCarrier): string | null {
   const gallery = [...(carrier.images ?? [])].sort((a, b) => galleryOrder(a) - galleryOrder(b));
 
+  // eslint-disable-next-line sonarjs/deprecation -- the one fallback reader of the legacy scalar
   return gallery[0]?.image ?? carrier.image ?? null;
 }

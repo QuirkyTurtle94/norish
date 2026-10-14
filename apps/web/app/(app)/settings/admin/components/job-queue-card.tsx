@@ -213,9 +213,9 @@ export default function JobQueueCard() {
           <Select
             aria-label={t("filters.queue")}
             className="w-full sm:w-56"
-            selectedKey={queueFilter}
+            value={queueFilter}
             variant="secondary"
-            onSelectionChange={(key) => {
+            onChange={(key) => {
               if (typeof key === "string") {
                 setQueueFilter(key);
                 setPage(1);

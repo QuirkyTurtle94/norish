@@ -440,7 +440,7 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
         inputValue={model}
         isDisabled={!enabled || !canFetchModels}
         onInputChange={setModel}
-        onSelectionChange={(key) => key && setModel(key as string)}
+        onChange={(key) => key && setModel(key as string)}
       >
         <Label>{t("model")}</Label>
         <ComboBox.InputGroup>
@@ -472,7 +472,7 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
         inputValue={visionModel}
         isDisabled={!enabled || !canFetchModels}
         onInputChange={setVisionModel}
-        onSelectionChange={(key) => key && setVisionModel(key as string)}
+        onChange={(key) => key && setVisionModel(key as string)}
       >
         <Label>{t("visionModel")}</Label>
         <ComboBox.InputGroup>

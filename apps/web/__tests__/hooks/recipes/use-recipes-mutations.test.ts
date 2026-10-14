@@ -399,6 +399,48 @@ describe("useRecipesMutations", () => {
       );
     });
 
+    it("gives the optimistic card the gallery's first image", async () => {
+      const listQueryKey = [["recipes", "list"], { input: {}, type: "infinite" }];
+
+      queryClient.setQueryData(listQueryKey, createMockInfiniteData());
+      queryClient.setQueryData(["recipes", "pending"], []);
+
+      const { useRecipesMutations } = await import("@/hooks/recipes/use-recipes-mutations");
+
+      renderHook(() => useRecipesMutations(), {
+        wrapper: createTestWrapper(queryClient),
+      });
+
+      const mutationOpts = mockCreateMutationOptions.mock.calls[0]![0] as {
+        onMutate: (input: unknown) => Promise<unknown>;
+      };
+
+      await act(async () => {
+        await mutationOpts.onMutate({
+          id: "22222222-2222-4222-8222-222222222222",
+          name: "Gallery recipe",
+          systemUsed: "metric",
+          recipeIngredients: [],
+          steps: [],
+          tags: [],
+          images: [
+            { image: "/recipes/22222222/second.jpg", order: 1 },
+            { image: "/recipes/22222222/first.jpg", order: 0 },
+          ],
+        });
+      });
+
+      const cachedList =
+        queryClient.getQueryData<ReturnType<typeof createMockInfiniteData>>(listQueryKey);
+
+      expect(cachedList?.pages[0]?.recipes[0]).toEqual(
+        expect.objectContaining({
+          id: "22222222-2222-4222-8222-222222222222",
+          image: "/recipes/22222222/first.jpg",
+        })
+      );
+    });
+
     it("creates optimistic UUIDs when crypto.randomUUID is unavailable", async () => {
       const originalCrypto = globalThis.crypto;
 

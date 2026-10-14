@@ -400,7 +400,7 @@ export default function VideoProcessingForm({ onDirtyChange }: VideoProcessingFo
               inputValue={transcriptionModel}
               isDisabled={isVideoUiDisabled || !hasTranscriptionCredentials}
               onInputChange={setTranscriptionModel}
-              onSelectionChange={(key) => key && setTranscriptionModel(key as string)}
+              onChange={(key) => key && setTranscriptionModel(key as string)}
             >
               <Label>{t("transcriptionModel")}</Label>
               <ComboBox.InputGroup>

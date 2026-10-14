@@ -8,6 +8,7 @@ import type {
   MeasurementSystem,
   RecipeDashboardDTO,
 } from "@norish/shared/contracts";
+import { primaryRecipeImage } from "@norish/shared/lib/recipe-media";
 
 import type { CreateRecipeHooksOptions } from "../types";
 import type { RecipesCacheHelpers } from "./use-recipes-cache";
@@ -169,6 +170,7 @@ function createOptimisticFullRecipe(input: FullRecipeInsertDTO): FullRecipeDTO |
     description: input.description ?? null,
     notes: input.notes ?? null,
     url: input.url ?? null,
+    // eslint-disable-next-line sonarjs/deprecation -- a payload's legacy scalar, carried as it came; readers resolve it through primaryRecipeImage
     image: input.image ?? null,
     servings: input.servings ?? 1,
     prepMinutes: input.prepMinutes ?? null,
@@ -275,7 +277,7 @@ function createOptimisticDashboardRecipe(recipe: FullRecipeDTO): RecipeDashboard
     description: recipe.description,
     notes: recipe.notes,
     url: recipe.url,
-    image: recipe.image,
+    image: primaryRecipeImage(recipe),
     servings: recipe.servings,
     prepMinutes: recipe.prepMinutes,
     cookMinutes: recipe.cookMinutes,

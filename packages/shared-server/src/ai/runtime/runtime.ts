@@ -25,7 +25,7 @@ import { extname } from "node:path";
 import type { z } from "zod";
 import {
   asSchema,
-  experimental_evaluate as evaluate,
+  experimental_decide as decideWithModel,
   generateImage as generateImageWithModel,
   generateText,
   Output,
@@ -940,7 +940,7 @@ async function requestDecision<Q extends DecisionQuestions>({
     "Sending Decision request"
   );
 
-  const result = await evaluate({
+  const result = await decideWithModel({
     model: decisionModel.model,
     state,
     questions: asked,

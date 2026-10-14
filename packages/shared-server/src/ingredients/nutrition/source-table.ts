@@ -36,7 +36,7 @@ const datasetFoodKey = z.custom<DatasetFoodKey>(
     value.split(":")[1] !== ""
 );
 
-const amount = z.number().finite().nonnegative();
+const amount = z.number().nonnegative();
 
 /**
  * A food as the file stores it: [dataset, code, name, kcal, fat,

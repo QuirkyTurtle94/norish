@@ -61,16 +61,19 @@ export function StoreSelector({
     <Select
       fullWidth
       placeholder={placeholder}
-      selectedKey={selectedValue}
+      value={selectedValue}
       variant="secondary"
-      onSelectionChange={handleChange}
+      onChange={handleChange}
     >
       <Label>{label}</Label>
       <Select.Trigger className={`${size === "sm" ? "min-h-10" : "min-h-12"} items-center`}>
         <Select.Value className="flex items-center" />
         <Select.Indicator />
       </Select.Trigger>
-      <Select.Popover UNSTABLE_portalContainer={portalContainer}>
+      <Select.Popover
+        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+        UNSTABLE_portalContainer={portalContainer}
+      >
         <ListBox>
           <ListBox.Item id="none" textValue={noStoreDescription ?? noStoreLabel}>
             <span className={noStoreDescription ? "text-muted" : ""}>

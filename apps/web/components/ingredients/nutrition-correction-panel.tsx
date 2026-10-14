@@ -562,13 +562,13 @@ function DatasetFoodPicker({
       inputValue={term}
       items={options}
       menuTrigger="input"
-      selectedKey={picked?.key ?? null}
+      value={picked?.key ?? null}
       variant="secondary"
       onInputChange={(value) => {
         setTerm(value);
         if (picked) onPick(null);
       }}
-      onSelectionChange={(key) => {
+      onChange={(key) => {
         const option = options.find((candidate) => candidate.id === key);
 
         if (!option) return;
@@ -588,7 +588,10 @@ function DatasetFoodPicker({
         placeholder={t("searchFood")}
         variant="secondary"
       />
-      <ComboBox.Popover UNSTABLE_portalContainer={portalContainer}>
+      <ComboBox.Popover
+        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+        UNSTABLE_portalContainer={portalContainer}
+      >
         <ListBox
           renderEmptyState={() => (
             <p className="text-muted px-3 py-2 text-sm">

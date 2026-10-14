@@ -17,7 +17,11 @@ export function SlotDropdown({ children, onSelectSlot, ariaLabel }: SlotDropdown
   return (
     <Dropdown>
       {children}
-      <Dropdown.Popover UNSTABLE_portalContainer={portalContainer} className="bg-overlay">
+      <Dropdown.Popover
+        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+        UNSTABLE_portalContainer={portalContainer}
+        className="bg-overlay"
+      >
         <Dropdown.Menu
           aria-label={ariaLabel ?? t("chooseSlot")}
           onAction={(slot) => onSelectSlot(slot as Slot)}

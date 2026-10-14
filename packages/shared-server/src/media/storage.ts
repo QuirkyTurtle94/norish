@@ -103,7 +103,7 @@ function extFromBuffer(buf: Buffer): string | undefined {
     buf[6] === 0x79 &&
     buf[7] === 0x70
   ) {
-    const brand = buf.slice(8, 12).toString("ascii");
+    const brand = buf.subarray(8, 12).toString("ascii");
 
     if (brand === "avif") return ".avif";
     if (
@@ -1080,7 +1080,7 @@ function extFromVideoBuffer(buf: Buffer): string | undefined {
     buf[6] === 0x79 &&
     buf[7] === 0x70
   ) {
-    const brand = buf.slice(8, 12).toString("ascii");
+    const brand = buf.subarray(8, 12).toString("ascii");
 
     // Common MP4 brands
     if (

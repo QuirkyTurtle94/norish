@@ -10,7 +10,7 @@
  */
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
-import { APICallError, experimental_evaluate, generateImage, generateText, Output } from "ai";
+import { APICallError, experimental_decide, generateImage, generateText, Output } from "ai";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 
@@ -288,13 +288,13 @@ describe("the image-generation route", () => {
 describe("the Decision route", () => {
   // The exact client the production runtime builds for the Decision block.
   function harnessDecisionModel() {
-    return createTypeSafeAi({ apiKey: "e2e-key", baseURL: `${provider.url}/v1` }).evaluationModel(
+    return createTypeSafeAi({ apiKey: "e2e-key", baseURL: `${provider.url}/v1` }).decisionModel(
       "jev-latest"
     );
   }
 
   function ask() {
-    return experimental_evaluate({
+    return experimental_decide({
       model: harnessDecisionModel(),
       state: { title: "Lentil stew" },
       questions: {

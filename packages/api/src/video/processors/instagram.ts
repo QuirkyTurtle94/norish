@@ -188,7 +188,6 @@ export class InstagramProcessor extends BaseVideoProcessor {
       try {
         const imagePath = await downloadImage(metadata.thumbnail, recipeId);
 
-        recipe.image = imagePath;
         recipe.images = [{ image: imagePath, order: 0 }];
       } catch {
         log.debug({ url }, "Failed to download Instagram thumbnail");

@@ -57,9 +57,10 @@ export function usePanel() {
  * vaul's own `pointer-events: auto`.
  *
  * `UNSTABLE_portalContainer` is React Aria's deprecated-but-supported escape
- * hatch. Its replacement, `UNSAFE_PortalProvider`, ships in `react-aria`, which
- * `react-aria-components` does not share a module instance with here — so
- * "modernising" this swaps a working prop for a silently ignored one.
+ * hatch. Its replacement, `UNSAFE_PortalProvider`, ships in `react-aria`,
+ * which this app does not depend on: React Aria Components only hears the
+ * provider from its own copy of `react-aria`, so a direct dependency would have
+ * to move in lockstep with it, and one left behind is silently ignored.
  */
 export function usePanelPortalContainer(): HTMLElement | undefined {
   return usePanel().portalContainer ?? undefined;

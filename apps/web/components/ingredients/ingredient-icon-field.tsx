@@ -128,7 +128,11 @@ export function IngredientIconField({
         >
           {icon}
         </Dropdown.Trigger>
-        <Dropdown.Popover UNSTABLE_portalContainer={portalContainer} className="bg-overlay">
+        <Dropdown.Popover
+          // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+          UNSTABLE_portalContainer={portalContainer}
+          className="bg-overlay"
+        >
           <Dropdown.Menu aria-label={t("change")}>
             <Dropdown.Item
               id="upload"

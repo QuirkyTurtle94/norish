@@ -80,6 +80,11 @@ import {
 } from "./steps";
 import { attachTagsToRecipeByInputTx } from "./tags";
 
+// The deprecated scalar, for this file's legacy paths only: the no-image
+// count, media cleanup, the startup migrations and the Dish Colour's media.
+// eslint-disable-next-line sonarjs/deprecation -- the repository reads the legacy column until a migration retires it
+const legacyImageColumn = recipes.image;
+
 type RecipeViewPolicy = RecipePermissionPolicy["view"];
 
 /**
@@ -934,6 +939,7 @@ export async function createRecipeWithRefs(
     // the deprecated column — appended after the gallery so it never
     // displaces the primary the payload actually led with.
     const galleryImages = [...(payload.images ?? [])];
+    // eslint-disable-next-line sonarjs/deprecation -- the legacy alias a payload may still carry, folded into the gallery here
     const legacyScalar = (payload.image ?? "").trim();
 
     if (legacyScalar !== "" && !galleryImages.some((img) => img.image === legacyScalar)) {
@@ -1068,7 +1074,7 @@ export async function getImageGenerationSweepCounts(): Promise<{
   )`;
   const hasNoImage = sql`NOT EXISTS (
     SELECT 1 FROM ${recipeImages} WHERE ${recipeImages.recipeId} = ${recipes.id}
-  ) AND (${recipes.image} IS NULL OR btrim(${recipes.image}) = '')`;
+  ) AND (${legacyImageColumn} IS NULL OR btrim(${legacyImageColumn}) = '')`;
 
   const [row] = await db
     .select({
@@ -1634,6 +1640,7 @@ export async function updateRecipeWithRefs(
     // the gallery. An update that says nothing about media leaves legacy
     // rows alone — stripping their only image is the migration's job, not a
     // rename's.
+    // eslint-disable-next-line sonarjs/deprecation -- an update naming the legacy alias touches media, and clears the column
     if (payload.image !== undefined || payload.images !== undefined) updateData.image = null;
     if (payload.dishColor !== undefined) updateData.dishColor = payload.dishColor;
     if (payload.servings !== undefined) updateData.servings = payload.servings;
@@ -1768,6 +1775,7 @@ export async function updateRecipeWithRefs(
     // a gallery-less archive whose hero travels beside `images: []`. With a
     // gallery present it is dropped: no reader has consulted the scalar past
     // a gallery row since the thumbnails went gallery-first.
+    // eslint-disable-next-line sonarjs/deprecation -- the legacy alias a payload may still carry, folded into an empty gallery here
     const updateScalar = typeof payload.image === "string" ? payload.image.trim() : "";
 
     if (updateScalar !== "") {
@@ -2291,7 +2299,7 @@ export async function listAllRecipeMediaReferences(): Promise<{
   videoUrls: string[];
 }> {
   const [allRecipes, galleryImages, videos] = await Promise.all([
-    db.select({ id: recipes.id, image: recipes.image }).from(recipes),
+    db.select({ id: recipes.id, image: legacyImageColumn }).from(recipes),
     db.select({ image: recipeImages.image }).from(recipeImages),
     db.select({ video: recipeVideos.video }).from(recipeVideos),
   ]);
@@ -2308,16 +2316,16 @@ export async function listAllRecipeMediaReferences(): Promise<{
  * migration (`@norish/api/startup/migrate-gallery-images`).
  */
 export async function listRecipeIdsAndImages(): Promise<{ id: string; image: string | null }[]> {
-  return await db.select({ id: recipes.id, image: recipes.image }).from(recipes);
+  return await db.select({ id: recipes.id, image: legacyImageColumn }).from(recipes);
 }
 
 export async function listRecipesWithLegacyImageUrls(
   urlPrefix: string
 ): Promise<{ id: string; image: string | null }[]> {
   return await db
-    .select({ id: recipes.id, image: recipes.image })
+    .select({ id: recipes.id, image: legacyImageColumn })
     .from(recipes)
-    .where(like(recipes.image, `${urlPrefix}%`));
+    .where(like(legacyImageColumn, `${urlPrefix}%`));
 }
 
 export async function updateRecipeImageUrl(recipeId: string, imageUrl: string): Promise<void> {
@@ -2350,7 +2358,7 @@ export async function listRecipesMissingDishColor(): Promise<
 > {
   const [missing, galleryImages] = await Promise.all([
     db
-      .select({ id: recipes.id, image: recipes.image })
+      .select({ id: recipes.id, image: legacyImageColumn })
       .from(recipes)
       .where(isNull(recipes.dishColor)),
     db
@@ -2397,7 +2405,7 @@ export async function getRecipeMediaForDishColor(recipeId: string): Promise<{
   galleryImages: { image: string; order: number | null }[];
 } | null> {
   const [recipe] = await db
-    .select({ image: recipes.image })
+    .select({ image: legacyImageColumn })
     .from(recipes)
     .where(eq(recipes.id, recipeId))
     .limit(1);

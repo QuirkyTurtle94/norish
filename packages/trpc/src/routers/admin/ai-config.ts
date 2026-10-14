@@ -238,7 +238,7 @@ const testAIEndpoint = adminProcedure
   .input(
     z.object({
       provider: AIConfigInputSchema.shape.provider,
-      endpoint: z.string().url().optional(),
+      endpoint: z.url().optional(),
       apiKey: z.string().optional(),
     })
   )

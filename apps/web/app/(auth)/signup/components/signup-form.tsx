@@ -34,7 +34,7 @@ export function SignupForm({ callbackUrl = "/" }: SignupFormProps) {
     passwordsMatch &&
     !passwordTooShort &&
     !passwordTooLong;
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);

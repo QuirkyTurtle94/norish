@@ -150,7 +150,7 @@ async function warmLibrary(trpc: WarmSetTRPC, queryClient: QueryClient): Promise
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     })
   );
-  const data = await queryClient.fetchInfiniteQuery(listOptions).catch(() => null);
+  const data = await queryClient.infiniteQuery(listOptions).catch(() => null);
 
   if (!data) {
     return false;
@@ -169,20 +169,20 @@ async function warmLibrary(trpc: WarmSetTRPC, queryClient: QueryClient): Promise
   const [detailResults, cookbookResults, imagesComplete] = await Promise.all([
     Promise.allSettled(
       recipes.map(({ id }) =>
-        queryClient.fetchQuery(withWarmGcTime(trpc.recipes.get.queryOptions({ id })))
+        queryClient.query(withWarmGcTime(trpc.recipes.get.queryOptions({ id })))
       )
     ),
     Promise.allSettled([
-      queryClient.fetchQuery(withWarmGcTime(trpc.cookbooks.editable.queryOptions())),
+      queryClient.query(withWarmGcTime(trpc.cookbooks.editable.queryOptions())),
       ...cookbookIds.flatMap((id) => [
-        queryClient.fetchQuery(withWarmGcTime(trpc.cookbooks.get.queryOptions({ id }))),
+        queryClient.query(withWarmGcTime(trpc.cookbooks.get.queryOptions({ id }))),
         // Ids only, and what the bulk-add panel needs to leave out what is
         // already in a cookbook — Offline it would otherwise offer to add
         // every member back.
-        queryClient.fetchQuery(
+        queryClient.query(
           withWarmGcTime(trpc.cookbooks.memberIds.queryOptions({ cookbookId: id }))
         ),
-        queryClient.fetchInfiniteQuery(
+        queryClient.infiniteQuery(
           withWarmGcTime(
             trpc.cookbooks.recipes.infiniteQueryOptions(
               { cookbookId: id, limit: WARM_RECIPE_LIST_LIMIT },
@@ -192,9 +192,7 @@ async function warmLibrary(trpc: WarmSetTRPC, queryClient: QueryClient): Promise
         ),
       ]),
       ...recipes.map(({ id }) =>
-        queryClient.fetchQuery(
-          withWarmGcTime(trpc.cookbooks.forRecipe.queryOptions({ recipeId: id }))
-        )
+        queryClient.query(withWarmGcTime(trpc.cookbooks.forRecipe.queryOptions({ recipeId: id })))
       ),
     ]),
     warmPrimaryImages(recipes),
@@ -209,18 +207,18 @@ async function warmLibrary(trpc: WarmSetTRPC, queryClient: QueryClient): Promise
 
 async function warmLists(trpc: WarmSetTRPC, queryClient: QueryClient): Promise<boolean> {
   const results = await Promise.allSettled([
-    queryClient.fetchQuery(withWarmGcTime(trpc.groceries.list.queryOptions())),
-    queryClient.fetchQuery(withWarmGcTime(trpc.stores.list.queryOptions())),
+    queryClient.query(withWarmGcTime(trpc.groceries.list.queryOptions())),
+    queryClient.query(withWarmGcTime(trpc.stores.list.queryOptions())),
     // Where each Store files each name; without it an offline list is one flat
     // block per Store.
-    queryClient.fetchQuery(withWarmGcTime(trpc.stores.aisleLinks.queryOptions())),
+    queryClient.query(withWarmGcTime(trpc.stores.aisleLinks.queryOptions())),
     // What the household has at home; without it an offline recipe adds every
     // staple to the list.
-    queryClient.fetchQuery(withWarmGcTime(trpc.pantry.list.queryOptions())),
+    queryClient.query(withWarmGcTime(trpc.pantry.list.queryOptions())),
     // The profile; it carries the reader's Device Preferences for Offline start-up.
-    queryClient.fetchQuery(withWarmGcTime(trpc.user.get.queryOptions())),
+    queryClient.query(withWarmGcTime(trpc.user.get.queryOptions())),
     ...calendarRanges().map((range) =>
-      queryClient.fetchQuery(withWarmGcTime(trpc.calendar.listItems.queryOptions(range)))
+      queryClient.query(withWarmGcTime(trpc.calendar.listItems.queryOptions(range)))
     ),
   ]);
 
@@ -301,7 +299,7 @@ function sameOriginImageUrl(image: string | null | undefined): string | null {
  */
 async function warmedCookbookIds(trpc: WarmSetTRPC, queryClient: QueryClient): Promise<string[]> {
   try {
-    const data = await queryClient.fetchInfiniteQuery(
+    const data = await queryClient.infiniteQuery(
       withWarmGcTime(
         trpc.cookbooks.list.infiniteQueryOptions(
           { limit: WARM_COOKBOOK_LIST_LIMIT, sortMode: "dateDesc" },

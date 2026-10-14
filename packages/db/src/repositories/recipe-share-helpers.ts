@@ -104,6 +104,7 @@ export function mapRecipeToPublicRecipeView(
     description: recipe.description ?? null,
     notes: recipe.notes ?? null,
     url: recipe.url ?? null,
+    // eslint-disable-next-line sonarjs/deprecation -- the legacy scalar travels beside the gallery, and the share page resolves gallery-first
     image: toSharedMediaUrl(recipe.image, shareToken),
     // The Dish Colour travels to the share page so a shared link tints the
     // way the app does (ADR-0023); it stays a colour, never a media URL.

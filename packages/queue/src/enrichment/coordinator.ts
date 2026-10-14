@@ -32,6 +32,7 @@ import {
   hasSubstantiveCategories,
   hasSubstantiveNutrition,
 } from "@norish/shared/lib/recipe-enrichment";
+import { primaryRecipeImage } from "@norish/shared/lib/recipe-media";
 
 import type { RecipeEnrichmentJobData } from "../contracts/job-types";
 import { ENRICHMENT_QUEUE_NAMES } from "./identity";
@@ -169,7 +170,7 @@ interface EvaluationInput {
 
 /** Any stored image at all: a gallery row, or the legacy scalar. */
 function hasAnyImage(recipe: FullRecipeDTO): boolean {
-  return recipe.images.length > 0 || (recipe.image ?? "").trim() !== "";
+  return recipe.images.length > 0 || (primaryRecipeImage(recipe) ?? "").trim() !== "";
 }
 
 function evaluate(kind: RecipeEnrichmentKind, input: EvaluationInput): Eligibility {

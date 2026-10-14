@@ -283,7 +283,10 @@ function ExpirySelect({
         <Select.Value />
         <Select.Indicator />
       </Select.Trigger>
-      <Select.Popover UNSTABLE_portalContainer={portalContainer}>
+      <Select.Popover
+        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+        UNSTABLE_portalContainer={portalContainer}
+      >
         <ListBox>
           {expiryOptions.map((option) => {
             const label = t(`expiryOptions.${option}`);

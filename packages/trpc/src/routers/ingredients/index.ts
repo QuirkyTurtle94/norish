@@ -738,7 +738,7 @@ const datasetFood = z.object({
     .regex(/^[a-z0-9-]+:[^\s]+$/)
     .max(100),
 });
-const amount = z.number().finite().nonnegative().max(100_000);
+const amount = z.number().nonnegative().max(100_000);
 
 /**
  * Correct an Ingredient's nutrition for the viewer's household: any member,

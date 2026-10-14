@@ -64,7 +64,7 @@ export function IngredientPicker({
       items={options}
       // The list opens once there is something to search by, never empty on focus.
       menuTrigger="input"
-      selectedKey={picked}
+      value={picked}
       variant="secondary"
       onInputChange={(value) => {
         setTerm(value);
@@ -73,7 +73,7 @@ export function IngredientPicker({
           onPick(null);
         }
       }}
-      onSelectionChange={(key) => {
+      onChange={(key) => {
         const option = options.find((candidate) => candidate.id === key);
 
         if (!option) return;
@@ -90,7 +90,10 @@ export function IngredientPicker({
         placeholder={t("pickIngredient")}
         variant="secondary"
       />
-      <ComboBox.Popover UNSTABLE_portalContainer={portalContainer}>
+      <ComboBox.Popover
+        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+        UNSTABLE_portalContainer={portalContainer}
+      >
         <ListBox
           renderEmptyState={() => (
             <p className="text-muted px-3 py-2 text-sm">

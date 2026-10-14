@@ -141,7 +141,11 @@ export function IconActionButton({
       >
         <Icon className="size-4" />
       </Button>
-      <Tooltip.Content UNSTABLE_portalContainer={portalContainer} placement={tooltipPlacement}>
+      <Tooltip.Content
+        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
+        UNSTABLE_portalContainer={portalContainer}
+        placement={tooltipPlacement}
+      >
         <p>{label}</p>
       </Tooltip.Content>
     </Tooltip>

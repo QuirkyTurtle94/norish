@@ -30,7 +30,7 @@ import { formatUnit } from "@norish/shared/lib/unit-localization";
 
 import type { ProvenanceFormValue } from "./provenance-fields";
 import ProvenanceFields, { EMPTY_PROVENANCE_FORM_VALUE } from "./provenance-fields";
-import { useRecipeFormDirtyState } from "./use-recipe-form-dirty-state";
+import { buildInitialMedia, useRecipeFormDirtyState } from "./use-recipe-form-dirty-state";
 
 const log = createClientLogger("RecipeForm");
 const ALL_CATEGORIES: RecipeCategory[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
@@ -88,47 +88,7 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   });
 
   // Media state - unified array of images and videos
-  const [media, setMedia] = useState<RecipeGalleryMedia[]>(() => {
-    const items: RecipeGalleryMedia[] = [];
-
-    // Add images from initialData
-    if (initialData?.images && initialData.images.length > 0) {
-      initialData.images.forEach((img) => {
-        items.push({
-          id: img.id,
-          type: "image",
-          src: img.image,
-          order: img.order,
-          version: img.version,
-        });
-      });
-    } else if (initialData?.image) {
-      // Fallback to legacy single image field
-      items.push({
-        type: "image",
-        src: initialData.image,
-        order: 0,
-      });
-    }
-
-    // Add videos from initialData
-    if (initialData?.videos && initialData.videos.length > 0) {
-      initialData.videos.forEach((vid) => {
-        items.push({
-          id: vid.id,
-          type: "video",
-          src: vid.video,
-          thumbnail: vid.thumbnail,
-          duration: vid.duration,
-          order: vid.order,
-          version: vid.version,
-        });
-      });
-    }
-
-    // Sort by order to maintain unified ordering
-    return items.sort((a, b) => a.order - b.order);
-  });
+  const [media, setMedia] = useState<RecipeGalleryMedia[]>(() => buildInitialMedia(initialData));
 
   // Nutrition state
   const [calories, setCalories] = useState<number | null>(initialData?.calories ?? null);

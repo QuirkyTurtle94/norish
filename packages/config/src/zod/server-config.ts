@@ -421,7 +421,9 @@ export const AIConfigInputSchema = z.object({
  */
 export const AIConfigSchema = AIConfigInputSchema.transform(
   ({
+    // eslint-disable-next-line sonarjs/deprecation -- the migration reads the legacy field it replaces
     autoTaggingMode,
+    // eslint-disable-next-line sonarjs/deprecation -- the migration reads the legacy field it replaces
     autoTagAllergies,
     tagStrategy,
     cuisineStrategy,

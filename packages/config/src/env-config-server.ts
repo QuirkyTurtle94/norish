@@ -231,7 +231,7 @@ const ServerConfigSchema = z.object({
   MAX_VIDEO_FILE_SIZE: z.coerce.number().default(100 * 1024 * 1024), // 100MB
 
   // Redis Configuration
-  REDIS_URL: z.string().url().default("redis://localhost:6379"),
+  REDIS_URL: z.url().default("redis://localhost:6379"),
 
   // Internationalization
   // If invalid locale is specified, falls back to 'en'
