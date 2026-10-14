@@ -71,6 +71,33 @@ function createPublisher(): Redis {
   return client;
 }
 
+const REDIS_HEALTH_TIMEOUT_MS = 2_000;
+
+/** PING through the publisher. A ping unanswered after two seconds counts as down. */
+export async function getRedisHealth() {
+  let timer: NodeJS.Timeout | undefined;
+
+  try {
+    const redis = await getPublisherClient();
+
+    await Promise.race([
+      redis.ping(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("Redis PING timed out")),
+          REDIS_HEALTH_TIMEOUT_MS
+        );
+      }),
+    ]);
+
+    return { status: "ok" as const };
+  } catch {
+    return { status: "error" as const };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Create a new subscriber client.
  * Each subscriber needs its own connection because Redis clients

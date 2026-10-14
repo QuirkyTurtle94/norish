@@ -16,6 +16,7 @@ import {
   isRegistrationEnabled,
   isTimersEnabled,
 } from "@norish/shared-server/config/server-config-loader";
+import { getRedisHealth } from "@norish/shared-server/redis/client";
 
 import { authedProcedure } from "../../middleware";
 import { publicProcedure, router } from "../../trpc";
@@ -23,8 +24,9 @@ import { healthyResponseSchema, parserHealthSchema } from "./config-openapi-type
 
 export async function getServiceHealth() {
   const parserHealthUrl = buildInternalParserApiUrl("/health");
-  const [databaseHealth, parserHealth, appVersions] = await Promise.all([
+  const [databaseHealth, redisHealth, parserHealth, appVersions] = await Promise.all([
     getDatabaseHealth(),
+    getRedisHealth(),
     (async () => {
       try {
         const response = await fetch(parserHealthUrl, {
@@ -60,18 +62,15 @@ export async function getServiceHealth() {
     getAppVersions(),
   ]);
 
-  if (databaseHealth.status !== "ok") {
+  if (
+    databaseHealth.status !== "ok" ||
+    redisHealth.status !== "ok" ||
+    parserHealth.status !== "ok"
+  ) {
     return {
       status: "degraded" as const,
       db: databaseHealth,
-      parser: parserHealth,
-    };
-  }
-
-  if (parserHealth.status !== "ok") {
-    return {
-      status: "degraded" as const,
-      db: databaseHealth,
+      redis: redisHealth,
       parser: parserHealth,
     };
   }
@@ -79,6 +78,7 @@ export async function getServiceHealth() {
   return {
     status: "ok" as const,
     db: databaseHealth,
+    redis: redisHealth,
     versions: {
       ...appVersions,
       scraper: parserHealth.recipeScrapersVersion,
@@ -226,10 +226,10 @@ export const health = publicProcedure
       tags: ["Health"],
       summary: "Check API health",
       description:
-        "Reports API availability and verifies both the database connection and internal parser service are healthy.",
-      successDescription: "The API, database, and parser service are healthy.",
+        "Reports API availability and verifies that the database, Redis and the internal parser service are healthy.",
+      successDescription: "The API, database, Redis and parser service are healthy.",
       errorResponses: {
-        503: "The API is up but the database or parser service is unhealthy or unreachable",
+        503: "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
       },
     },
   })
@@ -243,7 +243,9 @@ export const health = publicProcedure
         message:
           health.db.status !== "ok"
             ? `Database is ${health.db.status}`
-            : `Parser service is ${health.parser.status}`,
+            : health.redis.status !== "ok"
+              ? `Redis is ${health.redis.status}`
+              : `Parser service is ${health.parser.status}`,
       });
     }
 

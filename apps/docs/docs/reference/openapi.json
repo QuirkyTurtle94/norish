@@ -41,13 +41,13 @@
       "get": {
         "operationId": "health",
         "summary": "Check API health",
-        "description": "Reports API availability and verifies both the database connection and internal parser service are healthy.",
+        "description": "Reports API availability and verifies that the database, Redis and the internal parser service are healthy.",
         "tags": [
           "Health"
         ],
         "responses": {
           "200": {
-            "description": "The API, database, and parser service are healthy.",
+            "description": "The API, database, Redis and parser service are healthy.",
             "content": {
               "application/json": {
                 "schema": {
@@ -58,6 +58,19 @@
                       "const": "ok"
                     },
                     "db": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "const": "ok"
+                        }
+                      },
+                      "required": [
+                        "status"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "redis": {
                       "type": "object",
                       "properties": {
                         "status": {
@@ -125,6 +138,7 @@
                   "required": [
                     "status",
                     "db",
+                    "redis",
                     "versions",
                     "parser"
                   ],
@@ -134,7 +148,7 @@
             }
           },
           "503": {
-            "description": "The API is up but the database or parser service is unhealthy or unreachable",
+            "description": "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
             "content": {
               "application/json": {
                 "schema": {
@@ -3943,7 +3957,7 @@
           "message": {
             "type": "string",
             "description": "The error message",
-            "example": "The API is up but the database or parser service is unhealthy or unreachable"
+            "example": "The API is up but the database, Redis or the parser service is unhealthy or unreachable"
           },
           "code": {
             "type": "string",
@@ -3973,11 +3987,11 @@
           "code"
         ],
         "additionalProperties": false,
-        "title": "The API is up but the database or parser service is unhealthy or unreachable error (503)",
+        "title": "The API is up but the database, Redis or the parser service is unhealthy or unreachable error (503)",
         "description": "The error information",
         "example": {
           "code": "SERVICE_UNAVAILABLE",
-          "message": "The API is up but the database or parser service is unhealthy or unreachable",
+          "message": "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
           "issues": []
         }
       },

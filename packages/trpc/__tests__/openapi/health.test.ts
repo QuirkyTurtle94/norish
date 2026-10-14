@@ -11,6 +11,7 @@ const dbExecuteMock = vi.hoisted(() => vi.fn());
 const dbInsertValuesMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const dbInsertMock = vi.hoisted(() => vi.fn().mockReturnValue({ values: dbInsertValuesMock }));
 const getDatabaseHealthMock = vi.hoisted(() => vi.fn());
+const redisPingMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@norish/auth/providers", () => ({
   getAvailableProviders: vi.fn().mockResolvedValue([]),
@@ -54,6 +55,11 @@ vi.mock("@norish/config/env-config-server", async (importOriginal) => {
       new URL(pathname, "http://127.0.0.1:8001").toString(),
   };
 });
+
+vi.mock("@norish/shared-server/redis/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@norish/shared-server/redis/client")>()),
+  getPublisherClient: async () => ({ ping: redisPingMock }),
+}));
 
 const getSessionMock = vi.hoisted(() => vi.fn());
 
@@ -107,6 +113,8 @@ describe("openapi health endpoint", () => {
     });
     dbInsertMock.mockClear();
     dbInsertValuesMock.mockClear();
+    redisPingMock.mockReset();
+    redisPingMock.mockResolvedValue("PONG");
   });
 
   afterEach(() => {
@@ -135,6 +143,9 @@ describe("openapi health endpoint", () => {
     expect(responseJson).toEqual({
       status: "ok",
       db: {
+        status: "ok",
+      },
+      redis: {
         status: "ok",
       },
       versions: {
@@ -209,6 +220,41 @@ describe("openapi health endpoint", () => {
     );
   });
 
+  it.each([
+    ["fails", () => redisPingMock.mockRejectedValueOnce(new Error("Connection is closed."))],
+    ["never answers", () => redisPingMock.mockReturnValueOnce(new Promise(() => {}))],
+  ])("returns 503 for anonymous callers when a Redis ping %s", async (_label, breakPing) => {
+    getSessionMock.mockResolvedValue(null);
+    breakPing();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ status: "ok", recipeScrapersVersion: "15.10.0" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+    );
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+    try {
+      const pending = handleOpenApiRequest(new Request("http://localhost/api/v1/health"));
+
+      await vi.advanceTimersByTimeAsync(2_000);
+      const response = await pending;
+
+      expect(response.status).toBe(503);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({
+          code: "SERVICE_UNAVAILABLE",
+          message: "Redis is error",
+        })
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("rejects anonymous requests to protected openapi endpoints", async () => {
     getSessionMock.mockResolvedValue(null);
 
@@ -238,6 +284,8 @@ describe("openapi health endpoint", () => {
       })
     );
     expect(document.paths["/health"]?.get?.security).toBeUndefined();
+    expect(document.paths["/health"]?.get?.description).toContain("Redis");
+    expect(document.paths["/health"]?.get?.responses["503"]?.description).toContain("Redis");
     expect(document.paths["/recipes/search"]?.post?.security).toEqual([
       { ApiKeyAuth: [] },
       { BearerAuth: [] },

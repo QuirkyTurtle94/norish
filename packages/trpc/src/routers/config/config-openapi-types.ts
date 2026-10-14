@@ -10,6 +10,9 @@ export const healthyResponseSchema = z.object({
   db: z.object({
     status: z.literal("ok"),
   }),
+  redis: z.object({
+    status: z.literal("ok"),
+  }),
   versions: z.object({
     root: z.string(),
     apps: z.record(z.string(), z.string()),
