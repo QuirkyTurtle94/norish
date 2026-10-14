@@ -12,12 +12,15 @@ import { getBullClient } from "@norish/queue/redis/bullmq";
 
 import type { QueueRemovalOptions } from "../config";
 import { QUEUE_NAMES, storeLookupJobOptions } from "../config";
+import { logQueueErrors } from "../operation-aware-queue";
 
 export function createStoreLookupQueue(
   removalOptions?: QueueRemovalOptions
 ): Queue<StoreLookupJobData> {
-  return new Queue<StoreLookupJobData>(QUEUE_NAMES.STORE_LOOKUP, {
-    connection: getBullClient(),
-    defaultJobOptions: { ...storeLookupJobOptions, ...removalOptions },
-  });
+  return logQueueErrors(
+    new Queue<StoreLookupJobData>(QUEUE_NAMES.STORE_LOOKUP, {
+      connection: getBullClient(),
+      defaultJobOptions: { ...storeLookupJobOptions, ...removalOptions },
+    })
+  );
 }

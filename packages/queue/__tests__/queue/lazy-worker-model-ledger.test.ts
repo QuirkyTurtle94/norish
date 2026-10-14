@@ -38,6 +38,7 @@ vi.mock("bullmq", async (importOriginal) => {
 
   class MockQueue {
     getJobCounts = mockQueueGetJobCounts;
+    on = vi.fn();
     close = mockQueueClose;
   }
 

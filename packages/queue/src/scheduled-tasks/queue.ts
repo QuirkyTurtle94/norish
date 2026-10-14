@@ -11,6 +11,7 @@ import { getBullClient } from "@norish/queue/redis/bullmq";
 
 import type { QueueRemovalOptions } from "../config";
 import { QUEUE_NAMES, scheduledTasksJobOptions } from "../config";
+import { logQueueErrors } from "../operation-aware-queue";
 
 /**
  * Every scheduled task this build knows, and the one place that says so. The
@@ -39,8 +40,10 @@ export interface ScheduledTaskJobData {
 export function createScheduledTasksQueue(
   removalOptions?: QueueRemovalOptions
 ): Queue<ScheduledTaskJobData> {
-  return new Queue<ScheduledTaskJobData>(QUEUE_NAMES.SCHEDULED_TASKS, {
-    connection: getBullClient(),
-    defaultJobOptions: { ...scheduledTasksJobOptions, ...removalOptions },
-  });
+  return logQueueErrors(
+    new Queue<ScheduledTaskJobData>(QUEUE_NAMES.SCHEDULED_TASKS, {
+      connection: getBullClient(),
+      defaultJobOptions: { ...scheduledTasksJobOptions, ...removalOptions },
+    })
+  );
 }

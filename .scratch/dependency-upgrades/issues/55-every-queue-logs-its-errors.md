@@ -1,6 +1,6 @@
 # 55 — Every Queue logs its errors
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`. From `.scratch/architecture-after-upgrades/spec.md`, Further Notes ("What lands first"), fix 5.
@@ -14,9 +14,10 @@ No `Queue` has an `error` listener. BullMQ then catches the unhandled `error` ev
 
 ## Acceptance criteria
 
-- [ ] Every `Queue` the server constructs has an `error` listener.
-- [ ] A test shows a queue's `error` reaching the logger.
+- [x] Every `Queue` the server constructs has an `error` listener.
+- [x] A test shows a queue's `error` reaching the logger.
 
 ## Comments
 
 - Filed 2026-10-14 from the architecture spec's list of fixes meant for this branch; no deps ticket tracked them. The spec's fix also named QueueEvents; left out because architecture ticket 01, which the maintainer confirmed, deletes them.
+- 2026-10-14 (implemented) — `logQueueErrors(queue)` in `packages/queue/src/operation-aware-queue.ts` logs a Queue's `error` as "Queue error" with its `queueName` on the `queue` logger. Every construction site goes through it: `createOperationAwareQueue`, `createScheduledTasksQueue`, `createStoreLookupQueue` and the lazy-worker manager's job-count Queue. `queue-errors.test.ts` emits an error on each factory's queue and sees it reach the logger once; before the change the unhandled `error` was thrown. Five tests with a hand-built Queue mock gained an `on`.

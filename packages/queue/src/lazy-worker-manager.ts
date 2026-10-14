@@ -18,6 +18,7 @@ import { Queue, QueueEvents, Worker } from "bullmq";
 import { createLogger } from "@norish/shared-server/logger";
 
 import { instrumentProcessor } from "./instrumented-processor";
+import { logQueueErrors } from "./operation-aware-queue";
 
 const log = createLogger("lazy-worker");
 
@@ -143,7 +144,7 @@ async function initializeQueueEvents<T>(state: LazyWorkerState<T>): Promise<void
   const connection = options.connection as ConnectionOptions;
 
   // Create Queue instance for job count checking
-  const queue = new Queue<T>(queueName, { connection });
+  const queue = logQueueErrors(new Queue<T>(queueName, { connection }));
 
   state.queue = queue;
 
