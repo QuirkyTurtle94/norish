@@ -5,6 +5,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { decode } from "html-entities";
 
 import type { SiteAuthTokenDecryptedDto } from "@norish/shared/contracts/dto/site-auth-tokens";
 import { SERVER_CONFIG } from "@norish/config/env-config-server";
@@ -851,12 +852,8 @@ export function parseVttContent(content: string): string {
     // If we're in a cue, this is caption text
     if (inCue) {
       // Remove VTT formatting tags like <c>, </c>, <b>, etc.
-      const cleanText = trimmed
-        .replace(/<[^<>]+>/g, "") // Remove HTML-like tags
-        .replace(/&nbsp;/g, " ") // Replace non-breaking spaces
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
+      const cleanText = decode(trimmed.replace(/<[^<>]+>/g, "")) // Remove HTML-like tags
+        .replace(/\u00a0/g, " ") // Non-breaking spaces
         .trim();
 
       if (cleanText && !textLines.includes(cleanText)) {

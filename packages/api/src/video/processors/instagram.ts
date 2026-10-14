@@ -1,3 +1,5 @@
+import { decode } from "html-entities";
+
 import type { RecipeVerdict } from "@norish/api/parser/import-triage";
 import type { FullRecipeInsertDTO } from "@norish/shared/contracts/dto/recipe";
 import type { SiteAuthTokenDecryptedDto } from "@norish/shared/contracts/dto/site-auth-tokens";
@@ -23,13 +25,7 @@ function extractCaptionFromHtml(html: string): string {
   );
 
   if (metaMatch?.[1]) {
-    const decoded = metaMatch[1]
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&#x27;/g, "'")
-      .replace(/&#39;/g, "'");
+    const decoded = decode(metaMatch[1]);
 
     if (decoded.length > 50) {
       return decoded;
@@ -42,13 +38,7 @@ function extractCaptionFromHtml(html: string): string {
   );
 
   if (altMetaMatch?.[1]) {
-    const decoded = altMetaMatch[1]
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&#x27;/g, "'")
-      .replace(/&#39;/g, "'");
+    const decoded = decode(altMetaMatch[1]);
 
     if (decoded.length > 50) {
       return decoded;
