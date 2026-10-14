@@ -18,10 +18,10 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
     - `@norish/shared-react`, `@norish/ui`, `@tanstack/*`, `@trpc/client`, `@trpc/tanstack-react-query`
     - `embla-carousel(-react)`, `motion`, `next-themes`, `react-aria-components`, `react-markdown`, `tailwind-merge`, `use-sound`, `usehooks-ts`, `vaul`, `zustand`
 
-    Check each against Next's `*.nft.json` traces first. Anything a trace lists, or `serverExternalPackages` names, stays a dependency, and so does anything `server/**` imports (ticket 12's lint rule).
+    Check each against Next's `*.nft.json` traces first. Anything a trace lists, or `serverExternalPackages` names, stays a dependency, and so does anything `server/**` imports (ticket 12's import check).
 
   - [ ] `pino-pretty` stays a dependency (maintainer's call).
-  - [ ] `ffmpeg-static` stays a dependency of packages/api, and its `rm` line stays. `src/video/yt-dlp.ts` falls back to it, so ticket 12's lint rule rejects it as a devDependency. Production uses the system ffmpeg.
+  - [ ] `ffmpeg-static` stays a dependency of packages/api, and its `rm` line stays. `src/video/yt-dlp.ts` falls back to it, so ticket 12's import check rejects it as a devDependency. Production uses the system ffmpeg.
 - [ ] The deploy step removes what the server never loads. Each cut was verified on a repack of 12's image on 2026-10-14; sizes are compressed / unpacked:
 
   | Cut                                                                                                                                                                                                                                                                                                                               | Saves                                     |

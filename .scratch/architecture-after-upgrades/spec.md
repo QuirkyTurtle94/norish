@@ -121,7 +121,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
 
 - The workspace installs isolated, pnpm's default: a workspace imports only what it declares, and the image installs the same layout.
 - Production runs the server's source through tsx, as dev does. tsdown, its externals list and `dist-server` are gone, and every package loads its own dependencies.
-- Lint fails when a package's source imports a devDependency, because the image leaves devDependencies out.
+- `pnpm deps:cycles` fails when a package's source imports a devDependency, because the image leaves devDependencies out.
 - The image ships only what runs: about 275 MB to download.
 
 **The React and Next line.**
@@ -186,7 +186,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
 50. As a self-hosting operator whose probes call `/api/v1/health`, I want it to keep working and to be told what replaces it, so that upgrading doesn't break my setup.
 51. As a contributor, I want an import of a package my workspace doesn't declare to fail typecheck or tests, so that it never works on my machine and then breaks in the image.
 52. As a contributor, I want production to load the same source, resolved the same way, as dev and the tests, so that "the tests passed and the built server threw" can't happen.
-53. As a contributor, I want Lint to fail when source code imports a devDependency, so that a package the image leaves out is caught before release, not on the first request that needs it.
+53. As a contributor, I want a gate to fail when source code imports a devDependency, so that a package the image leaves out is caught before release, not on the first request that needs it.
 54. As a self-hosting operator, I want a smaller image, so that each upgrade downloads less.
 55. As a self-hosting operator who overrides the container's command, I want to be told the new one, so that my setup keeps starting.
 
@@ -292,7 +292,7 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
   - Node 26's own type stripping was rejected. It refuses files whose real path is under `node_modules`, which is where the deployed packages live. The code would also need 842 imports given a `.ts` extension, plus 13 constructs Node can't strip.
 - **Dependencies versus devDependencies.**
   - Without a bundle, `pnpm deploy --prod` decides what the image holds. A run-time import of a devDependency then breaks only in the image, and only on its code path.
-  - `import/no-extraneous-dependencies` (eslint-plugin-import, already installed) fails Lint on such an import.
+  - The workspace import check that `pnpm deps:cycles` already runs fails on such an import. It is extended for this, because the sweep deleted eslint-plugin-import and its `no-extraneous-dependencies` rule.
   - In apps/web only `server/**` is held to the rule, because Next bundles the rest at build time.
 - **The image.**
   - The deploy is isolated: `node_modules/.pnpm` is the store.
@@ -389,7 +389,7 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
   - render counts with and without the React Compiler
   - image size and build time with and without standalone output
   - the precache analysis
-- Ticket 12 adds no new tests. The isolated linker and the lint rule are the checks, and the E2E harness boots the source the way production does. The two db tests it moves into api run in a gate for the first time.
+- Ticket 12 adds no new tests. The isolated linker and the extended import check are the checks, and the E2E harness boots the source the way production does. The two db tests it moves into api run in a gate for the first time.
 - Every commit passes the `CONTRIBUTING.md` gates plus `pnpm deps:cycles` and `pnpm format:check`. E2E runs against a fresh `pnpm build`.
 
 ## Out of Scope

@@ -4,7 +4,7 @@
 
 - A workspace can only import what it declares. An undeclared import fails typecheck or tests, never production.
 - Production runs the same source, resolved the same way, as dev and the tests. There is no bundle and no hand-kept list of what stays outside it.
-- Lint fails when a package's source imports a devDependency, because the image leaves devDependencies out.
+- `pnpm deps:cycles` fails when a package's source imports a devDependency, because the image leaves devDependencies out.
 - The image installs the same isolated layout as development.
 
 See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build and the image.
@@ -33,11 +33,11 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
   - [ ] No `dist-server` reference is left: `.gitignore`, `.dockerignore`, the root and apps/web `turbo.json`, `tooling/eslint/base.ts`, `tooling/monorepo/scripts/check-workspace-imports.mjs`, `apps/web/vitest.config.ts`, `apps/web/__tests__/design-invariants.test.ts`, and the comment at `.github/workflows/_node-ci.yml:110`.
   - [ ] The E2E harness (`apps/web/__tests__/e2e/harness/production-stack.ts`) checks for `.next` instead of the bundle, and spawns `node --import tsx server/index.ts` with apps/web as its working directory.
   - [ ] AGENTS.md's stack line no longer says "custom Node server bundle via tsdown".
-- [ ] `import/no-extraneous-dependencies` (eslint-plugin-import, already in `tooling/eslint`) is on:
-  - Source that imports a devDependency or an undeclared package fails Lint.
-  - Type-only imports and config files are allowed.
+- [ ] `tooling/monorepo/scripts/check-workspace-imports.mjs`, which `pnpm deps:cycles` already runs over every package's source, also checks dependencies. (The sweep deleted eslint-plugin-import, so its `no-extraneous-dependencies` rule is not an option.)
+  - A value import of a package that the importing workspace lists only under devDependencies, or doesn't list at all, fails the check. `dependencies`, `peerDependencies` and `optionalDependencies` all count.
+  - Type-only imports, tests and config files are allowed.
   - In apps/web only `server/**` is held to it, because Next bundles the rest at build time.
-  - Whatever it flags is fixed by moving the declaration, never with a disable.
+  - Whatever it flags is fixed by moving the declaration.
 - [ ] The image (`docker/Dockerfile`):
   - [ ] `pnpm deploy --filter @norish/web --prod` runs isolated, with no linker override.
   - [ ] The clean-up after the deploy works inside `.pnpm`, whose folders are named `<name>@<version>[_<peers>]`.
