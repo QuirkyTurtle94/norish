@@ -71,6 +71,7 @@ allowBuilds:
   sharp: true
   ssh2: false
   unrs-resolver: true
+  workerd: false
 
 overrides:
   # Optional peers resolved once and never used; they only carried advisories.

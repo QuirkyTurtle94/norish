@@ -37,7 +37,8 @@
     "postcss": "catalog:",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "4.150.0"
   },
   "prettier": "@norish/prettier-config"
 }

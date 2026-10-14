@@ -42,7 +42,8 @@
     "@docusaurus/tsconfig": "^3.10.2",
     "@docusaurus/types": "^3.10.2",
     "prettier": "^3.9.10",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "wrangler": "4.150.0"
   },
   "browserslist": {
     "production": [
