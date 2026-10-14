@@ -17,6 +17,7 @@ import type { RedisOptions } from "ioredis";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const constructed: RedisOptions[] = [];
+const ping = vi.fn();
 
 class MockRedis {
   status = "ready";
@@ -26,6 +27,7 @@ class MockRedis {
   }
 
   on = vi.fn();
+  ping = ping;
   connect = vi.fn().mockResolvedValue(undefined);
   disconnect = vi.fn().mockImplementation(function (this: MockRedis) {
     this.status = "end";
@@ -137,6 +139,45 @@ describe("connection options", () => {
     // RESP3, reconnecting for ever with capped backoff, a 30 s keep-alive.
     for (const option of ["protocol", "retryStrategy", "keepAlive", "connectTimeout"] as const) {
       expect(constructed[0]).not.toHaveProperty(option);
+    }
+  });
+});
+
+describe("Redis health", () => {
+  it("is ok when the ping answers", async () => {
+    vi.resetModules();
+    const { getRedisHealth } = await import("../../src/redis/client");
+
+    ping.mockResolvedValueOnce("PONG");
+
+    await expect(getRedisHealth()).resolves.toEqual({ status: "ok" });
+  });
+
+  it("is an error when the ping fails", async () => {
+    vi.resetModules();
+    const { getRedisHealth } = await import("../../src/redis/client");
+
+    ping.mockRejectedValueOnce(new Error("Command timed out"));
+
+    await expect(getRedisHealth()).resolves.toEqual({ status: "error" });
+  });
+
+  it("is an error when the ping has not answered after two seconds", async () => {
+    vi.resetModules();
+    const { getRedisHealth } = await import("../../src/redis/client");
+
+    ping.mockReturnValueOnce(new Promise(() => {}));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+    try {
+      const health = getRedisHealth();
+
+      await vi.advanceTimersByTimeAsync(1_999);
+      await vi.advanceTimersByTimeAsync(1);
+
+      await expect(health).resolves.toEqual({ status: "error" });
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

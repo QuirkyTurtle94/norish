@@ -11,7 +11,7 @@ const dbExecuteMock = vi.hoisted(() => vi.fn());
 const dbInsertValuesMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const dbInsertMock = vi.hoisted(() => vi.fn().mockReturnValue({ values: dbInsertValuesMock }));
 const getDatabaseHealthMock = vi.hoisted(() => vi.fn());
-const redisPingMock = vi.hoisted(() => vi.fn());
+const getRedisHealthMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@norish/auth/providers", () => ({
   getAvailableProviders: vi.fn().mockResolvedValue([]),
@@ -58,7 +58,7 @@ vi.mock("@norish/config/env-config-server", async (importOriginal) => {
 
 vi.mock("@norish/shared-server/redis/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@norish/shared-server/redis/client")>()),
-  getPublisherClient: async () => ({ ping: redisPingMock }),
+  getRedisHealth: getRedisHealthMock,
 }));
 
 const getSessionMock = vi.hoisted(() => vi.fn());
@@ -113,8 +113,8 @@ describe("openapi health endpoint", () => {
     });
     dbInsertMock.mockClear();
     dbInsertValuesMock.mockClear();
-    redisPingMock.mockReset();
-    redisPingMock.mockResolvedValue("PONG");
+    getRedisHealthMock.mockReset();
+    getRedisHealthMock.mockResolvedValue({ status: "ok" });
   });
 
   afterEach(() => {
@@ -219,12 +219,9 @@ describe("openapi health endpoint", () => {
     );
   });
 
-  it.each([
-    ["fails", () => redisPingMock.mockRejectedValueOnce(new Error("Connection is closed."))],
-    ["never answers", () => redisPingMock.mockReturnValueOnce(new Promise(() => {}))],
-  ])("returns 503 for anonymous callers when a Redis ping %s", async (_label, breakPing) => {
+  it("returns 503 for anonymous callers when Redis does not answer its ping", async () => {
     getSessionMock.mockResolvedValue(null);
-    breakPing();
+    getRedisHealthMock.mockResolvedValueOnce({ status: "error" });
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
@@ -234,24 +231,16 @@ describe("openapi health endpoint", () => {
         })
       )
     );
-    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
 
-    try {
-      const pending = handleOpenApiRequest(new Request("http://localhost/api/v1/health"));
+    const response = await handleOpenApiRequest(new Request("http://localhost/api/v1/health"));
 
-      await vi.advanceTimersByTimeAsync(2_000);
-      const response = await pending;
-
-      expect(response.status).toBe(503);
-      await expect(response.json()).resolves.toEqual(
-        expect.objectContaining({
-          code: "SERVICE_UNAVAILABLE",
-          message: "Redis is error",
-        })
-      );
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        code: "SERVICE_UNAVAILABLE",
+        message: "Redis is error",
+      })
+    );
   });
 
   it("rejects anonymous requests to protected openapi endpoints", async () => {
