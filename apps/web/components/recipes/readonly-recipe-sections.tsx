@@ -94,6 +94,8 @@ type ReadonlyRecipeMediaProps = {
   bottomRightContent?: React.ReactNode;
   /** The recipe whose card image carries into this hero, on the recipe page only. */
   transitionId?: string;
+  /** Whether this hero is the one on screen, where the page mounts two layouts. */
+  transitionActive?: boolean;
 };
 
 const categoryIcons: Record<RecipeCategory, typeof FireIcon> = {
@@ -129,6 +131,7 @@ export function ReadonlyRecipeMedia({
   topRightContent,
   bottomRightContent,
   transitionId,
+  transitionActive = true,
 }: ReadonlyRecipeMediaProps) {
   const t = useTranslations("recipes.carousel.videoPlayer");
   const mediaItems = buildMediaItems(recipe);
@@ -188,7 +191,7 @@ export function ReadonlyRecipeMedia({
     <div className={`relative overflow-hidden rounded-2xl ${className}`}>
       {/* The media alone carries over from the card, not the chrome floating on it. */}
       {transitionId ? (
-        <RecipeImageTransition recipeId={transitionId}>
+        <RecipeImageTransition active={transitionActive} recipeId={transitionId}>
           <div className="h-full w-full">{carousel}</div>
         </RecipeImageTransition>
       ) : (

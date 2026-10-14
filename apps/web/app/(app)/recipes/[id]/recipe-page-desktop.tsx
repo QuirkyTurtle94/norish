@@ -22,6 +22,7 @@ import HeartButton from "@/components/shared/heart-button";
 import { useFavoritesMutation, useFavoritesQuery } from "@/hooks/favorites";
 import { useRatingQuery, useRatingsMutation } from "@/hooks/ratings";
 import { useBackDestination } from "@/hooks/use-back-destination";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useHiddenItemVisibility } from "@/hooks/user/use-hidden-item-visibility";
 import { ArrowLeftIcon } from "@heroicons/react/16/solid";
 import { Card } from "@heroui/react";
@@ -46,6 +47,8 @@ export default function RecipePageDesktop() {
   const t = useTranslations("recipes.detail");
   const back = useBackDestination();
   const { showRatings, showFavorites } = useHiddenItemVisibility();
+  // Both layouts are mounted; the hero on screen is the one the card morphs into.
+  const isMobile = useIsMobile();
 
   const isFavorite = checkFavorite(recipe.id);
   const handleToggleFavorite = () => toggleFavorite(recipe.id);
@@ -116,6 +119,7 @@ export default function RecipePageDesktop() {
             }}
           >
             <ReadonlyRecipeMedia
+              transitionActive={!isMobile}
               transitionId={recipe.id}
               className="h-[clamp(360px,42vw,520px)] rounded-2xl"
               mediaClassName="min-h-0"
