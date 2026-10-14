@@ -73,17 +73,15 @@ export async function initializeScheduledJobs(queue: Queue<ScheduledTaskJobData>
   // The first boot seeds the catalogue before the server starts; every boot
   // still asks once here, so a seed that failed at boot is retried without
   // waiting for midnight. The fetch is conditional, so asking about a seed
-  // already applied costs one small request. Once is once: a boot that finds
-  // the ask still queued (a dev server restarts on every saved file) adds
-  // nothing, or the queue fills with fetches that all say "unchanged".
-  const pending = await queue.getJobs(["waiting", "delayed", "active", "prioritized"]);
-  const asked = pending.some(
-    (job) => job.data?.taskType === "ingredient-catalogue-refresh" && !job.repeatJobKey
+  // already applied costs one small request. Once is once: while the ask is
+  // still queued or running (a dev server restarts on every saved file), a
+  // second boot's ask is deduplicated onto it; BullMQ frees the id once the
+  // ask finishes, so the next boot asks again.
+  await queue.add(
+    "ingredient-catalogue-refresh",
+    { taskType: "ingredient-catalogue-refresh" },
+    { deduplication: { id: "boot-ingredient-catalogue-refresh" } }
   );
-
-  if (!asked) {
-    await queue.add("ingredient-catalogue-refresh", { taskType: "ingredient-catalogue-refresh" });
-  }
 
   log.info("Scheduled tasks registered (daily at midnight)");
 }

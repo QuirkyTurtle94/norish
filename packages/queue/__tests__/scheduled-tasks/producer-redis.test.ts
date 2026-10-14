@@ -2,11 +2,12 @@
 /**
  * The scheduled tasks against a real Redis: every boot leaves exactly one Job
  * Scheduler per task, at midnight, carrying the task it runs. A boot runs the
- * registration again on every restart, so it must not pile schedules up.
+ * registration again on every restart, so it must not pile schedules up, nor
+ * catalogue asks.
  */
 import type { StartedRedisContainer } from "@testcontainers/redis";
 import { RedisContainer } from "@testcontainers/redis";
-import { Queue } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
 import type { ScheduledTaskJobData } from "../../src/scheduled-tasks/queue";
@@ -46,4 +47,30 @@ it("registers one scheduler per task at midnight, and a second boot adds none", 
   const delayed = await queue.getJobs(["delayed"]);
 
   expect(delayed.map((job) => job.data.taskType).sort()).toEqual([...SCHEDULED_TASKS].sort());
+});
+
+it("asks for the catalogue once however often it boots, and again once that ask has run", async () => {
+  const connection = getBullConnectionOptions(redis.getConnectionUrl());
+  const booting = new Queue<ScheduledTaskJobData>("scheduled-tasks-boot", { connection });
+  const asks = async () =>
+    (await booting.getJobs(["waiting", "completed"])).filter(
+      (job) => job.data.taskType === "ingredient-catalogue-refresh" && !job.repeatJobKey
+    );
+
+  try {
+    await initializeScheduledJobs(booting);
+    await initializeScheduledJobs(booting);
+    expect(await asks()).toHaveLength(1);
+
+    const worker = new Worker("scheduled-tasks-boot", async () => {}, { connection });
+
+    await expect.poll(async () => (await booting.getCompletedCount()) > 0).toBe(true);
+    await worker.close();
+
+    await initializeScheduledJobs(booting);
+    expect(await asks()).toHaveLength(2);
+  } finally {
+    await booting.obliterate({ force: true });
+    await booting.close();
+  }
 });

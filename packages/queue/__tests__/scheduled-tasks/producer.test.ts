@@ -60,17 +60,12 @@ describe("initializeScheduledJobs", () => {
     await initializeScheduledJobs(queue);
 
     expect(vi.mocked(queue.add).mock.calls).toEqual([
-      ["ingredient-catalogue-refresh", { taskType: "ingredient-catalogue-refresh" }],
+      [
+        "ingredient-catalogue-refresh",
+        { taskType: "ingredient-catalogue-refresh" },
+        { deduplication: { id: "boot-ingredient-catalogue-refresh" } },
+      ],
     ]);
-  });
-
-  it("asks only once: a boot with a catalogue fetch still queued adds no second one", async () => {
-    // A dev server restarts on every saved file; each boot must not queue another fetch.
-    const queue = fakeQueue([fakeJob("ingredient-catalogue-refresh")]);
-
-    await initializeScheduledJobs(queue);
-
-    expect(queue.add).not.toHaveBeenCalled();
   });
 
   it("clears out a task type the code no longer has", async () => {

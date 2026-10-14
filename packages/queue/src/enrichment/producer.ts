@@ -29,6 +29,11 @@ const log = createLogger("queue:enrichment");
  *
  * A retained terminal job for the same recipe and kind is removed first, so
  * history retention never blocks a rerun while an in-flight job still does.
+ *
+ * Unlike the imports and CalDAV sync, enrichment keeps deterministic job ids
+ * and no BullMQ deduplication: its status read finds a finished run by that
+ * id, and an automatic enrollment merges into a run that already completed,
+ * which needs the kept job to hold the id.
  */
 export async function addEnrichmentJob(
   queue: Queue<RecipeEnrichmentJobData>,
