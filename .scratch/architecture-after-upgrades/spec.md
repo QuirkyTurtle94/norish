@@ -26,7 +26,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
 - Every progress write copies the job's whole step timeline into a Redis events stream that nothing reads back. One ingredient round once grew it to 850 MB.
 - Each queue declares its own retention (CalDAV's "24 hours, persisted to Postgres", for one). None of it has ever applied, because the administrator's retention setting overrides all of it.
 
-**Redis.**
+**Redis.** Moved to the dependency sweep on 2026-10-14 (`.scratch/dependency-upgrades/` tickets 34 and 35); kept here for the record.
 
 - When Redis restarts and leaves a half-open socket, the Realtime Hub keeps listening on a dead connection. It misses every Realtime Event, without a Lagged signal, until the operating system's keepalive gives up, which takes minutes.
 - The realtime E2E only passes because the sweep reordered it so the Redis restart runs last.
@@ -66,7 +66,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
   - A restart aborts AI calls in flight but leaves those jobs to run again on the next boot.
 - The events stream is capped, and the administrator's retention setting is the only retention there is.
 
-**Redis.**
+**Redis.** Moved to the dependency sweep (tickets 34 and 35).
 
 - The Realtime Hub notices a dead socket within seconds and reconnects. Its subscriptions see Lagged and refetch, as for any reconnect.
 - The hand-rolled reconnect options give way to ioredis 6's defaults.
@@ -186,12 +186,10 @@ The upgrades landed as version bumps. The code around them still carries workaro
 
 ### Redis
 
-- The publisher and the Realtime Hub's subscriber get a `socketTimeout` of about ten seconds, and the hub sends `PING` every fifteen seconds. PING is allowed in RESP2 subscriber mode, and an idle subscriber writes nothing else that would arm the timeout.
-- A hub reconnect still reports Lagged to its subscriptions, as every reconnect does today (ADR-0034). Nothing about the realtime contract changes.
-- The hub no longer sends UNSUBSCRIBE before quitting.
-- The hand-rolled retry strategy, keepalive and connect timeout are removed from the connection options in favour of ioredis 6's defaults: exponential backoff capped at five seconds with jitter, never giving up, and a 30-second keepalive.
-- The publisher and the hub get `connectionName`s, as the BullMQ client already has.
-- RESP2 stays (`protocol: 2`). RESP3 would buy Norish nothing outside BullMQ, and BullMQ's Lua replies differ under it.
+Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer chose to fix it before the sweep merges:
+
+- **Ticket 34:** RESP3 with no protocol pin, ioredis 6's connection defaults in place of the hand-rolled retry strategy, keep-alive and connect timeout, and one options builder for pub/sub and BullMQ. This reverses the decision that RESP2 stays: the maintainer wants no `protocol: 2` anywhere. Under ioredis 6's `legacy` reply mapping, the only reply shape that changes is a Lua `false` (`0` instead of `null`), and no BullMQ 6.3.14 script replies with one.
+- **Ticket 35:** the publisher's and the hub's socket timeout, the hub's PING heartbeat, Lagged on reconnect (ADR-0034, unchanged), no UNSUBSCRIBE before quitting, connection names, a bounded shutdown, and the realtime E2E back in its original order.
 
 ### Page loads and the auth gate
 
@@ -254,6 +252,8 @@ The upgrades landed as version bumps. The code around them still carries workaro
 ### React Compiler
 
 - `reactCompiler` is on app-wide in infer mode. The compiler lint rules switched off today are switched back on, and what they flag is fixed.
+  - The sweep's ticket 39 removes eslint-plugin-react-hooks, so @eslint-react owns the hooks rules: switch its `refs`, `immutability` and `set-state-in-effect` back on.
+  - `incompatible-library` and `preserve-manual-memoization` exist only in eslint-plugin-react-hooks, which stays removed. Without them, nothing reports a component the compiler skips; the compiler still leaves such a component as it is.
 - Existing `useMemo`/`useCallback` stay, since the compiler works with them. New code doesn't add them.
 - Render counts on two heavy screens are recorded before and after.
 - Hook aliases keep a `use` prefix: a non-prefixed alias of a hook gets memoised into a conditional hook call, which the mobile app has already hit.
@@ -271,7 +271,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
   - admin cancel ends the job failed, without retry, with the administrator's reason; shutdown cancel leaves it retryable
   - the events stream stays at its cap
 - **Seam 2: browser E2E against the production-like stack.** The existing `ai` and `realtime` Playwright projects and their fixtures. It covers:
-  - the realtime spec back in its original order (a Redis restart that leaves a half-open connection, then a server restart) as the half-open regression test
+  - the realtime spec back in its original order (a Redis restart that leaves a half-open connection, then a server restart) as the half-open regression test, now in the dependency sweep's ticket 35
   - a signed-out reader redirected to login and returned to the requested page after signing in
   - a media request without a session not served, and a share link's images still served
   - an administrator cancelling a running job in the job monitor and seeing it Cancelled, next to the existing job monitor coverage in the decision-model spec
@@ -289,7 +289,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
 
 - Better Auth 1.7, account linking and anything else in the auth package beyond the session check's placement. Another session owns them.
 - The six defects fixed on `chore/dependency-upgrades` before this spec starts (see Further Notes).
-- RESP3, client-side caching and Redis auto-pipelining.
+- Client-side caching and Redis auto-pipelining. RESP3 itself lands in the dependency sweep (ticket 34).
 - Deduplication for enrichment.
 - BullMQ flows, global concurrency and rate limits, telemetry, metrics and sandboxed processors. Norish runs as one process.
 - BullMQ 6's typed progress. It never reaches the Queue getters the job monitor reads, so the runtime check of stored progress stays.
@@ -300,10 +300,10 @@ The upgrades landed as version bumps. The code around them still carries workaro
 
 ## Further Notes
 
-- **What lands first, on `chore/dependency-upgrades`.** One fix commit each, with a test:
+- **What lands first, on `chore/dependency-upgrades`.** One fix commit each, with a test. Ticketed there on 2026-10-14 as 51 to 56 (the reconnect half of fix 3 is in 34):
   1. `drainDelay` is in seconds, not milliseconds, so idle workers stop blocking for 83 minutes.
   2. The Redis publisher is created once and not replaced while it reconnects (`maxRetriesPerRequest: 1`), which ends the connection leak during outages.
-  3. The BullMQ client never gives up reconnecting, and a Redis `PING` joins the health check.
+  3. The BullMQ client never gives up reconnecting, and a Redis `PING` joins the health check. The reconnect half comes with the sweep's ticket 34, which drops the hand-rolled retry strategy for ioredis 6's never-give-up default.
   4. An idempotency claim is taken with a five-minute TTL and extended to seven days on completion.
   5. Every Queue and QueueEvents gets an `error` listener.
   6. The proxy matcher anchors its prefixes, so a future `/login-history` isn't public.
@@ -317,6 +317,6 @@ The upgrades landed as version bumps. The code around them still carries workaro
   - Everything else is independent.
 - **Release notes.**
   - Features: administrators can cancel a running background job.
-  - Fixes and Improvements: background jobs and realtime recover by themselves after a Redis restart.
+  - Fixes and Improvements: background jobs and realtime recover by themselves after a Redis restart. The sweep's ticket 35 writes this line.
   - The rest is internal and stays unpublished (ADR-0010).
 - **Docs.** The admin settings page documents cancelling a job, with a screenshot.

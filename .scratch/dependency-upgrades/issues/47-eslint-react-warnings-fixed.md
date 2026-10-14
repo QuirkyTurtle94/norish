@@ -1,6 +1,7 @@
 # 47 — The @eslint-react warnings fixed
 
 Status: ready-for-agent
+Blocked by: 39
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`, ticket 12. Found in the branch review on 2026-10-13.
@@ -23,6 +24,8 @@ Ticket 12 says: "Fix what the new recommended sets report, or switch a rule off 
 
 The React 19 rules (`no-use-context`, `no-context-provider`, `no-forward-ref`) are migrations to the current React API. Do them, don't switch them off.
 
+After 39, the hooks warnings report as `@eslint-react/exhaustive-deps` too (2 in apps/web on 2026-10-14). Fix them here; they count toward "no `@eslint-react` warnings".
+
 ## Acceptance criteria
 
 - [ ] `pnpm lint` reports no `@eslint-react` warnings.
@@ -33,3 +36,4 @@ The React 19 rules (`no-use-context`, `no-context-provider`, `no-forward-ref`) a
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 — The maintainer confirmed: fix them. apps/web alone had 599 warnings, 144 of them from @eslint-react, which matches the counts above.

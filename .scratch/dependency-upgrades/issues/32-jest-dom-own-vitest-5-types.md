@@ -33,3 +33,4 @@ The review said the shim misses `AsymmetricMatchersContaining`. That is wrong: i
 ## Comments
 
 - Filed 2026-10-13 from the branch review. Blocked on upstream; check the jest-dom releases before starting.
+- 2026-10-14 — Still blocked: jest-dom `latest` is 7.0.1 and #742 is open. It does not hold the branch's PR; if no release carries #742 by then, the shim ships and this ticket moves to the next release.

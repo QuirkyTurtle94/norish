@@ -32,7 +32,7 @@ Every dependency moves to its newest **stable** release. A line stays behind onl
 6. **apps/mobile leaves the pnpm workspace** (ticket 23), and the server drops `expo()` and `@better-auth/expo` while the app is parked.
 7. **Renovate keeps it current** (ticket 07): weekly lockfile maintenance and grouped PRs. No blocking audit gate in CI, because an advisory published overnight would turn every PR red. No image scan.
 8. **No right-sized images in this effort** (ticket 27 dropped). The unused `/_next/image` endpoint is still switched off (`images: { unoptimized: true }`, ticket 26).
-9. **Next's coding-agent upgrade nudge is off** (`experimental.agentUpgrade: false`).
+9. **Next's and Turborepo's coding-agent checks are on** (ticket 36). A build that stops because the installed Next has an advisory is the signal to upgrade Next. Reversed on 2026-10-14; the sweep had switched them off.
 10. **ESLint 10 replaces the plugins that stop at ESLint 9** (ticket 12): `@eslint-react/eslint-plugin` plus `@stylistic/eslint-plugin` for eslint-plugin-react, `eslint-plugin-jsx-a11y-x` for jsx-a11y. eslint-plugin-import is deleted; it enforces nothing.
 11. **Sign-in never links accounts** (ticket 10): `accountLinking.disableImplicitLinking: true`. `trustedProviders` stays, because it now only governs linking from a signed-in session. A deleted user's sessions are revoked immediately.
 12. **Linking an SSO provider from Settings** is built in 0.26 as its own feature spec, after Better Auth 1.7 lands. It is not part of this branch. The 0.25 release notes already promised it.
@@ -70,38 +70,39 @@ Each step is one commit on `chore/dependency-upgrades`; every commit leaves the 
 
 Versions as of 2026-10-13. Take the newest patch when the work starts.
 
-| Package                                                                                 | Today                              | Target (ticket)                                      |
-| --------------------------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
-| Node in the image, `.nvmrc`, CI                                                         | 22.23.3 (`node:22-alpine3.24`)     | 26 LTS, exact tag (15, 16)                           |
-| `@types/node`                                                                           | 25.9.5                             | ^26 (15)                                             |
-| `undici`                                                                                | 7.29.0                             | 8.11.x (15)                                          |
-| `pnpm`                                                                                  | 10.34.5                            | 12.x (16)                                            |
-| `typescript`                                                                            | 5.9.3                              | 6.0.3 (11); 7 held                                   |
-| `typescript-eslint`, `turbo`, `prettier`, `vite`, `@playwright/test`, `tsx`             | 8.67, 2.10, 3.9.6, 8.2, 1.62, —    | latest (11)                                          |
-| `eslint`, `@eslint/js`                                                                  | 9.39.5                             | 10.12.x, 10.0.x (12)                                 |
-| `eslint-plugin-react`, `eslint-plugin-jsx-a11y`, `eslint-plugin-import`                 | 7.37.5, 6.10.2, 2.32.0             | replaced, replaced, deleted (12)                     |
-| `vitest`                                                                                | 4.1.11                             | 5.0.x (13)                                           |
-| `tsdown`                                                                                | 0.22.14                            | 0.23.x (14)                                          |
-| `next`, `@next/eslint-plugin-next`, `next-intl`                                         | 16.3.8, 16.3.2, 4.13.7             | 16.4.x, 16.4.x, 4.14.x (26)                          |
-| `react`, `react-dom`, `@types/react`, `@types/react-dom`                                | 19.2.x                             | 19.3.0 (26)                                          |
-| image optimizer `/_next/image`                                                          | on, unused                         | off (26)                                             |
-| `@heroui/react`, `@heroui/styles`, `react-aria-components`, `motion`                    | 3.2.4, 1.20.0, 13.1.1              | 3.2.6, 1.22.x, 14.1.x (19)                           |
-| `zod`, `@trpc/*`, `@tanstack/react-query`                                               | 4.4.3, 11.18.0, 5.101.4            | 4.6.x, 11.19.x, 5.104.x (08)                         |
-| `better-auth`, `@better-auth/core`, `/api-key`                                          | 1.6.33                             | 1.7.x (09)                                           |
-| `@better-auth/expo`                                                                     | 1.6.33                             | removed (23)                                         |
-| `@better-auth/utils`                                                                    | 0.4.2                              | 0.4.2; better-auth pins it                           |
-| `bullmq`                                                                                | 5.81.3                             | 6.3.x (17, 18)                                       |
-| `ioredis`                                                                               | 5.11.1                             | 6.x, `protocol: 2` (18)                              |
-| `@ai-sdk/perplexity`                                                                    | 4.0.48                             | 5.0.x (05)                                           |
-| `ai`, other `@ai-sdk/*`, `ai-sdk-ollama`, `openai`                                      | 7.0.107 and the matching providers | latest (29)                                          |
-| `archiver` (+ `@types/archiver`), `dotenv`                                              | 7.0.1 (6.0.4), 17.4.2              | 8.0.0 (8.0.0), 18.0.x (20)                           |
-| `parse-ingredient`                                                                      | 2.2.0                              | 3.0.0 (21)                                           |
-| `prisma`, `@prisma/client`, `mysql2`, `@esbuild-kit/esm-loader` (unused optional peers) | in the lockfile                    | removed (28)                                         |
-| everything else in the workspace                                                        | —                                  | latest within range (28) or latest (owning ticket)   |
-| parser-api: Python, uv                                                                  | 3.14, 0.12.5                       | 3.15, 0.13.x (30)                                    |
-| parser-api: fastapi, uvicorn, beautifulsoup4, starlette, lxml and the rest              | see 06 and 30                      | latest (06, 30)                                      |
-| apps/docs (Docusaurus, React, HeroUI, TypeScript)                                       | 3.10.2, 19.2.7, 3.2.4, 5.9.3       | in-range refresh, TypeScript 6 (22)                  |
-| apps/mobile                                                                             | Expo SDK 56                        | out of the workspace (23); upgrades with the rewrite |
+| Package                                                                     | Today                              | Target (ticket)                                      |
+| --------------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
+| Node in the image, `.nvmrc`, CI                                             | 22.23.3 (`node:22-alpine3.24`)     | 26 LTS, exact tag (15, 16)                           |
+| `@types/node`                                                               | 25.9.5                             | ^26 (15)                                             |
+| `undici`                                                                    | 7.29.0                             | 8.11.x (15)                                          |
+| `pnpm`                                                                      | 10.34.5                            | 12.x (16)                                            |
+| `typescript`                                                                | 5.9.3                              | 6.0.3 (11); 7 held                                   |
+| `typescript-eslint`, `turbo`, `prettier`, `vite`, `@playwright/test`, `tsx` | 8.67, 2.10, 3.9.6, 8.2, 1.62, —    | latest (11)                                          |
+| `eslint`, `@eslint/js`                                                      | 9.39.5                             | 10.12.x, 10.0.x (12)                                 |
+| `eslint-plugin-react`, `eslint-plugin-jsx-a11y`, `eslint-plugin-import`     | 7.37.5, 6.10.2, 2.32.0             | replaced, replaced, deleted (12)                     |
+| `vitest`                                                                    | 4.1.11                             | 5.0.x (13)                                           |
+| `tsdown`                                                                    | 0.22.14                            | 0.23.x (14)                                          |
+| `next`, `@next/eslint-plugin-next`, `next-intl`                             | 16.3.8, 16.3.2, 4.13.7             | 16.4.x, 16.4.x, 4.14.x (26)                          |
+| `react`, `react-dom`, `@types/react`, `@types/react-dom`                    | 19.2.x                             | 19.3.0 (26)                                          |
+| image optimizer `/_next/image`                                              | on, unused                         | off (26)                                             |
+| `@heroui/react`, `@heroui/styles`, `react-aria-components`, `motion`        | 3.2.4, 1.20.0, 13.1.1              | 3.2.6, 1.22.x, 14.1.x (19)                           |
+| `zod`, `@trpc/*`, `@tanstack/react-query`                                   | 4.4.3, 11.18.0, 5.101.4            | 4.6.x, 11.19.x, 5.104.x (08)                         |
+| `better-auth`, `@better-auth/core`, `/api-key`                              | 1.6.33                             | 1.7.x (09)                                           |
+| `@better-auth/expo`                                                         | 1.6.33                             | removed (23)                                         |
+| `@better-auth/utils`                                                        | 0.4.2                              | 0.4.2; better-auth pins it                           |
+| `bullmq`                                                                    | 5.81.3                             | 6.3.x (17, 18)                                       |
+| `ioredis`                                                                   | 5.11.1                             | 6.x (18), RESP3 (34)                                 |
+| `@ai-sdk/perplexity`                                                        | 4.0.48                             | 5.0.x (05)                                           |
+| `ai`, other `@ai-sdk/*`, `ai-sdk-ollama`, `openai`                          | 7.0.107 and the matching providers | latest (29)                                          |
+| `archiver` (+ `@types/archiver`), `dotenv`                                  | 7.0.1 (6.0.4), 17.4.2              | 8.0.0 (8.0.0), 18.0.x (45)                           |
+| `parse-ingredient`                                                          | 2.2.0                              | 3.0.0 (21)                                           |
+| `prisma`, `@prisma/client`, `mysql2` (unused optional peers)                | in the lockfile                    | removed (28)                                         |
+| `@esbuild-kit/esm-loader` (a dependency of drizzle-kit)                     | in the lockfile                    | stays until drizzle-kit 1.0 (38)                     |
+| everything else in the workspace                                            | —                                  | latest within range (28) or latest (owning ticket)   |
+| parser-api: Python, uv                                                      | 3.14, 0.12.5                       | 3.15, 0.13.x (30)                                    |
+| parser-api: fastapi, uvicorn, beautifulsoup4, starlette, lxml and the rest  | see 06 and 30                      | latest (06, 30)                                      |
+| apps/docs (Docusaurus, React, HeroUI, TypeScript)                           | 3.10.2, 19.2.7, 3.2.4, 5.9.3       | in-range refresh, TypeScript 6 (22)                  |
+| apps/mobile                                                                 | Expo SDK 56                        | out of the workspace (23); upgrades with the rewrite |
 
 ## Held lines and what unblocks them
 
@@ -111,7 +112,6 @@ Versions as of 2026-10-13. Take the newest patch when the work starts.
 | zod-openapi 6                  | trpc-to-openapi 3.3.0, the latest, requires `^5.4.4`.                                                                                                                                         | A trpc-to-openapi release accepts 6.          |
 | `@better-auth/utils` 0.5       | better-auth 1.7.7, core and api-key pin 0.4.2 exactly.                                                                                                                                        | better-auth moves its pin.                    |
 | drizzle-orm 1.0                | Release candidates only (1.0.0-rc.4). 28 `relations()` and 29 `db.query.*` call sites plus drizzle-kit would move.                                                                            | 1.0.0 is stable; then it is its own effort.   |
-| dotenv 18                      | 18.0.7 shipped on 2026-10-09; ticket 20 takes a new major only after about two weeks without a patch.                                                                                         | 18.x goes two weeks without a release.        |
 | Docusaurus 4                   | Canary only.                                                                                                                                                                                  | A stable 4.0.                                 |
 | Next.js 17                     | Not released, not even as a canary. 16.4 warns that Cache Components become the default in the next major, and Norish's root layout reads the database, headers and cookies outside Suspense. | 17 ships. Run a Cache Components spike first. |
 | Expo SDK 57, React Native 0.87 | apps/mobile is parked.                                                                                                                                                                        | The mobile rewrite.                           |

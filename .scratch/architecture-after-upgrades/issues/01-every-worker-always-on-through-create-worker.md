@@ -11,7 +11,7 @@ All sixteen workers start one way, including the two built by hand today (schedu
 
 The lazy-worker manager and `defineLazyWorker` are deleted with no alias. See `.scratch/architecture-after-upgrades/spec.md`, Background jobs.
 
-**Blocked by:** None within this spec. The branch starts from the rc once `chore/dependency-upgrades` has merged, so the `drainDelay` fix is already in.
+**Blocked by:** None within this spec. The branch starts from the rc once `chore/dependency-upgrades` has merged, so the `drainDelay` fix (the sweep's ticket 51) is already in.
 
 **Status:** ready-for-agent
 

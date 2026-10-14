@@ -15,25 +15,28 @@ Ticket 18 set `protocol: 2` (RESP2) in two places:
 Both comments say RESP2 keeps "every reply shape" as it was. That is not the reason:
 
 - ioredis 6 already maps RESP3 replies to the RESP2 shapes by default (`replyMapping: "legacy"`, `ioredis/built/redis/RedisOptions.js:56`).
+- The one shape that still differs: a Lua script that returns `false` replies `0` under RESP3, where RESP2 gave `null` (`legacyTypeMapping` in `ioredis/built/DataHandler.js` maps RESP3 booleans to numbers). In BullMQ 6.3.14 every `return false` sits inside a Lua helper function, not in a script's reply, so none of BullMQ's replies change. The real-Redis tests below prove it.
 - RESP3 only lifts subscriber mode's limits on which commands a connection may send.
 
 **The fix:**
 
-1. **Drop `protocol: 2` from both places.**
-2. **One options builder.** BullMQ's connections start from `getRedisConnectionOptions()` and add only what BullMQ needs on top (ready check, offline queue, retry cap).
-3. **Tests run what production runs.** Every real-Redis test connects through the production options, not a bare `{ host, port }`. They also use the Redis that compose ships: 8.10.1 in `docker/compose.base.yaml`, while the tests start `redis:8.6.2-alpine`. One shared constant names that image. The tests are:
+1. **Drop `protocol: 2` everywhere**, including the tests that set it.
+2. **ioredis 6's connection defaults.** The hand-rolled retry strategy (`redisRetryStrategy`, and BullMQ's, which gives up after 20 tries), keep-alive and connect timeout go. ioredis 6's defaults replace them: exponential backoff capped at five seconds with jitter, never giving up, and a 30-second keep-alive. The BullMQ client then never gives up reconnecting either.
+3. **One options builder.** BullMQ's connections start from `getRedisConnectionOptions()` and add only what BullMQ needs on top: `maxRetriesPerRequest: null`, the ready check and the offline queue.
+4. **Tests run what production runs.** Every real-Redis test connects through the production options, not a bare `{ host, port }`. They also use the Redis that compose ships: 8.10.1 in `docker/compose.base.yaml`, while the tests start `redis:8.6.2-alpine`. One shared constant names that image. The tests are:
    - `packages/queue/__tests__/scheduled-tasks/producer-redis.test.ts`
-   - `packages/queue/__tests__/queue/lazy-worker-redis.test.ts`
+   - `packages/queue/__tests__/queue/lazy-worker-redis.test.ts` (deleted later by `.scratch/architecture-after-upgrades/` ticket 01)
    - `packages/auth/__tests__/auth/secondary-storage.test.ts`
-   - `packages/auth/__tests__/auth/oidc-flow.test.ts`
+   - `packages/auth/__tests__/auth/auth-handler.test.ts`
    - `apps/web/__tests__/e2e/harness/production-stack.ts:221`
-4. **Delete `case "paused"`** in `packages/shared/src/lib/recipe-enrichment.ts:501`. BullMQ 6's `JobState` has no paused state.
+5. **Delete `case "paused"`** in `packages/shared/src/lib/recipe-enrichment.ts:501`. BullMQ 6's `JobState` has no paused state.
 
 If BullMQ misbehaves on RESP3, report it upstream with the failing test. Do not pin the protocol.
 
 ## Acceptance criteria
 
-- [ ] No Redis connection sets `protocol`.
+- [ ] No Redis connection, in source or tests, sets `protocol`.
+- [ ] No connection options set a retry strategy, keep-alive or connect timeout; ioredis 6's defaults apply.
 - [ ] Pub/sub and BullMQ connections are built from one options builder.
 - [ ] The real-Redis tests use the production options and compose's Redis version, and they pass.
 - [ ] The realtime E2E project passes, which shows pub/sub working on RESP3.
@@ -41,3 +44,4 @@ If BullMQ misbehaves on RESP3, report it upstream with the failing test. Do not 
 ## Comments
 
 - Filed 2026-10-13 from the branch review. The maintainer wants a clean ioredis 6 and BullMQ 6 migration, with no protocol opt-out.
+- 2026-10-14 — The maintainer confirmed: no `protocol: 2` anywhere. This reverses `.scratch/architecture-after-upgrades/` ("RESP2 stays"). The connection-options part of that plan's ticket 05 moved here; the rest of it moved to 35. The test list was corrected: there is no `oidc-flow.test.ts`, and `auth-handler.test.ts` also pinned `protocol: 2` and Redis 8.6.2.

@@ -20,7 +20,8 @@ Today two plugins check the same things, and one set is switched off by hand.
 
 1. Drop eslint-plugin-react-hooks.
 2. Carry its deliberate choices over to the @eslint-react rule names: `exhaustive-deps` as a warning; `refs`, `set-state-in-effect` and `immutability` off.
-3. `incompatible-library` and `preserve-manual-memoization` are React Compiler rules with no @eslint-react counterpart. They are off today, so nothing is lost.
+3. `incompatible-library` and `preserve-manual-memoization` are React Compiler rules with no @eslint-react counterpart. They are off today, so nothing is lost, and they stay gone: eslint-plugin-react-hooks does not come back, not even for `.scratch/architecture-after-upgrades/` ticket 10.
+4. `exhaustive-deps` warnings then report as `@eslint-react/exhaustive-deps` (2 in apps/web on 2026-10-14). Ticket 47 fixes them with the other @eslint-react warnings.
 
 ## Acceptance criteria
 
@@ -30,3 +31,4 @@ Today two plugins check the same things, and one set is switched off by hand.
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 — The maintainer confirmed: remove eslint-plugin-react-hooks for good, with no later re-add for the two compiler-only rules. Lands before 47.

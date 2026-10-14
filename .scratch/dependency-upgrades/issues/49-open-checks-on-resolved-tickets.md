@@ -13,7 +13,6 @@ These tickets are resolved but still have unticked criteria that an agent can cl
 - **16, pnpm 12 everywhere.** `pnpm install --frozen-lockfile` passes on pnpm 12 in CI and in the devcontainer.
   - CI's frozen install is blocked by `minimumReleaseAge` until about 2026-10-14 18:15 (71af9042).
 - **18, Production smoke.** The E2E suite covered the rest; the part never watched is a scheduled task firing. On a production build, see one fire.
-- **24, Warm idle.** A test shows the warm-idle shutdown firing after its timeout. Only its `isRunning` precondition is covered today.
 
 **Covered elsewhere:**
 
@@ -21,6 +20,8 @@ These tickets are resolved but still have unticked criteria that an agent can cl
 - Ticket 22's deploy run is in 44.
 - Ticket 12 is in 47, and ticket 25 in 48.
 - The hand checks are in 50.
+
+Ticket 24's "Warm idle" is dropped: `.scratch/architecture-after-upgrades/` ticket 01 deletes the lazy-worker manager, warm-idle shutdown included.
 
 Tickets 17 "Upgraded instance" and 18 "Boot twice" stay as they are: the maintainer decided the tests start from Job Schedulers, not from a hand-built 5.x repeatable.
 
@@ -31,3 +32,4 @@ Tickets 17 "Upgraded instance" and 18 "Boot twice" stay as they are: the maintai
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 — Ticket 24's Warm idle check removed; the maintainer confirmed the lazy workers go (architecture ticket 01).

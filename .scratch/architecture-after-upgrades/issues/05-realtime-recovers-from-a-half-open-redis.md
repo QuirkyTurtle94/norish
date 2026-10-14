@@ -6,7 +6,9 @@ The realtime E2E goes back to its original order (the Redis restart before the s
 
 **Blocked by:** None within this spec. The branch starts from the rc once `chore/dependency-upgrades` has merged.
 
-**Status:** ready-for-agent
+**Status:** wontfix, duplicate of `.scratch/dependency-upgrades/issues/35-realtime-and-shutdown-recover-from-a-half-open-redis.md`
+
+> 2026-10-14: the maintainer moved this into the dependency sweep. Its scope is in that plan's ticket 35, its connection-options criterion in ticket 34. "`protocol: 2` stays" below is reversed: RESP3, no protocol pin anywhere. Do the work there, not here.
 
 - [ ] The publisher and the Realtime Hub's subscriber have a `socketTimeout` of about ten seconds.
 - [ ] The hub sends `PING` every fifteen seconds while subscribed (RESP2).

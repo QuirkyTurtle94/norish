@@ -1,6 +1,7 @@
 # 41 — TypeScript config without leftovers
 
-Status: ready-for-agent
+Status: wontfix
+Duplicate of: 46
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`, ticket 11. Found in the branch review on 2026-10-13.
@@ -24,3 +25,4 @@ Spec: `.scratch/dependency-upgrades/spec.md`, ticket 11. Found in the branch rev
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 — Folded into 46 (sweep leftovers) by the maintainer. Do the work there.

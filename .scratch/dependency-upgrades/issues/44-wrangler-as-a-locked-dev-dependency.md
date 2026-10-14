@@ -9,8 +9,8 @@ Spec: `.scratch/dependency-upgrades/spec.md`, ticket 22. Found in the branch rev
 
 `docs-deploy.yml:57` and `landing-deploy.yml:49` run `pnpm dlx wrangler@4.149.0`.
 
-- The version lives in a `run:` string, outside every lockfile and without an integrity hash.
-- Renovate (ticket 07) would not see it without a regex manager.
+- The version lives in a `run:` string, outside every lockfile and without an integrity hash, so CI downloads whatever the registry serves under that version.
+- `pnpm outdated` and `pnpm audit` can't see it, and neither could Renovate without a regex manager. The workflow comments say Renovate bumps it; nothing does (ticket 07 is wontfix).
 
 **The fix:**
 
@@ -26,3 +26,4 @@ Spec: `.scratch/dependency-upgrades/spec.md`, ticket 22. Found in the branch rev
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 — Reason reworded now that ticket 07 is wontfix: the case is the lockfile and integrity hash, not Renovate.
