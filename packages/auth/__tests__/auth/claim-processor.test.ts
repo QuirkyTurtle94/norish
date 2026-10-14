@@ -207,6 +207,14 @@ describe("parseOIDCClaims", () => {
       expect(result.householdName).toBe("alpha");
     });
 
+    it("should select first household alphabetically regardless of case", () => {
+      const profile = { groups: ["norish_household_Zebra", "norish_household_alpha"] };
+
+      const result = parseOIDCClaims(profile);
+
+      expect(result.householdName).toBe("alpha");
+    });
+
     it("should ignore household groups with empty name after prefix", () => {
       const profile = { groups: ["norish_household_", "norish_household_valid"] };
 

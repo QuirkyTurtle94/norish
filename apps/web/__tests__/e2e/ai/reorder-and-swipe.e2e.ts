@@ -252,6 +252,7 @@ async function expectReorder(
 }
 
 for (const pointer of ["mouse", "touch"] as const) {
+  // eslint-disable-next-line sonarjs/assertions-in-tests -- expectReorder asserts every order
   test(`a recipe's ingredients and steps reorder with a ${pointer}`, async ({
     browser,
     aiStack,

@@ -344,7 +344,10 @@ describe("the Decision route", () => {
 
     const result = await ask();
 
-    expect(Object.keys(result.answers).sort()).toEqual(["Breakfast", "mealtime"]);
+    expect(Object.keys(result.answers).sort((a, b) => a.localeCompare(b))).toEqual([
+      "Breakfast",
+      "mealtime",
+    ]);
     expect(result.answers.Breakfast).toEqual({ type: "boolean", probability: 0.04 });
   });
 
@@ -365,8 +368,8 @@ describe("the Decision route", () => {
     const first = await ask();
     const second = await ask();
 
-    expect(first.answers.Breakfast.probability).toBe(0.1);
-    expect(second.answers.Breakfast.probability).toBe(0.9);
+    expect(first.answers.Breakfast.probability).toBeCloseTo(0.1);
+    expect(second.answers.Breakfast.probability).toBeCloseTo(0.9);
     expect(provider.control.decisionRequestCount).toBe(2);
   });
 

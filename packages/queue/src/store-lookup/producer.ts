@@ -66,7 +66,10 @@ export async function addStoreRefreshJob(
       "refresh",
       data.storeId,
       String(windowOf(now, SHELF_PRICE_MAX_AGE_MS)),
-      data.productIds.slice().sort().join(",")
+      data.productIds
+        .slice()
+        .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+        .join(",")
     ),
     priority: REFRESH_PRIORITY,
   });

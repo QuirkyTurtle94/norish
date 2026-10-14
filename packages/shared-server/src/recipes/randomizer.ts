@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/pseudo-random -- picking a recipe to cook needs no unpredictability */
 import type { RandomRecipeCandidate } from "@norish/db/repositories/recipes";
 
 /**

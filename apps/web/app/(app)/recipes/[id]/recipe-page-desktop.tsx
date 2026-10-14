@@ -93,7 +93,7 @@ export default function RecipePageDesktop() {
                 <h2 className="text-lg font-semibold">{t("ingredients")}</h2>
                 <div className="flex flex-wrap items-center gap-2">
                   <AmountDisplayToggle />
-                  {recipe.servings && <ServingsControl />}
+                  {recipe.servings > 0 && <ServingsControl />}
                   {recipe.systemUsed && <SystemConvertMenu />}
                 </div>
               </div>

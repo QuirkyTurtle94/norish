@@ -44,6 +44,7 @@ type UpdateMutationContext = {
 };
 
 function createOptimisticPendingRecipeId(): string {
+  // eslint-disable-next-line sonarjs/pseudo-random -- a placeholder id needs to be unique, not unpredictable
   return `${OPTIMISTIC_PENDING_RECIPE_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
@@ -139,6 +140,7 @@ function createOptimisticId(): string {
     globalThis.crypto.getRandomValues(bytes);
   } else {
     for (let index = 0; index < bytes.length; index += 1) {
+      // eslint-disable-next-line sonarjs/pseudo-random -- fallback where Web Crypto is missing; the id needs to be unique, not unpredictable
       bytes[index] = Math.floor(Math.random() * 256);
     }
   }

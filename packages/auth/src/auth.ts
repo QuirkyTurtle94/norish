@@ -248,11 +248,13 @@ function createBetterAuth() {
       ...SERVER_CONFIG.TRUSTED_ORIGINS,
       ...(process.env.NODE_ENV === "development"
         ? [
+            /* eslint-disable sonarjs/no-clear-text-protocols -- development only: a phone on the LAN reaches the dev server over plain http */
             "http://*/*",
             "http://10.0.0.*:*/*",
             "http://192.168.*.*:*/*",
             "http://172.*.*.*:*/*",
             "http://localhost:*/*",
+            /* eslint-enable sonarjs/no-clear-text-protocols */
           ]
         : []),
     ],

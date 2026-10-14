@@ -95,8 +95,8 @@ export default function GeneralCard() {
     const serverEnabled = Object.entries(localeConfig.locales)
       .filter(([_, entry]) => entry.enabled)
       .map(([code]) => code)
-      .sort();
-    const localEnabled = [...enabledLocales].sort();
+      .sort((a, b) => a.localeCompare(b));
+    const localEnabled = [...enabledLocales].sort((a, b) => a.localeCompare(b));
     if (serverEnabled.length !== localEnabled.length) return true;
     if (!serverEnabled.every((v, i) => v === localEnabled[i])) return true;
     if (localeConfig.defaultLocale !== defaultLocale) return true;

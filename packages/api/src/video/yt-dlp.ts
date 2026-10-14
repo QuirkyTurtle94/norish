@@ -1,4 +1,5 @@
 import { execFile, execSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -23,6 +24,7 @@ function getFfmpegPath(): string | null {
 
   // Method 1: Check if system ffmpeg is available (production Docker)
   try {
+    // eslint-disable-next-line sonarjs/no-os-command-from-path -- finding ffmpeg on PATH is the point of this lookup
     const systemPath = execSync("which ffmpeg", { encoding: "utf8" }).trim();
 
     if (systemPath && fsSync.existsSync(systemPath)) {
@@ -360,7 +362,7 @@ export async function ensureYtDlpBinary(): Promise<void> {
     await downloadYtDlpBinary(ytDlpPath, ytDlpVersion);
 
     if (process.platform !== "win32") {
-      await fs.chmod(ytDlpPath, 0o755);
+      await fs.chmod(ytDlpPath, 0o700);
     }
   } catch (downloadError) {
     log.error({ err: downloadError, ytDlpPath }, "Could not download the yt-dlp binary");
@@ -438,10 +440,7 @@ export async function buildAuthArgs(
       );
     }
 
-    cookieFilePath = path.join(
-      os.tmpdir(),
-      `norish-cookies-${Date.now()}-${Math.random().toString(36).substring(7)}.txt`
-    );
+    cookieFilePath = path.join(os.tmpdir(), `norish-cookies-${Date.now()}-${randomUUID()}.txt`);
     await fs.writeFile(cookieFilePath, lines.join("\n"), "utf-8");
     args.push("--cookies", cookieFilePath);
   }
@@ -607,7 +606,7 @@ export async function downloadVideoAudio(
   await fs.mkdir(outputDir, { recursive: true });
 
   const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(7);
+  const randomId = randomUUID();
   const outputBase = `audio-${timestamp}-${randomId}`;
   const outputFiles = TRANSCRIPTION_AUDIO_FALLBACKS.map(({ format }) =>
     path.join(outputDir, `${outputBase}.${format}`)
@@ -738,7 +737,7 @@ export async function downloadCaptions(
   await fs.mkdir(outputDir, { recursive: true });
 
   const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(7);
+  const randomId = randomUUID();
   const outputTemplate = `caption-${timestamp}-${randomId}`;
 
   const auth = tokens?.length ? await buildAuthArgs(tokens, url) : null;
@@ -871,7 +870,7 @@ export async function downloadVideo(
   await fs.mkdir(outputDir, { recursive: true });
 
   const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(7);
+  const randomId = randomUUID();
   // Use a template that yt-dlp will fill in with the actual extension
   const outputTemplate = `video-${timestamp}-${randomId}.%(ext)s`;
 

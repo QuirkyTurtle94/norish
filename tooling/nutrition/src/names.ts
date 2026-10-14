@@ -92,7 +92,7 @@ export function normaliseFoodName(name: string): string {
     .filter((word) => word !== "" && !FILLER.has(word) && !USUAL_STATE.has(word))
     .map(singular);
 
-  return words.sort().join(" ");
+  return words.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join(" ");
 }
 
 /** Several foods behind one key are one answer only when their calories agree within 10% (or 15 kcal). */

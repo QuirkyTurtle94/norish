@@ -136,5 +136,6 @@ export function rotateCredentialSet(sets: CredentialSet[]): CredentialSet | null
   if (sets.length === 0) return null;
   if (sets.length === 1) return sets[0] ?? null;
 
+  // eslint-disable-next-line sonarjs/pseudo-random -- spreads imports over the accounts; nothing depends on the pick being unpredictable
   return sets[Math.floor(Math.random() * sets.length)] ?? null;
 }

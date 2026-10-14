@@ -70,7 +70,7 @@ function storeBlock(storeName: string = STORE) {
 }
 
 /** The same rows regardless of order: new rows land at the top, and order is not what these are about. */
-const sorted = (names: readonly string[]) => [...names].sort();
+const sorted = (names: readonly string[]) => [...names].sort((a, b) => a.localeCompare(b));
 
 /** Every grocery row of the Store's block, top to bottom. */
 async function rowsOf(storeName: string = STORE): Promise<string[]> {

@@ -78,7 +78,7 @@ export function createUseStoreAisles({ useTRPC }: CreateStoresHooksOptions) {
     const listFoods = useMemo(
       () =>
         [...new Set((list?.groceries ?? []).flatMap((grocery) => grocery.ingredientId ?? []))]
-          .sort()
+          .sort((a, b) => a.localeCompare(b))
           .join(","),
       [list]
     );

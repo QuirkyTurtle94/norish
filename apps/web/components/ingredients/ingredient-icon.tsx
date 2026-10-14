@@ -48,7 +48,8 @@ export function useIngredientIcons(
   const key = ids.filter(Boolean).join(",");
   const wanted = useMemo(
     // ponytail: a surface past 500 foods shows no icons beyond them; page the read if one ever does.
-    () => [...new Set(key ? key.split(",") : [])].sort().slice(0, MAX_IDS),
+    () =>
+      [...new Set(key ? key.split(",") : [])].sort((a, b) => a.localeCompare(b)).slice(0, MAX_IDS),
     [key]
   );
   const { data } = useQuery({

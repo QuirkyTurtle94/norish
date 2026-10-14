@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 
 import type {
@@ -410,9 +411,7 @@ export async function findOrCreateHouseholdByName(
 
 async function generateUniqueJoinCode(): Promise<string> {
   while (true) {
-    const code = Math.floor(Math.random() * 1_000_000)
-      .toString()
-      .padStart(6, "0");
+    const code = randomInt(1_000_000).toString().padStart(6, "0");
 
     const existing = await db
       .select({ id: households.id })

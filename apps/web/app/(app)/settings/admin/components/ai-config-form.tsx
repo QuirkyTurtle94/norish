@@ -141,11 +141,8 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
   const isApiKeyConfigured = !!aiConfig?.apiKey && aiConfig?.provider === provider;
   const canFetchModels =
     enabled &&
-    (cloudProviders.includes(provider)
-      ? apiKey || isApiKeyConfigured
-      : localProviders.includes(provider)
-        ? endpoint
-        : endpoint); // generic-openai needs endpoint
+    // Local providers and generic-openai need an endpoint
+    (cloudProviders.includes(provider) ? apiKey || isApiKeyConfigured : endpoint);
 
   const {
     models: availableModels,

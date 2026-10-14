@@ -41,14 +41,7 @@ export async function GET(req: Request, { params }: RouteContext<"/avatars/[id]"
   try {
     const file = await fs.readFile(filePath);
     const ext = path.extname(filePath).toLowerCase();
-    const type =
-      ext === ".png"
-        ? "image/png"
-        : ext === ".webp"
-          ? "image/webp"
-          : ext === ".jpg" || ext === ".jpeg"
-            ? "image/jpeg"
-            : "image/jpeg";
+    const type = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
 
     return new Response(new Uint8Array(file), {
       headers: {

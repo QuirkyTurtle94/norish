@@ -10,7 +10,7 @@ import { createClientLogger } from "@norish/shared/lib/logger";
 
 const log = createClientLogger("Error");
 
-export default function Error({
+export default function ErrorPage({
   error,
   retry,
 }: {

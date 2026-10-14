@@ -215,6 +215,7 @@ const ServerConfigSchema = z.object({
   OBSCURA_ENDPOINT: z
     .string()
     .min(1, "OBSCURA_ENDPOINT is required for web scraping")
+    // eslint-disable-next-line sonarjs/no-clear-text-protocols -- the shipped obscura service answers on the private compose network, without TLS
     .default("ws://obscura:9222"),
   // How long a URL import waits for the page's `load` event in Obscura.
   OBSCURA_NAVIGATION_TIMEOUT_MS: z.coerce.number().int().positive().default(45000),
