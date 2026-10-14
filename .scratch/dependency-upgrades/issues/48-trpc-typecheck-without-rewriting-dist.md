@@ -1,6 +1,6 @@
 # 48 — tRPC's typecheck without rewriting dist
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`, ticket 25. Found in the branch review on 2026-10-13.
@@ -20,10 +20,13 @@ Ticket 25 says: "trpc keeps a separate script for its dist refresh." It didn't h
 
 ## Acceptance criteria
 
-- [ ] tRPC's `typecheck` writes nothing.
-- [ ] `pnpm typecheck` from a clean checkout (no `dist`) passes.
-- [ ] Its wall time is recorded before and after, and is no worse.
+- [x] tRPC's `typecheck` writes nothing.
+- [x] `pnpm typecheck` from a clean checkout (no `dist`) passes.
+- [x] Its wall time is recorded before and after, and is no worse.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 (implemented) — `@norish/trpc`'s `typecheck` is `tsc --noEmit` and leaves no `dist` behind. In `turbo.json` the typecheck of the three workspaces that read tRPC's types through `dist` (`@norish/api`, `@norish/shared-react`, `@norish/web`) depends on `@norish/trpc#build`, and the generic `typecheck` no longer lists `dist/**` as an output.
+  - `@norish/trpc#build` has its own entry without `^build`: its declaration emit (`--noCheck`) reads its dependencies' types from their source, so waiting for their builds only added eight package builds to every typecheck. With `^build` the typecheck took 33 s and 31 s; without it, 29, 28 and 28 s.
+  - Wall time of `turbo run typecheck --force` from a checkout with no `packages/trpc/dist`, three runs each on an idle machine: before 31, 29, 29 s (19 tasks); after 29, 28, 28 s (20 tasks). Both pass.
