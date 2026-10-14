@@ -10,7 +10,13 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-type Press = { key: string; keyCode: number; ctrlKey?: boolean; shiftKey?: boolean };
+type Press = {
+  key: string;
+  keyCode: number;
+  code?: string;
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+};
 
 function typed(press: Press): boolean {
   render(<TimeInputs onChange={() => {}} />);
@@ -32,6 +38,8 @@ describe("TimeInputs", () => {
     { key: "Home", keyCode: 36 },
     { key: "v", keyCode: 86, ctrlKey: true },
     { key: "a", keyCode: 65, ctrlKey: true },
+    // Ctrl+V on a Cyrillic layout: the key reads "м", the physical key is still V.
+    { key: "м", keyCode: 86, code: "KeyV", ctrlKey: true },
   ])("lets $key through", (press) => {
     expect(typed(press)).toBe(true);
   });

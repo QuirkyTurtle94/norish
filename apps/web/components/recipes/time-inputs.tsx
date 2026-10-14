@@ -26,6 +26,8 @@ const PASSTHROUGH_KEYS = new Set([
   "ArrowDown",
 ]);
 const CLIPBOARD_KEYS = new Set(["a", "c", "v", "x"]);
+// The same shortcuts by physical key, for layouts whose letters are not Latin.
+const CLIPBOARD_CODES = new Set(["KeyA", "KeyC", "KeyV", "KeyX"]);
 
 export default function TimeInputs({
   prepMinutes,
@@ -61,7 +63,11 @@ export default function TimeInputs({
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (PASSTHROUGH_KEYS.has(e.key)) return;
     // Ctrl/Cmd + A, C, V, X
-    if ((e.ctrlKey || e.metaKey) && CLIPBOARD_KEYS.has(e.key.toLowerCase())) return;
+    if (
+      (e.ctrlKey || e.metaKey) &&
+      (CLIPBOARD_KEYS.has(e.key.toLowerCase()) || CLIPBOARD_CODES.has(e.code))
+    )
+      return;
     // Anything else must type a digit
     if (!/^\d$/.test(e.key)) e.preventDefault();
   }, []);
