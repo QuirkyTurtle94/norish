@@ -34,10 +34,10 @@ with a wider scope. There is no privileged extra data behind the admin button.
 
 ## Importing an archive
 
-Drop the `.norishrecipes` file on the **Import recipe archive** card, the same
-place you would drop a Mela or Mealie export. Progress, duplicate handling and
-per-recipe error reporting all work the way they already do for every other
-format.
+Drop the `.norishrecipes` file on the **Import recipe archive** card. The same
+card reads exports from Mela, Paprika, Mealie, Tandoor and Recipe Keeper (the
+`RecipeKeeper_….zip` file its export writes). Progress, duplicate handling and
+per-recipe error reporting work the same way for every format.
 
 Two things are worth knowing about how an import lands:
 
@@ -45,8 +45,13 @@ Two things are worth knowing about how an import lands:
   creates. The original author's display name travels as attribution so you can
   still tell whose recipe it was, but ownership does not transfer.
 - **Currently a matching recipe is overwritten, not duplicated.** A recipe is matched by
-  its URL or its name within your household, so re-importing your own archive
-  into the same instance updates your library rather than doubling it.
+  its URL, or by its name when one of the two has no URL, within your household,
+  so re-importing your own archive into the same instance updates your library
+  rather than doubling it. Two recipes in one archive that share a name both land.
+- **Cookbooks come along by name.** A Norish archive names the cookbooks each
+  recipe is in, and a Recipe Keeper export its collections. Each recipe lands in
+  your own cookbook of that name, made if you have none. Cookbook covers and
+  empty cookbooks stay behind.
 
 :::note
 Matching on URL or name is easy to abuse: an archive from someone else can
