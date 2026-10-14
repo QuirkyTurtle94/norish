@@ -22,6 +22,12 @@ const { registryMock } = vi.hoisted(() => {
   };
 });
 
+const cancelRunningJob = vi.hoisted(() => vi.fn());
+
+vi.mock("@norish/queue/create-worker", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@norish/queue/create-worker")>()),
+  cancelRunningJob,
+}));
 vi.mock("@norish/queue/registry", () => ({
   getQueueByName: registryMock.getQueueByName,
   getAllQueueEntries: registryMock.getAllQueueEntries,
@@ -112,6 +118,26 @@ describe("admin job queue procedures", () => {
       });
       expect(rows[0]).not.toHaveProperty("data");
       expect(rows[0]).not.toHaveProperty("dataJson");
+    });
+
+    it("shows a job an administrator cancelled as cancelled, not failed", async () => {
+      const queue = createMockQueue([
+        createMockJob({ id: "cancelled", failedReason: "Cancelled by an administrator" }),
+        createMockJob({ id: "failed", failedReason: "Parser timed out" }),
+      ]);
+
+      registryMock.queues.set(QUEUE_NAMES.RECIPE_IMPORT, queue);
+
+      const rows = await createCaller().list({
+        queue: QUEUE_NAMES.RECIPE_IMPORT,
+        states: ["failed"],
+        limit: 50,
+      });
+
+      expect(rows.map((row) => [row.id, row.state])).toEqual([
+        ["cancelled", "cancelled"],
+        ["failed", "failed"],
+      ]);
     });
 
     it("flags long-running active jobs as hanging", async () => {
@@ -500,6 +526,28 @@ describe("admin job queue procedures", () => {
         createCaller().retry({ queue: QUEUE_NAMES.RECIPE_IMPORT, jobId: "job-1" })
       ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
       expect(job.retry).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("cancel", () => {
+    it("cancels a job this process is running", async () => {
+      cancelRunningJob.mockReturnValueOnce(true);
+
+      const result = await createCaller().cancel({
+        queue: QUEUE_NAMES.RECIPE_IMPORT,
+        jobId: "job-1",
+      });
+
+      expect(cancelRunningJob).toHaveBeenCalledWith(QUEUE_NAMES.RECIPE_IMPORT, "job-1");
+      expect(result).toEqual({ success: true });
+    });
+
+    it("refuses a job that is not running", async () => {
+      cancelRunningJob.mockReturnValueOnce(false);
+
+      await expect(
+        createCaller().cancel({ queue: QUEUE_NAMES.RECIPE_IMPORT, jobId: "job-1" })
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
     });
   });
 

@@ -17,6 +17,7 @@ import type {
 import { JobRetentionConfigSchema, ServerConfigKeys } from "@norish/config/zod/server-config";
 import { setConfig } from "@norish/db/repositories/server-config";
 import { HANGING_THRESHOLD_MS, QUEUE_NAMES } from "@norish/queue/config";
+import { CANCELLED_BY_ADMINISTRATOR, cancelRunningJob } from "@norish/queue/create-worker";
 import { getJobStep, JOB_PIPELINES, readStepProgress } from "@norish/queue/job-steps";
 import { getAllQueueEntries, getQueueByName } from "@norish/queue/registry";
 import { trpcLogger as log } from "@norish/shared-server/logger";
@@ -205,7 +206,7 @@ function deriveAttempts(input: {
       ? "running"
       : state === "completed"
         ? "done"
-        : state === "failed"
+        : state === "failed" || state === "cancelled"
           ? "failed"
           : "pending";
 
@@ -290,8 +291,13 @@ function deriveModels(progress: unknown): AdminJobModelDTO[] {
   return [...byKey.values()];
 }
 
-function toRowDTO(queueName: QueueName, job: Job, state: AdminJobState): AdminJobRowDTO {
+function toRowDTO(queueName: QueueName, job: Job, bullState: AdminJobState): AdminJobRowDTO {
   const now = Date.now();
+  // BullMQ keeps a cancelled job as failed; the reason it failed with tells them apart.
+  const state =
+    bullState === "failed" && job.failedReason === CANCELLED_BY_ADMINISTRATOR
+      ? "cancelled"
+      : bullState;
   const processedOn = job.processedOn ?? null;
   const finishedOn = job.finishedOn ?? null;
 
@@ -434,7 +440,7 @@ const detail = adminProcedure
         progress: job.progress,
         stacktrace: job.stacktrace ?? null,
         logs: jobLogs.logs,
-        state,
+        state: row.state,
         attemptsMade: job.attemptsMade,
         finishedOn: row.finishedOn,
       }),
@@ -462,6 +468,23 @@ const retry = adminProcedure
     }
 
     await job.retry();
+
+    return { success: true };
+  });
+
+/**
+ * Cancel a running job, on any queue. An AI request in flight is aborted at
+ * once; other work finishes its current step. The job then ends Cancelled,
+ * without a retry.
+ */
+const cancel = adminProcedure
+  .input(z.object({ queue: QueueNameSchema, jobId: z.string().min(1) }))
+  .mutation(({ ctx, input }) => {
+    log.info({ userId: ctx.user.id, ...input }, "Admin cancelling job");
+
+    if (!cancelRunningJob(input.queue, input.jobId)) {
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "The job is not running" });
+    }
 
     return { success: true };
   });
@@ -557,6 +580,7 @@ export const jobQueueProcedures = router({
   list,
   detail,
   retry,
+  cancel,
   remove,
   summary,
   updateRetention,

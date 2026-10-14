@@ -62,5 +62,9 @@ decides who may edit an ingredient someone else added.
 
 Most tasks executed in Norish are run in the background via queues.
 You can view these queues and their steps in: **Settings => Admin => Job queues**
-A queue has the following states: waiting, running, finished or failed.
+A queue has the following states: waiting, running, finished, failed or cancelled.
 Opening a job shows details for debugging purposes.
+
+### Cancelling a job
+
+A running job can be stopped from its details with **Cancel job**. An AI request the job is waiting on stops at once; other work finishes its current step first, and the button reads **Cancelling…** until then. The job then shows as **Cancelled** and is not retried.

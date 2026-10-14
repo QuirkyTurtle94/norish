@@ -14,7 +14,7 @@ import { createLogger } from "@norish/shared-server/logger";
 import { caldav } from "@norish/shared-server/realtime/caldav";
 
 import { QUEUE_NAMES } from "../config";
-import { createWorker } from "../create-worker";
+import { createWorker, isFinalFailure } from "../create-worker";
 import { reportStep } from "../job-steps";
 
 const log = createLogger("worker:caldav-sync");
@@ -124,7 +124,7 @@ async function handleJobFailed(
 
   const { userId, itemId, itemType, plannedItemId, eventTitle } = job.data;
   const maxAttempts = job.opts.attempts ?? 10;
-  const isFinalFailure = job.attemptsMade >= maxAttempts;
+  const isFinal = isFinalFailure(job, error);
 
   const errorMessage = truncateErrorMessage(error.message);
 
@@ -135,7 +135,7 @@ async function handleJobFailed(
       itemId,
       attempt: job.attemptsMade,
       maxAttempts,
-      isFinalFailure,
+      isFinalFailure: isFinal,
       error: error.message,
     },
     "CalDAV sync job failed"
@@ -151,7 +151,7 @@ async function handleJobFailed(
         itemType,
         plannedItemId,
         eventTitle,
-        syncStatus: isFinalFailure ? "failed" : "pending",
+        syncStatus: isFinal ? "failed" : "pending",
         caldavEventUid: null,
         retryCount: job.attemptsMade,
         errorMessage,
@@ -159,7 +159,7 @@ async function handleJobFailed(
       } satisfies CaldavSyncStatusInsertDto)
     : await updateCaldavSyncStatus(existingStatus.id, {
         eventTitle,
-        syncStatus: isFinalFailure ? "failed" : "pending",
+        syncStatus: isFinal ? "failed" : "pending",
         retryCount: job.attemptsMade,
         errorMessage,
         lastSyncAt: new Date(),
@@ -169,7 +169,7 @@ async function handleJobFailed(
   const failurePayload = {
     itemId,
     itemType,
-    syncStatus: isFinalFailure ? "failed" : "pending",
+    syncStatus: isFinal ? "failed" : "pending",
     errorMessage,
     caldavEventUid: null,
     version: persistedStatus.version,
@@ -177,7 +177,7 @@ async function handleJobFailed(
 
   void caldav.publish("syncEvent", { type: "itemStatusUpdated", data: failurePayload }, { userId });
 
-  if (isFinalFailure) {
+  if (isFinal) {
     void caldav.publish(
       "syncEvent",
       {

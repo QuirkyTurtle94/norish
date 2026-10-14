@@ -25,7 +25,7 @@ import { ingredients } from "@norish/shared-server/realtime/ingredients";
 import type { JobStepEvent } from "../job-steps";
 import type { IconStepDetail } from "./progress";
 import { QUEUE_NAMES } from "../config";
-import { createWorker } from "../create-worker";
+import { createWorker, isFinalFailure } from "../create-worker";
 import { recordCompletedSteps } from "../job-steps";
 import { ICON_STEP, summarizeIconRound } from "./progress";
 
@@ -84,7 +84,11 @@ async function announceRound(
 }
 
 /** Exported so the job body can be exercised without a Redis-backed worker. */
-export async function processIngredientIconsJob(job: Job<IngredientIconsJobData>): Promise<void> {
+export async function processIngredientIconsJob(
+  job: Job<IngredientIconsJobData>,
+  _token?: string,
+  signal?: AbortSignal
+): Promise<void> {
   const { ingredients: foods } = job.data;
   const writeEvery = Math.max(1, Math.ceil(foods.length / ROUND_WRITES));
   let unwritten: (JobStepEvent & { endedAt: number; detail: IconStepDetail })[] = [];
@@ -96,6 +100,8 @@ export async function processIngredientIconsJob(job: Job<IngredientIconsJobData>
   await announcingTogether(async () => {
     // ponytail: one drawing at a time, as image APIs rate-limit hard; draw a few at once if rounds feel slow.
     for (const [index, food] of foods.entries()) {
+      // A cancelled round draws no further food.
+      if (signal?.aborted) break;
       const startedAt = Date.now();
       const { ingredientId, ...outcome } = await draw(job, food.id);
 
@@ -120,7 +126,9 @@ export async function processIngredientIconsJob(job: Job<IngredientIconsJobData>
         unwritten.map((step) => step.detail)
       );
     }
+    if (unwritten.length > 0) await recordCompletedSteps(job, unwritten);
   });
+  signal?.throwIfAborted();
   await announceRound(job, true);
 }
 
@@ -130,7 +138,7 @@ export async function handleIngredientIconsFailure(
   error: Error
 ): Promise<void> {
   log.error({ jobId: job?.id, err: error }, "A Draw icons round failed");
-  if (!job || job.attemptsMade < (job.opts.attempts ?? 1)) return;
+  if (!job || !isFinalFailure(job, error)) return;
   await announceRound(job, true);
 }
 

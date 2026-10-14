@@ -6,7 +6,7 @@ import { findIngredientFor } from "@norish/shared-server/ingredients/resolver";
 import { createLogger } from "@norish/shared-server/logger";
 
 import { QUEUE_NAMES } from "../config";
-import { createWorker } from "../create-worker";
+import { createWorker, isFinalFailure } from "../create-worker";
 import { completeStep, reportStep } from "../job-steps";
 import { matchGroceryName, refreshProducts } from "./lookup";
 
@@ -57,16 +57,17 @@ async function processStoreLookup(job: Job<StoreLookupJobData>): Promise<void> {
 }
 
 /**
- * A lookup that gave up. A match job that has spent its attempts leaves no
- * Pending Link behind: the name is unknown again, and the next view of the
- * list asks. An attempt that will be retried leaves the row where it is —
- * the question is still being asked.
+ * A lookup that gave up. A match job that has spent its attempts, or was
+ * cancelled, leaves no Pending Link behind: the name is unknown again, and
+ * the next view of the list asks. An attempt that will be retried leaves the
+ * row where it is — the question is still being asked.
  */
 export async function forgetFailedLookup(
-  job: Pick<Job<StoreLookupJobData>, "data" | "attemptsMade" | "opts"> | undefined
+  job: Pick<Job<StoreLookupJobData>, "data" | "attemptsMade" | "opts"> | undefined,
+  error: Error
 ): Promise<void> {
   if (job?.data.kind !== "match") return;
-  if (job.attemptsMade < (job.opts.attempts ?? 1)) return;
+  if (!isFinalFailure(job, error)) return;
   const ingredientId = await ingredientAskedAbout(job.data);
 
   if (ingredientId) await clearPendingLink(job.data.storeId, ingredientId);

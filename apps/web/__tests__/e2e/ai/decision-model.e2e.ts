@@ -301,3 +301,41 @@ test("a disabled Decision block leaves every kind to the AI provider", async () 
   expect(stack.ai.control.decisionRequestCount).toBe(0);
   expect(chatRequestCount()).toBe(2);
 });
+
+test("an administrator cancels a running AI job, and the job monitor shows it Cancelled", async () => {
+  await configureDecisionModel({ provider: "disabled" });
+  await setAutomaticEnrichment({});
+  stack.ai.control.reset();
+  stack.ai.control.setDefault(null);
+  // The extraction request arrives and is never answered: the job stays active on it.
+  stack.ai.control.hold();
+
+  try {
+    await page.goto("/");
+    await submitPasteImport(page, "Import Held Stew — the harness never answers.");
+    await expect.poll(() => chatRequestCount(), { timeout: 30_000 }).toBe(1);
+
+    await page.goto("/settings?tab=admin");
+    const running = page
+      .getByRole("row")
+      .filter({ hasText: "Paste import" })
+      .filter({ hasText: "Active" });
+
+    await expect(running).toHaveCount(1, { timeout: 15_000 });
+    await running.click();
+
+    const dialog = page.getByRole("dialog");
+
+    await dialog.getByRole("button", { name: "Cancel job" }).click();
+    await expect(dialog.getByRole("button", { name: "Cancelling…" })).toBeVisible();
+    await expect(dialog.getByText("Cancelled", { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(dialog.getByText("An administrator cancelled this job.")).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Cancelling…" })).toHaveCount(0);
+  } finally {
+    stack.ai.control.release();
+  }
+
+  // Cancelled for good: no retry asks the provider again.
+  await page.waitForTimeout(3_000);
+  expect(chatRequestCount()).toBe(1);
+});

@@ -73,7 +73,7 @@ import {
   rememberRefusedImageParameter,
 } from "./image-parameter-fallback";
 import { forgetKeyRejection, noteKeyRejection } from "./key-rejections";
-import { recordModelUse } from "./model-use-ledger";
+import { recordModelUse, requestSignal } from "./model-use-ledger";
 import {
   canDegradeToJsonMode,
   createDecisionModelFromConfig,
@@ -261,7 +261,7 @@ async function requestObject<T>({
     instructions,
     temperature: config.temperature,
     maxOutputTokens: config.maxTokens,
-    abortSignal: AbortSignal.timeout(config.timeoutMs),
+    abortSignal: requestSignal(config.timeoutMs),
     ...(useVision
       ? {
           messages: [
@@ -570,7 +570,7 @@ async function transcribeWithProvider(
       const result = await transcribeWithModel({
         model: createTranscriptionModel(provider, { apiKey, model, endpoint, timeoutMs }),
         audio: await readFile(audioPath),
-        abortSignal: AbortSignal.timeout(timeoutMs),
+        abortSignal: requestSignal(timeoutMs),
       });
 
       aiLogger.debug(
@@ -591,7 +591,7 @@ async function transcribeWithProvider(
 
       const response = await client.audio.transcriptions.create(
         { file: createReadStream(audioPath), model, response_format: "json" },
-        { signal: AbortSignal.timeout(timeoutMs) }
+        { signal: requestSignal(timeoutMs) }
       );
 
       return requireTranscript(response.text);
@@ -718,7 +718,7 @@ export async function generateImage(options: GenerateImageOptions): Promise<Gene
         // Image calls are billed per request, so the SDK's silent in-call
         // retries are disabled: the queue's attempts are the one retry budget.
         maxRetries: 0,
-        abortSignal: AbortSignal.timeout(aiConfig.timeoutMs),
+        abortSignal: requestSignal(aiConfig.timeoutMs),
       });
     const key = imageModelKey(provider, model);
     let result: Awaited<ReturnType<typeof draw>> | undefined;
@@ -944,7 +944,7 @@ async function requestDecision<Q extends DecisionQuestions>({
     model: decisionModel.model,
     state,
     questions: asked,
-    abortSignal: AbortSignal.timeout(timeoutMs),
+    abortSignal: requestSignal(timeoutMs),
     // Like image generation, the SDK's silent in-call retries are off: the
     // queue's attempts are the one retry budget.
     maxRetries: 0,

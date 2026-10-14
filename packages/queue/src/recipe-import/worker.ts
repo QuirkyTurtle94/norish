@@ -21,7 +21,7 @@ import { credentialSetsForUrl, rotateCredentialSet } from "@norish/shared/lib/si
 import { withTimeout } from "@norish/shared/lib/with-timeout";
 
 import { QUEUE_NAMES, RECIPE_IMPORT_PROCESSING_TIMEOUT_MS } from "../config";
-import { createWorker } from "../create-worker";
+import { createWorker, isFinalFailure } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { completeStep, reportStep } from "../job-steps";
 
@@ -163,7 +163,7 @@ async function handleJobFailed(
 
   const { url, recipeId, userId, householdKey } = job.data;
   const maxAttempts = job.opts.attempts ?? 3;
-  const isFinalFailure = job.attemptsMade >= maxAttempts;
+  const isFinal = isFinalFailure(job, error);
 
   log.error(
     {
@@ -172,7 +172,7 @@ async function handleJobFailed(
       recipeId,
       attempt: job.attemptsMade,
       maxAttempts,
-      isFinalFailure,
+      isFinalFailure: isFinal,
       error: error.message,
     },
     "Recipe import job failed"
@@ -180,7 +180,7 @@ async function handleJobFailed(
 
   await deleteRecipeImagesDir(recipeId);
 
-  if (isFinalFailure) {
+  if (isFinal) {
     // Emit failed event to remove skeleton
     const policy = await getRecipePermissionPolicy();
     const ctx = { userId, householdKey };

@@ -5,6 +5,7 @@
  * the last try gives up, and that is the one that must not leave a Pending
  * Link saying the shop is still being asked.
  */
+import { UnrecoverableError } from "bullmq";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { closeWorkers } from "@norish/queue/create-worker";
@@ -23,6 +24,7 @@ vi.mock("bullmq", async (importOriginal) => {
   class MockWorker {
     on = vi.fn();
     pause = vi.fn(async () => undefined);
+    cancelAllJobs = vi.fn();
     close = vi.fn(async () => undefined);
 
     constructor(_queueName: string, processor: (job: unknown) => Promise<unknown>) {
@@ -69,25 +71,39 @@ describe("forgetFailedLookup", () => {
     clearPendingLink.mockReset();
   });
 
+  const failure = new Error("shop away");
+
   it("clears the Pending Link of a match job that has spent its attempts", async () => {
-    await forgetFailedLookup({ data: match, attemptsMade: 2, opts: { attempts: 2 } });
+    await forgetFailedLookup({ data: match, attemptsMade: 2, opts: { attempts: 2 } }, failure);
+
+    expect(clearPendingLink).toHaveBeenCalledExactlyOnceWith(STORE, "ingredient-kaas");
+  });
+
+  it("clears it for a match job an administrator cancelled, attempts left or not", async () => {
+    await forgetFailedLookup(
+      { data: match, attemptsMade: 1, opts: { attempts: 2 } },
+      new UnrecoverableError("Cancelled by an administrator")
+    );
 
     expect(clearPendingLink).toHaveBeenCalledExactlyOnceWith(STORE, "ingredient-kaas");
   });
 
   it("leaves the Pending Link while an attempt is still to come", async () => {
-    await forgetFailedLookup({ data: match, attemptsMade: 1, opts: { attempts: 2 } });
+    await forgetFailedLookup({ data: match, attemptsMade: 1, opts: { attempts: 2 } }, failure);
 
     expect(clearPendingLink).not.toHaveBeenCalled();
   });
 
   it("has nothing to clear for a refresh, or for no job at all", async () => {
-    await forgetFailedLookup({
-      data: { kind: "refresh", storeId: STORE, productIds: ["p1"], householdKey: "h" },
-      attemptsMade: 2,
-      opts: { attempts: 2 },
-    });
-    await forgetFailedLookup(undefined);
+    await forgetFailedLookup(
+      {
+        data: { kind: "refresh", storeId: STORE, productIds: ["p1"], householdKey: "h" },
+        attemptsMade: 2,
+        opts: { attempts: 2 },
+      },
+      failure
+    );
+    await forgetFailedLookup(undefined, failure);
 
     expect(clearPendingLink).not.toHaveBeenCalled();
   });

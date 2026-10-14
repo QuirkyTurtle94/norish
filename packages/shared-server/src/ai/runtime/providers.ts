@@ -37,6 +37,7 @@ import {
   normalizeOpenAICompatibleEndpoint,
 } from "./endpoints";
 import { imageModelKey, withoutRefusedImageParameters } from "./image-parameter-fallback";
+import { requestSignal } from "./model-use-ledger";
 import { withTemperatureFallback } from "./temperature-fallback";
 import { createFetchWithTimeout } from "./transport";
 
@@ -558,7 +559,7 @@ export async function requestOllamaTranscription({
       stream: false,
       input_audio: [audio],
     }),
-    signal: AbortSignal.timeout(timeoutMs),
+    signal: requestSignal(timeoutMs),
   });
 
   if (!response.ok) {

@@ -9,14 +9,20 @@ import { RedisContainer } from "@testcontainers/redis";
 import { Queue } from "bullmq";
 import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 
-import { recordModelUse } from "@norish/shared-server/ai/runtime/model-use-ledger";
+import { recordModelUse, requestSignal } from "@norish/shared-server/ai/runtime/model-use-ledger";
 import {
   getCurrentOperationId,
   runWithOperationContext,
 } from "@norish/shared-server/lib/operation-context";
 
 import { freezableProxy, REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
-import { closeWorkers, createWorker } from "../../src/create-worker";
+import {
+  CANCELLED_BY_ADMINISTRATOR,
+  cancelRunningJob,
+  closeWorkers,
+  createWorker,
+  isFinalFailure,
+} from "../../src/create-worker";
 import { readStepProgress } from "../../src/job-steps";
 import { QUEUE_NAMES } from "../../src/queue-names";
 import { withJobOperationContext } from "../../src/queue-operation-context";
@@ -176,4 +182,80 @@ it("closes by force once the budget runs out, leaving the job active", async () 
 
   expect(Date.now() - startedAt).toBeLessThan(2_000);
   expect(await queue.getJobState(job.id!)).toBe("active");
+}, 30_000);
+
+/** What an AI request does with the job's signal: wait for an answer that never comes, until aborted. */
+function aRequestThatHangs(): Promise<never> {
+  const signal = requestSignal(60_000);
+
+  return new Promise((_, reject) => {
+    signal.addEventListener("abort", () => reject(new Error("The request was aborted")), {
+      once: true,
+    });
+  });
+}
+
+it("ends a job an administrator cancelled as failed for good, with the administrator's reason", async () => {
+  let started = () => {};
+  const running = new Promise<void>((resolve) => (started = resolve));
+  const finals: boolean[] = [];
+
+  createWorker(
+    QUEUE,
+    async () => {
+      started();
+      await aRequestThatHangs();
+    },
+    { onFailed: (job, err) => void finals.push(isFinalFailure(job!, err)) }
+  );
+
+  const job = await queue.add(
+    "cancel-me",
+    {},
+    { attempts: 3, backoff: { type: "fixed", delay: 100 } }
+  );
+
+  await running;
+  expect(cancelRunningJob(QUEUE, job.id!)).toBe(true);
+
+  await expect.poll(() => queue.getJobState(job.id!)).toBe("failed");
+  // Well past the backoff a retry would have waited out.
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const stored = await queue.getJob(job.id!);
+
+  expect(await queue.getJobState(job.id!)).toBe("failed");
+  expect(stored?.failedReason).toBe(CANCELLED_BY_ADMINISTRATOR);
+  expect(stored?.attemptsMade).toBe(1);
+  expect(finals).toEqual([true]);
+}, 30_000);
+
+it("answers a cancel for a job no worker here is running with false", async () => {
+  createWorker(QUEUE, async () => {});
+
+  expect(cancelRunningJob(QUEUE, "not-running")).toBe(false);
+});
+
+it("puts a job a shutdown stopped back to waiting with its attempts unchanged, and the next worker runs it", async () => {
+  let started = () => {};
+  const running = new Promise<void>((resolve) => (started = resolve));
+
+  createWorker(QUEUE, async () => {
+    started();
+    await aRequestThatHangs();
+  });
+
+  const job = await queue.add("interrupted", {}, { attempts: 3 });
+
+  await running;
+  await closeWorkers(10_000);
+
+  expect(await queue.getJobState(job.id!)).toBe("waiting");
+  expect((await queue.getJob(job.id!))?.attemptsMade).toBe(0);
+
+  // The next boot.
+  createWorker(QUEUE, async () => "ran");
+
+  await expect.poll(() => queue.getJobState(job.id!)).toBe("completed");
+  expect((await queue.getJob(job.id!))?.returnvalue).toBe("ran");
 }, 30_000);

@@ -25,10 +25,15 @@ import { reportStep } from "../job-steps";
 const log = createLogger("worker:new-ingredients");
 
 /** Exported so the job body can be exercised without a Redis-backed worker. */
-export async function processNewIngredientsJob(job: Job<NewIngredientsJobData>): Promise<void> {
+export async function processNewIngredientsJob(
+  job: Job<NewIngredientsJobData>,
+  _token?: string,
+  signal?: AbortSignal
+): Promise<void> {
   const { plainName, icon } = await getAutomaticIngredientsConfig();
 
   for (const ingredientId of job.data.ingredientIds) {
+    signal?.throwIfAborted();
     if (plainName) {
       await reportStep(job, "naming", { ingredientId });
       try {

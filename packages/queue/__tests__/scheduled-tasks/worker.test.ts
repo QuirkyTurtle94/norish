@@ -24,6 +24,7 @@ vi.mock("bullmq", async (importOriginal) => {
   class MockWorker {
     on = vi.fn();
     pause = vi.fn(async () => undefined);
+    cancelAllJobs = vi.fn();
     close = vi.fn(async () => undefined);
 
     constructor(_queueName: string, processor: (job: unknown) => Promise<unknown>) {

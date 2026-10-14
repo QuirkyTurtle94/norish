@@ -80,6 +80,7 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
     const removeMutation = useMutation(
       trpc.admin.jobs.remove.mutationOptions({ onSuccess: invalidateJobQueries })
     );
+    const cancelMutation = useMutation(trpc.admin.jobs.cancel.mutationOptions());
     const retentionMutation = useMutation(
       trpc.admin.jobs.updateRetention.mutationOptions({
         onSuccess: () => {
@@ -98,6 +99,18 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
           return {
             success: false as const,
             error: error instanceof Error ? error.message : "Failed to retry job",
+          };
+        }
+      },
+      cancelJob: async (queue: string, jobId: string) => {
+        try {
+          await cancelMutation.mutateAsync({ queue: queue as never, jobId });
+
+          return { success: true as const };
+        } catch (error) {
+          return {
+            success: false as const,
+            error: error instanceof Error ? error.message : "Failed to cancel job",
           };
         }
       },

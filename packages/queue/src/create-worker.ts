@@ -11,10 +11,16 @@
  * - is registered for shutdown
  * - passes its processor BullMQ's abort signal as a third parameter, which
  *   BullMQ only creates for a processor that declares three parameters
+ *
+ * A job stops only where it checks that signal, which in practice is the AI
+ * Runtime: every request a job makes is bound to it. A job the signal stopped
+ * is answered by who stopped it. An administrator's cancel fails it for good
+ * (**Cancelled**); a shutdown puts it back to waiting without spending an
+ * attempt, so the next boot runs it first.
  */
 
 import type { Job, Processor } from "bullmq";
-import { Worker } from "bullmq";
+import { UnrecoverableError, WaitingError, Worker } from "bullmq";
 
 import { createLogger } from "@norish/shared-server/logger";
 
@@ -25,6 +31,12 @@ import { createContextAwareProcessor } from "./queue-operation-context";
 import { getBullClient } from "./redis/bullmq";
 
 const log = createLogger("worker");
+
+/** What a job an administrator cancelled fails with; the job monitor reads it as Cancelled. */
+export const CANCELLED_BY_ADMINISTRATOR = "Cancelled by an administrator";
+
+/** The reason shutdown aborts the running jobs with. */
+const SHUTDOWN = "Norish is shutting down";
 
 interface StartedWorker {
   worker: Worker;
@@ -60,11 +72,26 @@ export function createWorker<T>(
 
   const running = new Set<Promise<unknown>>();
   const instrumented = createContextAwareProcessor(createModelLedgerProcessor(processor));
+  const settle = async (job: Job<T>, token?: string, signal?: AbortSignal) => {
+    try {
+      return await instrumented(job, token, signal);
+    } catch (err) {
+      if (!signal?.aborted) throw err;
+      if (signal.reason !== SHUTDOWN) throw new UnrecoverableError(CANCELLED_BY_ADMINISTRATOR);
+
+      // With Redis unreachable the job stays active, and the next boot's
+      // stalled-job check puts it back.
+      await job.moveToWait(token).catch((moveErr: unknown) => {
+        log.warn({ err: moveErr, queueName, jobId: job.id }, "Could not put a job back to waiting");
+      });
+      throw new WaitingError();
+    }
+  };
   const worker = new Worker<T>(
     queueName,
     // Three parameters, or BullMQ creates no abort signal.
     async (job, token, signal) => {
-      const run = instrumented(job, token, signal);
+      const run = settle(job, token, signal);
 
       running.add(run);
 
@@ -102,9 +129,27 @@ export function createWorker<T>(
 }
 
 /**
- * Close every worker. Each stops taking jobs at once, and a running job gets
- * until the budget runs out to finish; then the workers are closed by force,
- * and a job still running stays active for the next boot's stalled-job check.
+ * Whether a failed attempt was the job's last: its attempts are spent, or it
+ * failed for good, as a cancelled job does.
+ */
+export function isFinalFailure(job: Pick<Job, "attemptsMade" | "opts">, error: Error): boolean {
+  return job.attemptsMade >= (job.opts.attempts ?? 1) || error instanceof UnrecoverableError;
+}
+
+/**
+ * Cancel a job this process is running. False when none of its workers is
+ * running it: the job finished, or it was left active by a previous process.
+ */
+export function cancelRunningJob(queueName: QueueName, jobId: string): boolean {
+  return workers().get(queueName)?.worker.cancelJob(jobId, CANCELLED_BY_ADMINISTRATOR) ?? false;
+}
+
+/**
+ * Close every worker. Each stops taking jobs at once, and its running jobs
+ * are aborted: one stopped mid-request goes back to waiting, and one that does
+ * not check the signal gets until the budget runs out to finish. Then the
+ * workers are closed by force, and a job still running stays active for the
+ * next boot's stalled-job check.
  * Always by force in the end: BullMQ's graceful close also waits for whatever
  * command its run loop has in flight, which after a Redis restart can sit on a
  * half-open socket until the socket timeout.
@@ -114,6 +159,7 @@ export async function closeWorkers(budgetMs: number): Promise<void> {
 
   workers().clear();
   await Promise.all(started.map(({ worker }) => worker.pause(true)));
+  for (const { worker } of started) worker.cancelAllJobs(SHUTDOWN);
 
   let timer: NodeJS.Timeout | undefined;
   const budget = new Promise<void>((resolve) => (timer = setTimeout(resolve, budgetMs)));

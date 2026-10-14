@@ -30,7 +30,7 @@ import { FullRecipeInsertSchema } from "@norish/shared/contracts/zod";
 import { hasRecipeNameIngredientsAndSteps } from "@norish/shared/lib/helpers";
 
 import { QUEUE_NAMES } from "../config";
-import { createWorker } from "../create-worker";
+import { createWorker, isFinalFailure } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { completeStep, reportStep } from "../job-steps";
 
@@ -248,7 +248,7 @@ async function handleJobFailed(
 
   const { recipeIds, userId, householdKey } = job.data;
   const maxAttempts = job.opts.attempts ?? 3;
-  const isFinalFailure = job.attemptsMade >= maxAttempts;
+  const isFinal = isFinalFailure(job, error);
 
   log.error(
     {
@@ -256,7 +256,7 @@ async function handleJobFailed(
       recipeIds,
       attempt: job.attemptsMade,
       maxAttempts,
-      isFinalFailure,
+      isFinalFailure: isFinal,
       error: error.message,
     },
     "Paste import job failed"
@@ -264,7 +264,7 @@ async function handleJobFailed(
 
   await Promise.all(recipeIds.map((recipeId) => deleteRecipeImagesDir(recipeId)));
 
-  if (isFinalFailure) {
+  if (isFinal) {
     const policy = await getRecipePermissionPolicy();
     const ctx = { userId, householdKey };
 
