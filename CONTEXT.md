@@ -264,6 +264,10 @@ _Avoid_: Token rotation (names the picking, not the thing picked), Session pool 
 The release of the downloader binary a server is actually running. A report, not a setting: production fixes it by image and development by first download, and no Norish setting changes it.
 _Avoid_: Configured yt-dlp version
 
+**Cancelled**:
+A background job an administrator stopped while it ran. It ends without a retry and records that an administrator stopped it, which sets it apart from a failed job, which may retry, and from work a server restart interrupts, which the next boot picks up again.
+_Avoid_: Aborted (also names the restart interruption, which is not a cancel), Killed
+
 ### People & Presentation
 
 **Avatar**:
