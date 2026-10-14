@@ -28,9 +28,9 @@ export function parseHumanDurationToMinutes(s?: string | null): number | undefin
 
   // Match patterns like "1 hr 30 min", "1h30m", "90 minutes", "1 hour", "2 hours"
   // For hours: allow 'h' to be followed by digits (for compact "1h30m" format)
-  const hourMatch = lower.match(/(\d+)\s*(?:hrs?|hours?|h)(?:\s|\d|$)/i);
+  const hourMatch = lower.match(/(?<!\d)(\d+)\s*(?:hrs?|hours?|h)(?:\s|\d|$)/i);
   // For minutes: require 'm' not to be followed by word characters (to avoid matching words like "medium")
-  const minMatch = lower.match(/(\d+)\s*(?:mins?|minutes?|m)(?!\w)/i);
+  const minMatch = lower.match(/(?<!\d)(\d+)\s*(?:mins?|minutes?|m)(?!\w)/i);
 
   const hours = hourMatch ? parseInt(hourMatch[1]!, 10) : 0;
   const minutes = minMatch ? parseInt(minMatch[1]!, 10) : 0;

@@ -142,8 +142,6 @@ export const baseConfig = defineConfig(
     // Rules that still have findings, each off until the ticket named fixes
     // them (.scratch/sonarjs-lint). This block goes with the last of them.
     rules: {
-      // 03
-      "sonarjs/super-linear-regex": "off",
       // 04
       "sonarjs/deprecation": "off",
     },

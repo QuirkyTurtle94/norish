@@ -61,7 +61,7 @@ function extractLinkedRecipeIds(ingredients: GroceryIngredient[]) {
   for (const ingredient of ingredients) {
     const name = ingredient.ingredientName ?? "";
 
-    for (const match of name.matchAll(/\[[^\]]+\]\(id:([a-zA-Z0-9-]+)\)/g)) {
+    for (const match of name.matchAll(/\[[^[\]]+\]\(id:([a-zA-Z0-9-]+)\)/g)) {
       if (match[1]) ids.add(match[1]);
     }
   }

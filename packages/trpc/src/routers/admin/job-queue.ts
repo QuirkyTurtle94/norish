@@ -258,7 +258,7 @@ function groupLogsByAttempt(logs: string[]): Map<number, string[]> {
 
     if (match) current = Number(match[1]);
 
-    const cleaned = line.replace(/\s*\[attempt \d+\]/, "");
+    const cleaned = line.replace(/(?<!\s)\s*\[attempt \d+\]/, "");
     const bucket = byAttempt.get(current) ?? [];
 
     bucket.push(cleaned);

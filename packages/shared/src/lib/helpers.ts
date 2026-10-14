@@ -14,7 +14,7 @@ import {
 
 export function stripHtmlTags(input: string): string {
   // 1. Remove HTML tags first (replace with space to preserve word boundaries)
-  const withoutTags = input.replace(/<[^>]*>/g, " ");
+  const withoutTags = input.replace(/<[^<>]*>/g, " ");
 
   // 2. Decode HTML entities
   const decoded = decode(withoutTags);
@@ -26,7 +26,7 @@ export function stripHtmlTags(input: string): string {
   const trimmed = normalized.trim();
 
   // 5. Remove space before closing punctuation at end (including Unicode quotes)
-  const cleaned = trimmed.replace(/\s+(["\u201D\u201C\u2019\u2018'»\]\)]+)$/g, "$1");
+  const cleaned = trimmed.replace(/(?<!\s)\s+(["\u201D\u201C\u2019\u2018'»\]\)]+)$/g, "$1");
 
   return cleaned;
 }
@@ -342,7 +342,7 @@ export function normalizeUrl(url: string): string {
     const parsed = new URL(url);
 
     // Remove trailing slash from pathname
-    parsed.pathname = parsed.pathname.replace(/\/+$/, "");
+    parsed.pathname = parsed.pathname.replace(/(?<!\/)\/+$/, "");
 
     // Remove common tracking params
     parsed.searchParams.delete("utm_source");

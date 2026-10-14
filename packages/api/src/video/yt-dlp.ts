@@ -834,7 +834,7 @@ export function parseVttContent(content: string): string {
     if (inCue) {
       // Remove VTT formatting tags like <c>, </c>, <b>, etc.
       const cleanText = trimmed
-        .replace(/<[^>]+>/g, "") // Remove HTML-like tags
+        .replace(/<[^<>]+>/g, "") // Remove HTML-like tags
         .replace(/&nbsp;/g, " ") // Replace non-breaking spaces
         .replace(/&amp;/g, "&")
         .replace(/&lt;/g, "<")

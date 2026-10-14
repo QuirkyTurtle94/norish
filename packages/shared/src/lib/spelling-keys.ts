@@ -36,8 +36,8 @@ const MENTION = /(^|\s)@[\p{L}\p{N}_.]+/gu;
  */
 export function stripPreparation(text: string): string {
   return text
-    .replace(/\([^)]*\)|\[[^\]]*\]/g, " ")
-    .replace(/[([].*$/, " ")
+    .replace(/\([^()]*\)|\[[^[\]]*\]/g, " ")
+    .replace(/[([].*/, " ")
     .split(",")[0]!
     .replace(MENTION, " ")
     .replace(/\s+/g, " ")

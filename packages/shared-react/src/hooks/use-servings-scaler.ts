@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 
+import { formatAmountAsDecimal } from "@norish/shared/lib/format-amount";
+
 type IngredientWithAmount = { amount?: number | string | null };
 
 /** The ingredient at the chosen servings, its amount always a number. */
@@ -81,7 +83,5 @@ export function useServingsScaler<T extends IngredientWithAmount>(
 }
 
 export function formatServings(n: number): string {
-  if (Number.isInteger(n)) return String(n);
-
-  return n.toFixed(2).replace(/\.?0+$/, "");
+  return formatAmountAsDecimal(n);
 }

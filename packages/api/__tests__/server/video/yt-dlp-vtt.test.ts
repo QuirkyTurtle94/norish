@@ -1,0 +1,24 @@
+// @vitest-environment node
+import { describe, expect, it } from "vitest";
+
+import { parseVttContent } from "@norish/api/video/yt-dlp";
+
+describe("parseVttContent", () => {
+  it("reads the caption text without its tags, each line once", () => {
+    const vtt = [
+      "WEBVTT",
+      "",
+      "1",
+      "00:00:00.000 --> 00:00:02.000",
+      "<c.colorE5E5E5>Add the</c> <b>flour</b>",
+      "",
+      "00:00:02.000 --> 00:00:04.000",
+      "<00:00:02.500><c>Add the</c> <b>flour</b>",
+      "",
+      "00:00:04.000 --> 00:00:06.000",
+      "Salt &amp; pepper, 1 &lt; 2&nbsp;tbsp",
+    ].join("\n");
+
+    expect(parseVttContent(vtt)).toBe("Add the flour Salt & pepper, 1 < 2 tbsp");
+  });
+});

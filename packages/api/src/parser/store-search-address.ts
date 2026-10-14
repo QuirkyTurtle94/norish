@@ -182,12 +182,12 @@ export function readOpenSearchTemplate(xml: string, descriptionUrl: string): str
   // that requires something Norish cannot fill is not an address at all.
   const withMark = (template as string)
     .replace(/\{searchTerms\??\}/g, TERM_MARK)
-    .replace(/([?&])[^&=]+=\{[^}]*\?\}(&|$)/g, (_, lead: string, tail: string) =>
+    .replace(/([?&])[^?&=]+=\{[^}]*\?\}(&|$)/g, (_, lead: string, tail: string) =>
       tail ? lead : ""
     )
     .replace(/[?&]$/, "");
 
-  if (/\{[^}]+\}/.test(withMark)) return null;
+  if (/\{[^{}]+\}/.test(withMark)) return null;
   const resolved = resolveUrl(withMark, descriptionUrl);
 
   return resolved ? resolved.replace(TERM_MARK, SEARCH_ADDRESS_PLACEHOLDER) : null;

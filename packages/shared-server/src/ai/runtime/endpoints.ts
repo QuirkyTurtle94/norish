@@ -17,7 +17,7 @@
 
 /** The Azure SDK expects the /openai path suffix on a configured endpoint. */
 export function normalizeAzureEndpoint(endpoint: string): string {
-  const baseUrl = endpoint.replace(/\/+$/, "");
+  const baseUrl = endpoint.replace(/(?<!\/)\/+$/, "");
 
   return baseUrl.endsWith("/openai") ? baseUrl : `${baseUrl}/openai`;
 }
@@ -30,12 +30,12 @@ export function normalizeAzureEndpoint(endpoint: string): string {
  * `…/api/v1`, and a trailing slash never doubles the segment.
  */
 export function normalizeOpenAICompatibleEndpoint(endpoint: string): string {
-  const baseUrl = endpoint.replace(/\/+$/, "");
+  const baseUrl = endpoint.replace(/(?<!\/)\/+$/, "");
 
   return baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`;
 }
 
 /** Ollama is addressed at its host root, without a trailing slash or /api. */
 export function normalizeOllamaEndpoint(endpoint: string): string {
-  return endpoint.replace(/\/+$/, "").replace(/\/api$/, "");
+  return endpoint.replace(/(?<!\/)\/+$/, "").replace(/\/api$/, "");
 }

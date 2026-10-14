@@ -87,6 +87,7 @@ function singular(word: string): string {
  * "whole rice flour" do not, nor "Tomato juice" and "tomatoes in tomato juice".
  */
 export function normaliseFoodName(name: string): string {
+  // eslint-disable-next-line sonarjs/super-linear-regex -- reads the dataset names this tool downloads, not outside input; a narrower pattern could change the tables
   const words = foldFoodName(name.replace(/\([^)]*\)|\[[^\]]*\]/g, " "))
     .split(" ")
     .filter((word) => word !== "" && !FILLER.has(word) && !USUAL_STATE.has(word))

@@ -12,6 +12,7 @@ import {
   hasRecipeName,
   hasRecipeNameIngredientsAndSteps,
   isAvatarFilenameForUser,
+  normalizeUrl,
   parseIngredientWithDefaults,
   parseIsoDuration,
   stripHtmlTags,
@@ -274,10 +275,26 @@ describe("stripHtmlTags", () => {
     );
   });
 
+  it("removes the space before closing punctuation at the end", () => {
+    expect(stripHtmlTags("<p>&ldquo;Quoted &rdquo;</p>")).toBe("\u201CQuoted\u201D");
+    expect(stripHtmlTags("Serve with rice (or bread )")).toBe("Serve with rice (or bread)");
+    expect(stripHtmlTags("Keep the ( space ) inside")).toBe("Keep the ( space ) inside");
+  });
+
   it("handles mixed entities and HTML tags", () => {
     expect(stripHtmlTags("<p>&ldquo;Hello&nbsp;<b>World</b>&rdquo;</p>")).toBe(
       "\u201CHello World\u201D"
     );
+  });
+});
+
+describe("normalizeUrl", () => {
+  it("drops trailing slashes and tracking parameters, in lower case", () => {
+    expect(normalizeUrl("https://Example.com/Recipes/Soup///?utm_source=x&id=2")).toBe(
+      "https://example.com/recipes/soup?id=2"
+    );
+    expect(normalizeUrl("https://example.com/a/b/")).toBe("https://example.com/a/b");
+    expect(normalizeUrl("https://example.com/a//b")).toBe("https://example.com/a//b");
   });
 });
 

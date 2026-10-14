@@ -13,7 +13,7 @@ import { cacheManager } from "@/lib/query-cache";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function offlineSurface(pathname: string) {
-  const path = pathname.replace(/\/+$/, "") || "/";
+  const path = pathname.replace(/(?<!\/)\/+$/, "") || "/";
 
   if (path === "/") return <Dashboard />;
   if (path === "/groceries" || path === "/groceries/pantry") return <GroceriesScreen />;

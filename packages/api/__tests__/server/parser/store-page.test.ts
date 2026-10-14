@@ -698,6 +698,16 @@ describe("discovery: how a shop says it is searched", () => {
     );
   });
 
+  it("leaves out an optional parameter at the end of an OpenSearch template", () => {
+    const xml = `<?xml version="1.0"?><OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+      <Url type="text/html" method="get" template="/search?page={startPage?}&amp;q={searchTerms}&amp;count={count?}"/>
+      </OpenSearchDescription>`;
+
+    expect(readOpenSearchTemplate(xml, "https://shop.example.kr/opensearch.xml")).toBe(
+      "https://shop.example.kr/search?q={query}"
+    );
+  });
+
   it("refuses an OpenSearch template that needs something it cannot fill", () => {
     const xml = `<?xml version="1.0"?><OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
       <Url type="text/html" method="get" template="/search?q={searchTerms}&amp;sid={sessionId}"/>
