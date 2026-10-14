@@ -79,12 +79,12 @@ export function createWarmSet({
     async inspect() {
       const owner = cacheManager.owner();
       const desktopRange = calendarRange("desktop");
-      const recipePath = [trpc.recipes.get.queryKey({ id: "" })[0]];
+      const recipePath = trpc.recipes.get.pathKey();
       const recipes = queryClient
         .getQueryCache()
         .findAll({ queryKey: recipePath })
         .filter((query) => query.state.data != null).length;
-      const cookbookPath = [trpc.cookbooks.get.queryKey({ id: "" })[0]];
+      const cookbookPath = trpc.cookbooks.get.pathKey();
       const cookbooks = queryClient
         .getQueryCache()
         .findAll({ queryKey: cookbookPath })

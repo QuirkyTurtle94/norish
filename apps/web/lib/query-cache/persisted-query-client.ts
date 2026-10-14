@@ -27,6 +27,10 @@ import {
   persistQueryClientSubscribe,
 } from "@tanstack/query-persist-client-core";
 import { QueryClient } from "@tanstack/react-query";
+import { createTRPCClient } from "@trpc/client";
+import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+
+import type { AppRouter } from "@norish/trpc/client";
 
 /** Discard a restored cache older than this (ADR: 7-day maxAge). */
 export const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -73,15 +77,6 @@ function writeBootOwner(ownerId: string): void {
 const shouldDehydrateQuery = (query: { state: { data: unknown } }) =>
   query.state.data !== undefined;
 
-/**
- * The reads a reader opens or makes that must outlive a trip Offline: a recipe
- * and a cookbook (ADR-0008). Paths of tRPC query keys, so each matches every id.
- */
-const HELD_PROCEDURES = [
-  ["recipes", "get"],
-  ["cookbooks", "get"],
-];
-
 function createQueryClient(): QueryClient {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -107,8 +102,16 @@ function createQueryClient(): QueryClient {
   // any read or restore, gives every such entry the offline cache's lifetime
   // however it got in: the Warm Set, the page the reader opened, or the seed a
   // create writes Live or Offline.
-  for (const path of HELD_PROCEDURES) {
-    queryClient.setQueryDefaults([path], { gcTime: CACHE_MAX_AGE_MS });
+  // The reads a reader opens or makes that must outlive a trip Offline: a recipe
+  // and a cookbook (ADR-0008). tRPC builds their path keys, so each matches every
+  // id; the proxy only names keys and never sends a request.
+  const keys = createTRPCOptionsProxy<AppRouter>({
+    client: createTRPCClient<AppRouter>({ links: [] }),
+    queryClient,
+  });
+
+  for (const pathKey of [keys.recipes.get.pathKey(), keys.cookbooks.get.pathKey()]) {
+    queryClient.setQueryDefaults(pathKey, { gcTime: CACHE_MAX_AGE_MS });
   }
 
   return queryClient;
