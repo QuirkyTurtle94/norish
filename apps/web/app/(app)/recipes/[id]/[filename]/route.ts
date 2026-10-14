@@ -6,10 +6,7 @@ const VALID_UUID_PATTERN = /^[a-f0-9-]{36}$/i;
 
 export const runtime = "nodejs";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string; filename: string }> }
-) {
+export async function GET(req: Request, { params }: RouteContext<"/recipes/[id]/[filename]">) {
   const refused = await refuseWithoutSession(req);
 
   if (refused) return refused;

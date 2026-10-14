@@ -1,14 +1,11 @@
 import http from "node:http";
 import { join } from "node:path";
-import { parse } from "node:url";
 import next from "next";
 
 import { SERVER_CONFIG } from "@norish/config/env-config-server";
 import { resolveExistingWorkspacePath } from "@norish/shared-server/lib/workspace-paths";
 import { serverLogger } from "@norish/shared-server/logger";
 import { initTrpcWebSocket } from "@norish/trpc/server";
-
-import { serveStaticFile } from "./static-files";
 
 const WEB_APP_DIR = resolveExistingWorkspacePath(join("apps", "web"));
 
@@ -24,13 +21,8 @@ export async function createServer() {
 
   const server = http.createServer(async (req, res) => {
     try {
-      // Serve static files from uploads directory
-      if (serveStaticFile(req, res)) return;
-
-      // Let Next.js handle all other requests (including /api/trpc/*)
-      const parsedUrl = parse(req.url || "/", true);
-
-      await handle(req, res, parsedUrl);
+      // Next parses the URL itself; the WebSocket's upgrade never reaches here.
+      await handle(req, res);
     } catch (err) {
       serverLogger.error({ err }, "Request error");
       res.statusCode = 500;

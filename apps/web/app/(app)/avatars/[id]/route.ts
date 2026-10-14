@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 const AVATARS_DISK_DIR = path.join(SERVER_CONFIG.UPLOADS_DIR, "avatars");
 const VALID_FILENAME_PATTERN = /^[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+$/;
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: RouteContext<"/avatars/[id]">) {
   const refused = await refuseWithoutSession(req);
 
   if (refused) return refused;
