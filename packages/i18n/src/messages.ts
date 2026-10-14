@@ -162,10 +162,10 @@ const MESSAGE_LOADERS: Record<LocaleCatalogCode, Partial<Record<MessageSection, 
 
 /** One section of a locale's catalogue, or null where the catalogue has none. */
 export async function loadMessageSection(
-  locale: string,
+  locale: LocaleCatalogCode,
   section: MessageSection
 ): Promise<Record<string, unknown> | null> {
-  const load = MESSAGE_LOADERS[locale as LocaleCatalogCode]?.[section];
+  const load = MESSAGE_LOADERS[locale]?.[section];
 
   return load ? (await load()).default : null;
 }

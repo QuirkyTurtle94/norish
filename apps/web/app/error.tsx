@@ -10,7 +10,13 @@ import { createClientLogger } from "@norish/shared/lib/logger";
 
 const log = createClientLogger("Error");
 
-export default function Error({ error, retry }: { error: Error; retry: () => void }) {
+export default function Error({
+  error,
+  retry,
+}: {
+  error: Error & { digest?: string };
+  retry: () => void;
+}) {
   const t = useTranslations("common.errorPage");
 
   useEffect(() => {
@@ -22,7 +28,7 @@ export default function Error({ error, retry }: { error: Error; retry: () => voi
       {
         err: error.message,
         name: error.name,
-        digest: (error as Error & { digest?: string }).digest,
+        digest: error.digest,
         stack: error.stack,
       },
       "Unhandled error"

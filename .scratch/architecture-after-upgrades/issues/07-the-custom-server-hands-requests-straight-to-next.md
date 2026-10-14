@@ -17,7 +17,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, The web server.
 - [x] The error page uses the `retry` callback, with copy from the message catalogue in every shipped language.
 - [x] A global error boundary renders its own document, with copy chosen by the browser's language and an English fallback.
 - [x] `next typegen` runs before type checking in CI and in the local typecheck script. Hand-written `params: Promise<…>` types use Next's generated page, layout and route-context prop types.
-- [ ] The E2E suite passes against a fresh `pnpm build`.
+- [x] The E2E suite passes against a fresh `pnpm build`.
 
 ## Comments
 
@@ -27,3 +27,5 @@ See `.scratch/architecture-after-upgrades/spec.md`, The web server.
   - `error.tsx` is the Nora card with the `retry` callback (Next 16.4 passes `retry`; `reset` only re-renders). Copy is `common.errorPage` (title, message, retry) in all 16 locales.
   - `global-error.tsx` renders its own `<html>`: the root layout's locale and message provider are gone there, so it picks the first catalogue locale matching `navigator.languages` (with `de`, `nb`/`nn` and `pt` mapped to the catalogue's codes), loads only that locale's `common` section through the new `loadMessageSection`, and falls back to English. Unit test: `apps/web/__tests__/app/global-error.test.tsx`.
   - The typecheck script runs `next typegen` first, and CI runs that script. Pages use `PageProps<"/route">` (or `Pick<…, "params">` where a page reads only params) and route handlers `RouteContext<"/route">`. With Next's types, `searchParams` values are `string | string[]`, so login and signup take `callbackUrl` only when it is a single string.
+  - The full browser suite passed against a fresh build: 181 of 181, no flaky test (2026-10-14, together with ticket 10).
+  - **After review:** the global error page reads in English until the reader's language loads, and keeps English when it cannot load (a lost network or a chunk that will not load is a likely cause of an error this far out), so it is never blank.

@@ -10,6 +10,9 @@ import "@testing-library/jest-dom";
 
 import GlobalError from "@/app/global-error";
 
+import * as messages from "@norish/i18n/messages";
+import english from "@norish/i18n/messages/en/common.json";
+
 vi.mock("@/styles/globals.css", () => ({}));
 
 function inBrowserLanguages(languages: string[]) {
@@ -38,6 +41,20 @@ describe("the global error page", () => {
     });
 
     expect(await screen.findByText("Something went wrong.")).toBeInTheDocument();
+  });
+
+  it("reads in the catalogue's English at once, and stays readable when the catalogue cannot load", async () => {
+    inBrowserLanguages(["nl-NL"]);
+    vi.spyOn(messages, "loadMessageSection").mockRejectedValue(new Error("chunk failed"));
+    render(<GlobalError error={new Error("boom")} retry={() => {}} />, {
+      container: document.documentElement,
+    });
+
+    expect(screen.getByText(english.errorPage.title)).toBeInTheDocument();
+    expect(screen.getByText(english.errorPage.message)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: english.errorPage.retry })).toBeInTheDocument();
+    await vi.waitFor(() => expect(messages.loadMessageSection).toHaveBeenCalled());
+    expect(screen.getByText(english.errorPage.title)).toBeInTheDocument();
   });
 
   it("tries again when asked", async () => {
