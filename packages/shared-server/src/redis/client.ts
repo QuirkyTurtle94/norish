@@ -16,11 +16,6 @@ import { parseRedisUrl } from "./url";
 
 const log = createLogger("redis");
 
-/** Longest pause between reconnection attempts. The strategy never gives up. */
-export const REDIS_RETRY_MAX_DELAY_MS = 5_000;
-export const REDIS_KEEP_ALIVE_MS = 30_000;
-export const REDIS_CONNECT_TIMEOUT_MS = 10_000;
-
 // Read on every access, never copied into a module-local — see the note on
 // `globalForRegistry` in packages/queue/src/registry.ts for why this module is
 // evaluated more than once per process. Here the cost of getting it wrong is
@@ -31,26 +26,16 @@ const globalForRedis = globalThis as unknown as {
 };
 
 /**
- * Exponential backoff, capped, and never `null`: pub/sub must keep trying for
- * as long as the process lives. Returning `null` would make ioredis give up,
- * after which every subscription in the process is silently dead.
+ * Connection options every Redis client in Norish starts from: the publisher,
+ * each subscriber and BullMQ's connections. ioredis 6's defaults do the rest:
+ * RESP3, reconnecting with capped exponential backoff for as long as the
+ * process lives, and a 30-second keep-alive.
  */
-export function redisRetryStrategy(times: number): number {
-  return Math.min(1_000 * 2 ** Math.max(0, times - 1), REDIS_RETRY_MAX_DELAY_MS);
-}
-
-/** Connection options shared by the publisher and every subscriber. */
 export function getRedisConnectionOptions(url = SERVER_CONFIG.REDIS_URL): RedisOptions {
   return {
     ...parseRedisUrl(url),
-    // ioredis 6 speaks RESP3 by default; RESP2 keeps subscriber mode and every
-    // reply shape as they were.
-    protocol: 2,
     lazyConnect: true,
     maxRetriesPerRequest: null,
-    keepAlive: REDIS_KEEP_ALIVE_MS,
-    connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
-    retryStrategy: redisRetryStrategy,
   };
 }
 

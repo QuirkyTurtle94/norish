@@ -11,7 +11,9 @@ import { RedisContainer } from "@testcontainers/redis";
 import { Queue } from "bullmq";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
+import { REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
 import { createLazyWorker, stopLazyWorker } from "../../src/lazy-worker-manager";
+import { getBullConnectionOptions } from "../../src/redis/bullmq";
 
 const QUEUE = "lazy-worker-redis-test";
 
@@ -20,7 +22,7 @@ let redis: StartedRedisContainer;
 let finish = () => {};
 
 beforeAll(async () => {
-  redis = await new RedisContainer("redis:8.6.2-alpine").start();
+  redis = await new RedisContainer(REDIS_IMAGE).start();
 });
 
 afterAll(async () => {
@@ -38,7 +40,7 @@ function isRunning(): boolean | undefined {
 }
 
 it("registers with a job already waiting, runs it, and counts as running meanwhile", async () => {
-  const connection = { host: redis.getHost(), port: redis.getPort() };
+  const connection = getBullConnectionOptions(redis.getConnectionUrl());
   const queue = new Queue(QUEUE, { connection });
   const finished = new Promise<void>((resolve) => (finish = resolve));
   let started!: (data: unknown) => void;

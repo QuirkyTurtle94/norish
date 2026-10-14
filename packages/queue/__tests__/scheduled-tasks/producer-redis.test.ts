@@ -10,6 +10,8 @@ import { Queue } from "bullmq";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
 import type { ScheduledTaskJobData } from "../../src/scheduled-tasks/queue";
+import { REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
+import { getBullConnectionOptions } from "../../src/redis/bullmq";
 import { initializeScheduledJobs } from "../../src/scheduled-tasks/producer";
 import { SCHEDULED_TASKS } from "../../src/scheduled-tasks/queue";
 
@@ -17,9 +19,9 @@ let redis: StartedRedisContainer;
 let queue: Queue<ScheduledTaskJobData>;
 
 beforeAll(async () => {
-  redis = await new RedisContainer("redis:8.6.2-alpine").start();
+  redis = await new RedisContainer(REDIS_IMAGE).start();
   queue = new Queue("scheduled-tasks", {
-    connection: { host: redis.getHost(), port: redis.getPort() },
+    connection: getBullConnectionOptions(redis.getConnectionUrl()),
   });
 });
 

@@ -9,10 +9,14 @@ import Redis from "ioredis";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { redisSecondaryStorage as storage } from "@norish/auth/secondary-storage";
+import { getRedisConnectionOptions } from "@norish/shared-server/redis/client";
+
+import { REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
 
 const client = vi.hoisted(() => ({ redis: null as Redis | null }));
 
-vi.mock("@norish/shared-server/redis/client", () => ({
+vi.mock("@norish/shared-server/redis/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@norish/shared-server/redis/client")>()),
   getPublisherClient: async () => client.redis,
 }));
 
@@ -20,8 +24,8 @@ let container: StartedRedisContainer;
 let redis: Redis;
 
 beforeAll(async () => {
-  container = await new RedisContainer("redis:8.6.2-alpine").start();
-  redis = new Redis({ host: container.getHost(), port: container.getPort(), protocol: 2 });
+  container = await new RedisContainer(REDIS_IMAGE).start();
+  redis = new Redis(getRedisConnectionOptions(container.getConnectionUrl()));
   client.redis = redis;
 }, 60_000);
 

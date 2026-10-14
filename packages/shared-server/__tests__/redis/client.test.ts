@@ -117,7 +117,7 @@ describe("publisher connection", () => {
 });
 
 describe("connection options", () => {
-  it("connects with the parsed URL and BullMQ's keep-alive and connect timeout", async () => {
+  it("connects with the parsed URL and leaves the rest to ioredis 6's defaults", async () => {
     vi.resetModules();
     const { getPublisherClient } = await import("../../src/redis/client");
 
@@ -128,28 +128,11 @@ describe("connection options", () => {
       port: 6380,
       password: "secret",
       db: 3,
-      keepAlive: 30_000,
-      connectTimeout: 10_000,
       maxRetriesPerRequest: null,
     });
-    expect(constructed[0]!.retryStrategy).toBeTypeOf("function");
-  });
-
-  it("backs off exponentially, caps at 5 s and never gives up", async () => {
-    vi.resetModules();
-    const { redisRetryStrategy, REDIS_RETRY_MAX_DELAY_MS } = await import("../../src/redis/client");
-
-    expect(REDIS_RETRY_MAX_DELAY_MS).toBe(5_000);
-    expect(redisRetryStrategy(1)).toBe(1_000);
-    expect(redisRetryStrategy(2)).toBe(2_000);
-    expect(redisRetryStrategy(3)).toBe(4_000);
-    expect(redisRetryStrategy(4)).toBe(5_000);
-
-    for (const times of [5, 20, 21, 100, 10_000]) {
-      const delay = redisRetryStrategy(times);
-
-      expect(delay).not.toBeNull();
-      expect(delay).toBe(5_000);
+    // RESP3, reconnecting for ever with capped backoff, a 30 s keep-alive.
+    for (const option of ["protocol", "retryStrategy", "keepAlive", "connectTimeout"] as const) {
+      expect(constructed[0]).not.toHaveProperty(option);
     }
   });
 });

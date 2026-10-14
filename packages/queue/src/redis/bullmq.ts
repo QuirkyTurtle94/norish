@@ -12,9 +12,8 @@
 import type { RedisOptions } from "ioredis";
 import Redis from "ioredis";
 
-import { SERVER_CONFIG } from "@norish/config/env-config-server";
 import { createLogger } from "@norish/shared-server/logger";
-import { parseRedisUrl } from "@norish/shared-server/redis/url";
+import { getRedisConnectionOptions } from "@norish/shared-server/redis/client";
 
 const log = createLogger("redis:bullmq");
 
@@ -27,38 +26,17 @@ const globalForBull = globalThis as unknown as {
 };
 
 /**
- * Base Redis options optimized for BullMQ
+ * The shared Redis options plus what BullMQ needs on top: it connects at once,
+ * a command waits out an outage in the offline queue instead of failing, and
+ * no ready check holds the connection back.
  */
-function getBaseOptions(): RedisOptions {
+export function getBullConnectionOptions(url?: string): RedisOptions {
   return {
-    ...parseRedisUrl(SERVER_CONFIG.REDIS_URL),
-    // ioredis 6 speaks RESP3 by default; RESP2 keeps the wire protocol BullMQ
-    // and every reply shape here were written against.
-    protocol: 2,
+    ...getRedisConnectionOptions(url),
+    lazyConnect: false,
     maxRetriesPerRequest: null,
-
-    // Performance optimizations
     enableReadyCheck: false,
     enableOfflineQueue: true,
-
-    lazyConnect: false,
-    keepAlive: 30_000,
-    connectTimeout: 10_000,
-
-    // Retry strategy with exponential backoff
-    retryStrategy: (times: number) => {
-      if (times > 20) {
-        log.error({ times }, "Redis connection failed after max retries");
-
-        return null; // Stop retrying
-      }
-
-      const delay = Math.min(Math.exp(times), 20_000);
-
-      log.warn({ times, delay }, "Redis connection retry");
-
-      return delay;
-    },
   };
 }
 
@@ -85,7 +63,7 @@ export function getBullClient(): Redis {
 
   // Create new client if none exists or previous one was closed
   const bullClient = new Redis({
-    ...getBaseOptions(),
+    ...getBullConnectionOptions(),
     connectionName: `norish:${process.pid}:bull`,
   });
 

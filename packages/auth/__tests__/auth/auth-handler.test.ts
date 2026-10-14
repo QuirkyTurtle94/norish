@@ -14,6 +14,10 @@ import { RedisContainer } from "@testcontainers/redis";
 import Redis from "ioredis";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { getRedisConnectionOptions } from "@norish/shared-server/redis/client";
+
+import { REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
+
 const { store, client, registration } = vi.hoisted(() => ({
   store: { user: [], session: [], account: [], verification: [], apikey: [] } as Record<
     string,
@@ -49,7 +53,8 @@ vi.mock("@norish/shared-server/logger", () => {
 
   return { authLogger: logger, trpcLogger: logger, createLogger: () => logger };
 });
-vi.mock("@norish/shared-server/redis/client", () => ({
+vi.mock("@norish/shared-server/redis/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@norish/shared-server/redis/client")>()),
   getPublisherClient: async () => client.redis,
 }));
 
@@ -272,8 +277,8 @@ beforeAll(async () => {
   vi.stubEnv("AUTH_URL", AUTH_URL);
   vi.stubEnv("AUTH_RATE_LIMIT_ENABLED", "true");
   vi.stubEnv("TRUSTED_PROXIES", "10.0.0.0/24");
-  container = await new RedisContainer("redis:8.6.2-alpine").start();
-  redis = new Redis({ host: container.getHost(), port: container.getPort(), protocol: 2 });
+  container = await new RedisContainer(REDIS_IMAGE).start();
+  redis = new Redis(getRedisConnectionOptions(container.getConnectionUrl()));
   client.redis = redis;
   issuer = await idp.start();
   authModule = await importAuth();

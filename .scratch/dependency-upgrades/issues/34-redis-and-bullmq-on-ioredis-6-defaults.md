@@ -1,6 +1,6 @@
 # 34 — Redis and BullMQ on ioredis 6's defaults
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026-10-13.
@@ -35,13 +35,17 @@ If BullMQ misbehaves on RESP3, report it upstream with the failing test. Do not 
 
 ## Acceptance criteria
 
-- [ ] No Redis connection, in source or tests, sets `protocol`.
-- [ ] No connection options set a retry strategy, keep-alive or connect timeout; ioredis 6's defaults apply.
-- [ ] Pub/sub and BullMQ connections are built from one options builder.
-- [ ] The real-Redis tests use the production options and compose's Redis version, and they pass.
+- [x] No Redis connection, in source or tests, sets `protocol`.
+- [x] No connection options set a retry strategy, keep-alive or connect timeout; ioredis 6's defaults apply.
+- [x] Pub/sub and BullMQ connections are built from one options builder.
+- [x] The real-Redis tests use the production options and compose's Redis version, and they pass.
 - [ ] The realtime E2E project passes, which shows pub/sub working on RESP3.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review. The maintainer wants a clean ioredis 6 and BullMQ 6 migration, with no protocol opt-out.
 - 2026-10-14 — The maintainer confirmed: no `protocol: 2` anywhere. This reverses `.scratch/architecture-after-upgrades/` ("RESP2 stays"). The connection-options part of that plan's ticket 05 moved here; the rest of it moved to 35. The test list was corrected: there is no `oidc-flow.test.ts`, and `auth-handler.test.ts` also pinned `protocol: 2` and Redis 8.6.2.
+- 2026-10-14 (implemented) — `getRedisConnectionOptions(url)` is the one builder: the parsed URL, `lazyConnect` and `maxRetriesPerRequest: null`, nothing else, so RESP3, the never-give-up backoff and the 30 s keep-alive are ioredis 6's. `getBullConnectionOptions(url)` in `packages/queue/src/redis/bullmq.ts` starts from it and adds connecting at once, `maxRetriesPerRequest: null`, no ready check and the offline queue. `redisRetryStrategy` and its constants are gone; the unit tests assert neither builder sets `protocol`, `retryStrategy`, `keepAlive` or `connectTimeout`.
+  - The Redis image is `REDIS_IMAGE` in `packages/shared-server/__tests__/helpers/redis.ts`, read from `docker/compose.base.yaml` itself (`redis:8.10.1`), so the tests cannot drift from compose. The four real-Redis suites and the E2E harness use it, and connect through `getBullConnectionOptions` / `getRedisConnectionOptions` with the container's URL. All four pass on RESP3 (6 + 19 tests).
+  - `case "paused"` is gone from `toEnrichmentLifecycleState`.
+  - The realtime E2E project runs with ticket 35, which reorders its scenarios; its result is recorded there.

@@ -10,6 +10,8 @@ import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { RedisContainer } from "@testcontainers/redis";
 import { Client } from "pg";
 
+import { REDIS_IMAGE } from "../../../../../packages/shared-server/__tests__/helpers/redis";
+
 const WEB_DIR = path.resolve(import.meta.dirname, "../../..");
 const REPO_ROOT = path.resolve(import.meta.dirname, "../../../../..");
 const DIST_SERVER_ENTRY = path.join(REPO_ROOT, "dist-server/index.mjs");
@@ -218,7 +220,7 @@ export class ProductionStack {
           .withUsername(this.options.databaseName)
           .withPassword(this.options.databaseName)
           .start(),
-        new RedisContainer("redis:8.6.2-alpine")
+        new RedisContainer(REDIS_IMAGE)
           .withExposedPorts({ container: 6379, host: redisHostPort })
           .start(),
       ]);
