@@ -25,6 +25,7 @@ import {
   processClaimsForUser,
   storeOIDCProfile,
 } from "./claim-processor";
+import { API_KEY_HEADERS } from "./credentials";
 import {
   getCachedGitHubProvider,
   getCachedGoogleProvider,
@@ -453,7 +454,7 @@ function createBetterAuth() {
           timeWindow: 1000 * 60 * 60 * 1,
           maxRequests: 500,
         },
-        apiKeyHeaders: ["x-api-key", "bearer"],
+        apiKeyHeaders: [...API_KEY_HEADERS],
       }),
 
       nextCookies(),

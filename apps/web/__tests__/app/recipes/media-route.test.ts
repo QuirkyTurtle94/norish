@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { GET as getRecipeMedia } from "@/app/(app)/recipes/[id]/[filename]/route";
 import { GET as getSharedRecipeMedia } from "@/app/share/[token]/media/[filename]/route";
 import { GET as getSharedStepMedia } from "@/app/share/[token]/steps/[filename]/route";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,6 +8,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const statMock = vi.hoisted(() => vi.fn());
 const readFileMock = vi.hoisted(() => vi.fn());
 const getActiveRecipeShareByTokenMock = vi.hoisted(() => vi.fn());
+const readSessionPrincipal = vi.hoisted(() => vi.fn());
+
+vi.mock("@norish/auth/session", () => ({ readSessionPrincipal }));
 
 vi.mock("node:fs/promises", () => ({
   default: {
@@ -65,5 +69,34 @@ describe("recipe media share access", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+});
+
+describe("a signed-in reader's recipe media", () => {
+  const recipeId = "123e4567-e89b-12d3-a456-426614174000";
+  const request = () =>
+    getRecipeMedia(new Request(`http://localhost/recipes/${recipeId}/cover.jpg`), {
+      params: Promise.resolve({ id: recipeId, filename: "cover.jpg" }),
+    });
+
+  beforeEach(() => {
+    statMock.mockResolvedValue({ size: 12 });
+    readFileMock.mockResolvedValue(Buffer.from("file-bytes"));
+  });
+
+  it("is served with a session", async () => {
+    readSessionPrincipal.mockResolvedValueOnce({ userId: "user-1", token: "token" });
+
+    expect((await request()).status).toBe(200);
+  });
+
+  it("is answered like a missing file without one, uncached, reading nothing", async () => {
+    readSessionPrincipal.mockResolvedValueOnce(null);
+
+    const response = await request();
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(readFileMock).not.toHaveBeenCalled();
   });
 });

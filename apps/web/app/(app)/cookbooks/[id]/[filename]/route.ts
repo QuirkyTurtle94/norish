@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseWithoutSession } from "@/lib/auth/media-session";
 import { serveCookbookMedia } from "@/lib/recipe-media";
 
 const VALID_UUID_PATTERN = /^[a-f0-9-]{36}$/i;
@@ -9,6 +10,10 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string; filename: string }> }
 ) {
+  const refused = await refuseWithoutSession(req);
+
+  if (refused) return refused;
+
   const { id, filename } = await params;
 
   if (!id || !VALID_UUID_PATTERN.test(id)) {

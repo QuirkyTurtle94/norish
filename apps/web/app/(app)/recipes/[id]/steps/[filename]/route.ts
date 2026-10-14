@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseWithoutSession } from "@/lib/auth/media-session";
 import { serveRecipeStepMedia } from "@/lib/recipe-media";
 
 export const runtime = "nodejs";
@@ -9,6 +10,10 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string; filename: string }> }
 ) {
+  const refused = await refuseWithoutSession(req);
+
+  if (refused) return refused;
+
   const { id, filename } = await params;
 
   // Validate id (should be a UUID)

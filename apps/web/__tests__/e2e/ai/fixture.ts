@@ -9,7 +9,7 @@ import { hydratingBrowser } from "../harness/hydration";
 import { ProductionStack } from "../harness/production-stack";
 import { configureDatabase } from "./database";
 
-const OWNER = {
+export const OWNER = {
   email: "ai-e2e-a@norish.test",
   password: "ai-e2e-a-password-1",
   name: "AI E2E Owner",
