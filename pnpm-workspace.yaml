@@ -83,3 +83,10 @@ overrides:
   # a second copy breaks declaration emit with TS2742 errors naming
   # @norish/shared/node_modules/zod. Move the value, keep the pin.
   zod: 4.6.7
+
+auditConfig:
+  ignoreGhsas:
+    # braces <=3.0.3, no patched release. Only the lint plugin
+    # @next/eslint-plugin-next reaches it (fast-glob > micromatch), with the
+    # repo's own glob patterns; nothing that ships or runs a request loads it.
+    - GHSA-vfj7-8cjw-p6xm
