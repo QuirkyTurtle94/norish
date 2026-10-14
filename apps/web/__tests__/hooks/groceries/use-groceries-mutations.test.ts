@@ -297,6 +297,40 @@ describe("useGroceriesMutations", () => {
     });
   });
 
+  describe("a list read already under way", () => {
+    it("does not land over a grocery checked off while it ran", async () => {
+      const before = createMockGroceriesData(
+        [createMockGrocery({ id: "g1", isDone: false, version: 3 })],
+        []
+      );
+      let answerRead: (data: typeof before) => void = () => {};
+
+      // Fresh, so mounting reads nothing of its own.
+      queryClient.setQueryDefaults(["groceries", "list"], { staleTime: Infinity });
+      queryClient.setQueryData(["groceries", "list"], before);
+
+      const { result } = renderHook(() => useGroceriesMutations(), {
+        wrapper: createTestWrapper(queryClient),
+      });
+      // The page's own read, answered with the list as it was before the tick.
+      const read = queryClient
+        .query({
+          queryKey: ["groceries", "list"],
+          queryFn: () => new Promise<typeof before>((resolve) => (answerRead = resolve)),
+          staleTime: 0,
+        })
+        .catch(() => undefined);
+
+      act(() => result.current.toggleGroceries(["g1"], true));
+      answerRead(before);
+      await read;
+
+      const data = queryClient.getQueryData<typeof before>(["groceries", "list"]);
+
+      expect(data?.groceries[0]).toMatchObject({ id: "g1", isDone: true, version: 4 });
+    });
+  });
+
   describe("getRecurringGroceryForGrocery", () => {
     it("returns recurring grocery when grocery has recurringGroceryId", async () => {
       const recurringGrocery = createMockRecurringGrocery({ id: "r1", name: "Weekly Eggs" });

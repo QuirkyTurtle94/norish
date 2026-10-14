@@ -24,6 +24,11 @@ export function createUseGroceriesQuery({ useTRPC }: CreateGroceriesHooksOptions
     const setGroceriesData = (
       updater: (prev: GroceriesData | undefined) => GroceriesData | undefined
     ) => {
+      // A read already under way answers for the list as it was: it must not
+      // land over this write. The list stays stale, so the next mount or focus
+      // reads it again. With nothing held yet there is nothing to write over,
+      // and stopping the first read would leave the list loading.
+      if (queryClient.getQueryData(queryKey)) void queryClient.cancelQueries({ queryKey });
       queryClient.setQueryData<GroceriesData>(queryKey, updater);
     };
 
