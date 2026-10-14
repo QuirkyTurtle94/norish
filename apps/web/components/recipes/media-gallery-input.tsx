@@ -142,7 +142,6 @@ function SortableMediaItem({ item, index, onDelete, isFirstImage }: SortableMedi
           {item.thumbnail ? (
             <NextImage
               fill
-              unoptimized
               alt={`Video ${index + 1}`}
               className="object-cover"
               src={item.thumbnail}
@@ -166,13 +165,7 @@ function SortableMediaItem({ item, index, onDelete, isFirstImage }: SortableMedi
           )}
         </>
       ) : (
-        <NextImage
-          fill
-          unoptimized
-          alt={`Image ${index + 1}`}
-          className="object-cover"
-          src={item.src}
-        />
+        <NextImage fill alt={`Image ${index + 1}`} className="object-cover" src={item.src} />
       )}
 
       {/* Order badge */}

@@ -2,6 +2,7 @@
   "extends": "@norish/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ES2022", "dom"],
+    "types": ["node"],
     "noImplicitAny": false,
     "jsx": "preserve",
     "plugins": [

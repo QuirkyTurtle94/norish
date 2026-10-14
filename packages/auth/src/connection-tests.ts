@@ -205,7 +205,7 @@ export async function testAIEndpoint(config: {
       testUrl = `${normalizeOpenAICompatibleEndpoint(config.endpoint)}/models`;
       break;
     case "perplexity":
-      // Perplexity doesn't have a /models endpoint, use chat completions with minimal request
+      // Perplexity has no /models endpoint, so ask its Agent API one tiny question instead
       return testPerplexityConnection(config.apiKey);
     default:
       return { success: false, error: `Unknown provider: ${config.provider}` };

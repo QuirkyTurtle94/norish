@@ -187,7 +187,6 @@ export default function ImageLightbox({
                         ) : (
                           <Image
                             data-lightbox-interactive
-                            unoptimized
                             alt={image.alt || `Image ${index + 1}`}
                             className="max-h-[68dvh] w-auto max-w-full rounded-2xl object-contain select-none sm:rounded-3xl"
                             draggable={false}
@@ -233,7 +232,6 @@ export default function ImageLightbox({
                 ) : (
                   <Image
                     data-lightbox-interactive
-                    unoptimized
                     alt={currentImage.alt || "Image"}
                     className="max-h-[68dvh] w-auto max-w-full rounded-2xl object-contain select-none sm:rounded-3xl"
                     draggable={false}

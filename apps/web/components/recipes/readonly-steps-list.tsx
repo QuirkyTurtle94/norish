@@ -228,7 +228,6 @@ export function ReadonlyStepsList({
                         >
                           <Image
                             fill
-                            unoptimized
                             alt={`Step ${currentStepNumber} image ${imgIndex + 1}`}
                             className="object-cover"
                             src={img.image}

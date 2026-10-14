@@ -64,7 +64,6 @@ export default defineConfig({
       "@ai-sdk/perplexity",
       "@ai-sdk/provider",
       "@ai-sdk/provider-utils",
-      "ollama-ai-provider-v2",
       // --- Logging ---
       "pino",
       "pino-pretty",

@@ -182,7 +182,6 @@ function MediaCarouselSlides({
               >
                 <NextImage
                   fill
-                  unoptimized
                   alt={`Recipe media ${index + 1}`}
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(min-width: 1024px) 60vw, (min-width: 768px) 50vw, 100vw"
@@ -332,7 +331,6 @@ export default function MediaCarousel({
             >
               <NextImage
                 fill
-                unoptimized
                 alt="Recipe image"
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 sizes="(min-width: 1024px) 60vw, (min-width: 768px) 50vw, 100vw"

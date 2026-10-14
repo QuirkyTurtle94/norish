@@ -228,7 +228,6 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
                     {files.map(({ id, file, preview }) => (
                       <div key={id} className="group relative">
                         <Image
-                          unoptimized
                           alt={file.name}
                           className="h-20 w-full rounded-lg object-cover"
                           height={80}

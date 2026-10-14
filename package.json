@@ -34,7 +34,7 @@
     "test:coverage": "turbo run test:coverage",
     "test:e2e": "pnpm run build:web && pnpm run build:server && pnpm --filter @norish/web run test:e2e",
     "lint": "turbo run lint",
-    "lint:fix": "turbo run lint --concurrency=1 -- --fix",
+    "lint:fix": "turbo run lint -- --fix",
     "typecheck": "turbo run typecheck",
     "typecheck:web": "pnpm --filter @norish/web run typecheck",
     "format": "turbo run format -- --write",

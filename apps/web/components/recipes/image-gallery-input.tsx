@@ -107,7 +107,6 @@ function SortableImageItem({ item, index, onDelete }: SortableImageItemProps) {
       {/* Image */}
       <NextImage
         fill
-        unoptimized
         alt={`Gallery image ${index + 1}`}
         className="object-cover"
         src={item.image}

@@ -45,7 +45,6 @@ export function StepImages({ className = "", step }: StepImagesProps) {
             <Image
               fill
               priority
-              unoptimized
               alt={`Step ${step.stepNumber} image 1`}
               className="object-cover"
               sizes="(min-width: 768px) 520px, 92vw"
@@ -81,7 +80,6 @@ export function StepImages({ className = "", step }: StepImagesProps) {
                     ) : (
                       <Image
                         fill
-                        unoptimized
                         alt={`Step ${step.stepNumber} image ${index + 1}`}
                         className="object-cover"
                         sizes="(min-width: 768px) 384px, 92vw"

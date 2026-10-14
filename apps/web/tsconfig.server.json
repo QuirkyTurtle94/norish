@@ -5,8 +5,7 @@
   "compilerOptions": {
     "module": "ESNext",
     "target": "ES2022",
-    "moduleResolution": "Bundler",
-    "esModuleInterop": true,
+    "types": ["node"],
     "skipLibCheck": true,
     "strict": false,
     "noEmit": true,
