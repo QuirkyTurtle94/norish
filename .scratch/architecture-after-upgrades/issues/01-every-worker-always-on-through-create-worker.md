@@ -31,5 +31,5 @@ Shutdown bounds its close by force-closing the workers once the budget runs out.
 - [ ] Shutdown closes every worker. The shutdown step still names itself in the log if it runs slow.
 - [ ] Once the shutdown budget runs out, the workers are force-closed (`worker.close(true)`). No BullMQ connection sets `commandTimeout`; if the sweep's ticket 35 landed one, it is replaced by the force-close.
 - [ ] The sweep's ticket 35 regression still passes: `realtime.e2e.ts` runs the Redis restart before the server restart, and the shutdown log names no step over budget.
-- [ ] The E2E suite passes against a rebuilt `dist-server`, including the job monitor's AI-model chip in the decision-model spec.
+- [ ] The E2E suite passes against a fresh `pnpm build`, including the job monitor's AI-model chip in the decision-model spec.
 - [ ] Release notes, under Fixes and Improvements: "A recipe import or calendar sync that failed and is due to retry now retries as soon as its wait is over. Before, the retry did not run until another import or sync was started, even after a restart." The maintainer will rewrite it.

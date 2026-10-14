@@ -27,4 +27,4 @@ All three producers use BullMQ's deduplication in one `add`, replacing the check
   - [ ] An add while a sync is active yields exactly one follow-up sync.
   - [ ] Two boot asks yield one job.
   - [ ] Every real-Redis test connects through the production connection options and the shared Redis image constant from the sweep's ticket 34, and adds no `vi.clearAllMocks()` (Vitest 5's default, the sweep's ticket 31).
-- [ ] Recipe-import and calendar E2E specs pass against a rebuilt `dist-server`.
+- [ ] Recipe-import and calendar E2E specs pass against a fresh `pnpm build`.

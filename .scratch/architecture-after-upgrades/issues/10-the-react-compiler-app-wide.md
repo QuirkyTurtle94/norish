@@ -17,4 +17,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, React Compiler.
 - [ ] Existing `useMemo`/`useCallback` stay, and the contributing guide says new code doesn't add them.
 - [ ] Hook aliases keep a `use` prefix. A lint rule or a comment at each shared hook bag guards it.
 - [ ] Record here the render counts on the same two screens, after.
-- [ ] The full E2E suite passes against a rebuilt `dist-server`, with no new flake (`--repeat-each` on any spec that turns red once).
+- [ ] The full E2E suite passes against a fresh `pnpm build`, with no new flake (`--repeat-each` on any spec that turns red once).

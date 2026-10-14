@@ -32,4 +32,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, Page loads and the auth gate
   - [ ] A recipe image requested without a session is not served.
   - [ ] A share link's images load signed out.
 - [ ] Measure time to skeleton on a cold load (phone profile) before and after, and record both here. The after number is ticket 08's baseline.
-- [ ] The auth E2E specs pass against a rebuilt `dist-server`.
+- [ ] The auth E2E specs pass against a fresh `pnpm build`.

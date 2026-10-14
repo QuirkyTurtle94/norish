@@ -4,7 +4,7 @@ Status: ready-for-agent
 
 Settled in a `/grill-with-docs` session on 2026-10-13, after the 0.26 dependency sweep moved BullMQ to 6.3, ioredis to 6 and Next.js to 16.4 with React 19.3 (`.scratch/dependency-upgrades/`). Four read-only audits mapped the queue, Redis, web and auth code against the new versions; every claim this spec rests on was re-read in the installed packages. The vocabulary is CONTEXT.md's **Cancelled** (added that day), **Realtime Hub**, **Lagged**, **AI Runtime**, **Outbox**, **Device Preference** and **Device Kind**. Nothing here is expensive to reverse, so it adds no ADR; the closest candidate, the auth gate leaving the proxy, carries its reasoning in its ticket. Target Version: 0.26.0-beta, the open rc. Better Auth 1.7 is out of scope; it landed on the sweep branch (`cddffabf`, `.scratch/dependency-upgrades/issues/09` and `10`), and the auth gate below builds on it.
 
-Re-read against the sweep's open tickets in a second `/grill-with-docs` session on 2026-10-14. That session settled the shutdown rules, the leftover-session case, the release-note line for always-on workers and the liveness and readiness endpoints (ticket 11). The dependency-upgrades plan is being worked on and was left untouched: whatever this plan needs from it is written here.
+Re-read against the sweep's open tickets in a second `/grill-with-docs` session on 2026-10-14. That session settled the shutdown rules, the leftover-session case, the release-note line for always-on workers and the liveness and readiness endpoints (ticket 11). The dependency-upgrades plan was still being worked on then and was left untouched: whatever this plan needs from it is written here. That plan is now done. A third session the same day, also on 2026-10-14, added the move off the hoisted install, production running the source without tsdown, and the image's size (tickets 12 and 13). Every number there was measured in a throwaway clone first.
 
 ## Problem Statement
 
@@ -54,6 +54,17 @@ The upgrades landed as version bumps. The code around them still carries workaro
 - One endpoint, `/api/v1/health`, answers two different questions: whether to restart Norish and whether to send it traffic.
 - It answers 503 when Postgres or the parser is down, and the sweep's ticket 53 adds Redis.
 - The image's `HEALTHCHECK` calls it. An orchestrator that restarts unhealthy containers (Swarm, Kubernetes liveness, autoheal) would therefore restart Norish through every Postgres or Redis outage, and a restart fixes neither.
+
+**Installs and the image.**
+
+- The workspace installs hoisted, a flat `node_modules` from which any workspace can import any package.
+  - About 20 imports across 7 workspaces use packages their workspace never declares. One is live code: shared-server's AI runtime imports `@ai-sdk/provider`, which it declares only as a devDependency.
+  - Which copy of a package lands at the root is luck, and it has shipped two bugs: React Native's ws@7 in the deploy (#361), and archiver 7 at the root with 8 nested, where vitest passed and the built server threw (`e468650b`).
+  - Its only context is the Expo app it arrived with, which has since left the workspace.
+- tsdown bundles the custom server, while dev runs the same source through tsx.
+  - The bundle loads 43 packages at run time, and apps/web declares only a few of them. It finds the rest only because the install is flat.
+  - A hand-kept `neverBundle` list decides what stays out of the bundle.
+- The image is 388 MB to download and 1.77 GB unpacked, and much of it never runs: 138 MB of source maps, Next's 86 MB SWC compiler, client libraries Next has already bundled, an unused 23 MB `libpython`, and the workspace code twice.
 
 **The React and Next line.**
 
@@ -105,6 +116,13 @@ The upgrades landed as version bumps. The code around them still carries workaro
 - `/api/v1/health/ready` answers whether to send Norish traffic. It checks Postgres and Redis, and reports the parser without failing on it.
 - `/api/v1/health` keeps working, marked deprecated, until a later release removes it.
 - The image's healthcheck calls live.
+
+**Installs and the image.**
+
+- The workspace installs isolated, pnpm's default: a workspace imports only what it declares, and the image installs the same layout.
+- Production runs the server's source through tsx, as dev does. tsdown, its externals list and `dist-server` are gone, and every package loads its own dependencies.
+- Lint fails when a package's source imports a devDependency, because the image leaves devDependencies out.
+- The image ships only what runs: about 275 MB to download.
 
 **The React and Next line.**
 
@@ -166,6 +184,11 @@ The upgrades landed as version bumps. The code around them still carries workaro
 48. As a self-hosting operator, I want a health check that fails only when restarting Norish would help, so that my orchestrator doesn't restart Norish through a Postgres or Redis outage.
 49. As a self-hosting operator behind a load balancer, I want a health check that says whether Norish can serve requests, so that traffic stops while Postgres or Redis is down and returns when they are back.
 50. As a self-hosting operator whose probes call `/api/v1/health`, I want it to keep working and to be told what replaces it, so that upgrading doesn't break my setup.
+51. As a contributor, I want an import of a package my workspace doesn't declare to fail typecheck or tests, so that it never works on my machine and then breaks in the image.
+52. As a contributor, I want production to load the same source, resolved the same way, as dev and the tests, so that "the tests passed and the built server threw" can't happen.
+53. As a contributor, I want Lint to fail when source code imports a devDependency, so that a package the image leaves out is caught before release, not on the first request that needs it.
+54. As a self-hosting operator, I want a smaller image, so that each upgrade downloads less.
+55. As a self-hosting operator who overrides the container's command, I want to be told the new one, so that my setup keeps starting.
 
 ## Implementation Decisions
 
@@ -241,10 +264,49 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
   - It uses the `retry` callback, with copy from the message catalogue.
   - A global error boundary renders its own document. It takes its copy from the message catalogue by the browser's language with an English fallback, since the root layout and its provider are gone when it renders.
 - `next typegen` runs before type checking, in CI and in the local typecheck script. Hand-written `params: Promise<…>` types are replaced with Next's generated page, layout and route-context prop types.
-- **The standalone trial.**
-  - Build without `output: "standalone"`, and have the image copy the built output minus its cache.
-  - Keep the change only if the image builds and boots against Postgres and Redis (health check, an upload including HEIC, a URL import through the parser, a video import) and is smaller or faster to build.
-  - Otherwise standalone stays, and the ticket records the numbers.
+- The standalone trial moved to ticket 13, with the rest of the image work.
+
+### Installs, the server build and the image
+
+- **The isolated linker.**
+  - `nodeLinker: hoisted` goes, and nothing brings hoisting back: no `publicHoistPattern`, no hoisted deploy. Dev, CI and the image share one layout.
+  - In the clone, isolated broke typecheck (about 620 errors), tests and build until three fixes were made:
+    - `preserveSymlinks` was deleted from `tooling/typescript/compiled-package.json`; it caused most of the errors.
+    - `getOpenApiDocument()` was given a return type.
+    - About ten missing declarations were added.
+
+    Then every gate passed with the same test counts. Install time and size didn't change (6 s, 1.3 GB).
+
+  - Three breaks that no gate catches are fixed in the ticket:
+    - The Tailwind `@source` path: HeroUI's classes would silently vanish.
+    - The devcontainer's `prettierPath`.
+    - Two `packages/db` tests that import api and queue. Declaring those would create a cycle, so the tests move to `packages/api/__tests__/`.
+- **No tsdown.**
+  - Production runs `node --import tsx server/index.ts` from apps/web; dev already runs this source through tsx. Use `--import`, not the `tsx` CLI, which forks a second process.
+  - Every package loads its own dependencies, so apps/web takes on none of the 42 declarations a bundle in `apps/web/dist-server` would have needed.
+  - The cost, measured in the image:
+    - boot is 8.1 s in a new container and 5.4 s on restart, against 6.0 s and 4.1 s for the bundle
+    - about 65 MB more memory, plus an esbuild process of about 20 MB after a compile
+    - 20 MB more image
+    - a module loaded on demand compiles on first use
+  - Node 26's own type stripping was rejected. It refuses files whose real path is under `node_modules`, which is where the deployed packages live. The code would also need 842 imports given a `.ts` extension, plus 13 constructs Node can't strip.
+- **Dependencies versus devDependencies.**
+  - Without a bundle, `pnpm deploy --prod` decides what the image holds. A run-time import of a devDependency then breaks only in the image, and only on its code path.
+  - `import/no-extraneous-dependencies` (eslint-plugin-import, already installed) fails Lint on such an import.
+  - In apps/web only `server/**` is held to the rule, because Next bundles the rest at build time.
+- **The image.**
+  - The deploy is isolated: `node_modules/.pnpm` is the store.
+    - Its folder names match the build workspace's, because both come from the lockfile, so Next's links for pg, pino and sharp resolve.
+    - That holds only while the deploy stays at `/app/node_modules`.
+  - `CMD` becomes `node --import tsx /app/apps/web/server/index.ts`.
+  - The size work (ticket 13), verified on a repack of the tsx image, takes it from 405 to 275 MB compressed and from 1.87 to 1.07 GB unpacked.
+    - Where a package is in the image only because of a wrong declaration, the declaration is fixed: apps/web's client-only libraries become devDependencies.
+    - Filled optional peers are removed by name.
+    - Source maps, `@next/swc-*`, type declarations, docs, Python's unused parts and the second copy of the workspace code go.
+  - Ticket 13 also decides whether production reads Next's config from `.next/required-server-files.json` instead of running `next.config.js` at boot.
+    - It saves 23 MB compressed and 258 ms.
+    - It sets a private `__NEXT_PRIVATE_*` variable, the one Next's own standalone server uses, so the standalone trial makes the call.
+  - No CI step boots the image, because the maintainer tests every image before shipping it. The store-folder cut rests on static analysis and Next's traces, so that test includes a URL import, a video import, a HEIC upload and an AI job.
 
 ### Health checks
 
@@ -327,7 +389,8 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
   - render counts with and without the React Compiler
   - image size and build time with and without standalone output
   - the precache analysis
-- Every commit passes the `CONTRIBUTING.md` gates plus `pnpm deps:cycles` and `pnpm format:check`. E2E runs against a rebuilt `dist-server`.
+- Ticket 12 adds no new tests. The isolated linker and the lint rule are the checks, and the E2E harness boots the source the way production does. The two db tests it moves into api run in a gate for the first time.
+- Every commit passes the `CONTRIBUTING.md` gates plus `pnpm deps:cycles` and `pnpm format:check`. E2E runs against a fresh `pnpm build`.
 
 ## Out of Scope
 
@@ -341,6 +404,11 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
 - Stripping the existing memo hooks, and route cross-fades.
 - Next 17 itself, which is not released (npm `latest` is 16.4.0 on 2026-10-14).
 - Cancelling waiting or delayed jobs, which the job monitor's existing actions already cover.
+- Node's own type stripping in place of tsx, and a CI step that boots the image. The reasons are under Installs, the server build and the image.
+- These image cuts were measured but not planned:
+  - **yt-dlp:** a 39 MB binary carrying its own Python. Installing it into a venv on the shipped Python would need a `curl_cffi` wheel for Python 3.15 on musl.
+  - **A minimal ffmpeg:** most of its 48 MB compressed is codecs Norish never uses, but trimming it means building ffmpeg ourselves.
+  - **A hand-built base image:** saves 7 MB and gives up free base-image updates.
 
 ## Further Notes
 
@@ -358,12 +426,18 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
 - **Order.**
   - `createWorker` comes first; deduplication (because of CalDAV's delay), cancellation and retention build on it.
   - The proxy change lands before the Cache Components baseline is measured.
+  - Ticket 12 lands before 07 and 13. Ticket 07 builds on the server's new start command, and 13's cuts are measured against 12's image.
   - Everything else is independent. The health endpoints (ticket 11) need only the sweep merged, because ready reuses its ticket 53 Redis ping.
 - **Release notes.**
   - Features: administrators can cancel a running background job.
   - Fixes and Improvements:
     - Background jobs and realtime recover by themselves after a Redis restart. The sweep's ticket 35 writes this line.
     - Ticket 01 writes: "A recipe import or calendar sync that failed and is due to retry now retries as soon as its wait is over. Before, the retry did not run until another import or sync was started, even after a restart." The maintainer will rewrite it.
+  - Ticket 13 writes, under Fixes and Improvements: "The Docker image is about 30% smaller to download."
+  - Ticket 12 writes, under Upgrade notes: "The image starts the server with `node --import tsx /app/apps/web/server/index.ts`. If you override the container's command, update it."
   - Upgrade notes: two new health endpoints. `/api/v1/health/live` is for restarts, `/api/v1/health/ready` is for traffic, and the image's healthcheck now calls live. `/api/v1/health` still works but is deprecated and will be removed in a later release. Ticket 11 writes this.
   - The rest is internal and stays unpublished (ADR-0010).
 - **Docs.** The admin settings page documents cancelling a job, with a screenshot.
+- **Mobile.** Hoisting arrived with the Expo app, which has since left the workspace.
+  - A rewrite that rejoins the workspace works isolated: Expo supports isolated installs since SDK 54, and configures Metro for monorepos itself since SDK 55.
+  - The rewrite's real constraint is React's version, not the linker. The workspace is on 19.3, while Expo pins 19.2, and that splits React Query's context under either linker.
