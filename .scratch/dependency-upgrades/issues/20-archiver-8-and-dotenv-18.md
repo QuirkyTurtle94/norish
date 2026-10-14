@@ -23,7 +23,7 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 
 - [x] **Archive round trip.** A Norish archive export and import round trip passes, and an archive exported before the bump still imports.
 - [x] **Audit.** `pnpm audit` shows no `lodash` or `brace-expansion` findings from archiver. Floors from ticket 03 that are no longer needed are removed.
-- [ ] **Env loading.** Loading is unchanged: a test with a `.env` file, and one with the variables set in the process environment.
+- [x] **Env loading.** Loading is unchanged: a test with a `.env` file, and one with the variables set in the process environment.
 - [x] **Gates.** `pnpm lint`, `pnpm test:run`, `pnpm i18n:check` and `pnpm build` pass.
 
 ## Comments
@@ -36,3 +36,4 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 - 2026-10-13 — **archiver 8.0.0** with `@types/archiver` 8.0.0: the writer imports `ZipArchive` and builds `new ZipArchive({ zlib: { level: 6 } })`; the stream API it uses is unchanged. The round-trip tests pass, and a new one reads `fixtures/norish-archive-0.25.zip`, written by this writer on archiver 7.0.1 before the bump. archiver 7 stays in the lockfile only under testcontainers (dev). `pnpm audit` has no lodash or brace-expansion finding; this repo had no floors for them to remove. The one high finding left is `braces` through `@next/eslint-plugin-next` (no fixed version; ticket 03).
   - **dotenv stays on 17.** 18.0.7 shipped on 2026-10-09, four days before this work, against the ticket's two quiet weeks. Renovate (ticket 07) can take it once 18 settles; the env-loading tests are for that change.
 
+- 2026-10-14 — Env loading ticked through ticket 45, which took dotenv 18 with the tests.

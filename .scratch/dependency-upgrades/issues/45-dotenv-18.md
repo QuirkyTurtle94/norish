@@ -1,6 +1,6 @@
 # 45 — dotenv 18
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`, ticket 20. Found in the branch review on 2026-10-13.
@@ -15,11 +15,12 @@ Ticket 20 held dotenv at 17.4.2 until 18 "has gone about two weeks without a pat
 
 ## Acceptance criteria
 
-- [ ] `packages/config` is on dotenv 18.
-- [ ] Both env-loading tests pass.
+- [x] `packages/config` is on dotenv 18.
+- [x] Both env-loading tests pass.
 - [x] dotenv is gone from the spec's held lines.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
 - 2026-10-14 — The maintainer confirmed taking dotenv 18; the held line is gone from the spec.
+- 2026-10-14 (implemented) — dotenv 18.0.7 (published 2026-10-09). `packages/config/__tests__/config/env-loading.test.ts` re-imports `env-config-server` from a temporary `apps/web` directory: a `.env.local` one level up is read, a variable set in the process environment wins over the file, and the process environment alone works without a file. All three passed on 17.4.2 before the bump and on 18.0.7 after; the config suite passes (815). The full E2E pass at the end of this batch boots the server bundle on it.
