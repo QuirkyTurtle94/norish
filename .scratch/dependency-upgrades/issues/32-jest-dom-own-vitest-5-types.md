@@ -1,0 +1,35 @@
+# 32 — jest-dom's own Vitest 5 types
+
+Status: ready-for-agent
+Blocked by: a jest-dom release carrying testing-library/jest-dom#742
+Target release: 0.26.0-beta
+
+Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026-10-13.
+
+## What to build
+
+`apps/web/__tests__/jest-dom-vitest.d.ts` declares jest-dom's matchers on Vitest's `Matchers` interface.
+
+**Why it exists:**
+
+- jest-dom 7.0.1 (npm `latest` on 2026-10-13) still augments Vitest 4's `Assertion<T>`.
+- Vitest 5 declares `Assertion<R, T>`, so the two declarations can't merge. This is upstream issue testing-library/jest-dom#738.
+- `skipLibCheck` hides the failed merge, so without the local file the matchers are silently untyped.
+- The fix is upstream PR testing-library/jest-dom#742, "feat: support vitest 5". It was still open on 2026-10-13.
+
+**When a jest-dom release carries #742:**
+
+1. Take that release.
+2. Replace the `matchers` import and `expect.extend` in `apps/web/__tests__/setup.ts` with `import "@testing-library/jest-dom/vitest"`.
+3. Delete the shim.
+
+The review said the shim misses `AsymmetricMatchersContaining`. That is wrong: in Vitest 5 that interface extends `Matchers`, so the shim already covers it.
+
+## Acceptance criteria
+
+- [ ] `jest-dom-vitest.d.ts` is gone.
+- [ ] `pnpm typecheck` passes, and a misspelled matcher such as `toBeInTheDocumen` is a type error.
+
+## Comments
+
+- Filed 2026-10-13 from the branch review. Blocked on upstream; check the jest-dom releases before starting.
