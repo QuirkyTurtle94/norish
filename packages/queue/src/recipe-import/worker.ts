@@ -19,10 +19,10 @@ import { deleteRecipeImagesDir } from "@norish/shared-server/media/storage";
 import { recipes } from "@norish/shared-server/realtime/recipes";
 import { ErrorWithDetail } from "@norish/shared/lib/error-extensions";
 import { credentialSetsForUrl, rotateCredentialSet } from "@norish/shared/lib/site-auth-tokens";
+import { withTimeout } from "@norish/shared/lib/with-timeout";
 
 import { defineLazyWorker, QUEUE_NAMES, RECIPE_IMPORT_PROCESSING_TIMEOUT_MS } from "../config";
 import { announceUsableRecipe } from "../enrichment/announce";
-import { withTimeout } from "../helpers";
 import { completeStep, reportStep } from "../job-steps";
 
 const log = createLogger("worker:recipe-import");

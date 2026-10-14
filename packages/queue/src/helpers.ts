@@ -7,7 +7,6 @@
 import type { Queue } from "bullmq";
 
 import type { PermissionLevel } from "@norish/config/zod/server-config";
-import { OperationTimeoutError } from "@norish/shared/lib/error-extensions";
 import { normalizeUrl } from "@norish/shared/lib/helpers";
 
 export function sanitizeUrlForJobId(url: string): string {
@@ -86,27 +85,5 @@ export async function removeRetainedTerminalJob<T>(
     return true;
   } catch (err) {
     throw new Error(`Could not remove retained job ${jobId}`, { cause: err });
-  }
-}
-
-export async function withTimeout<T>(
-  operation: () => Promise<T>,
-  timeoutMs: number,
-  operationName: string
-): Promise<T> {
-  let timeoutId: NodeJS.Timeout | null = null;
-
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(new OperationTimeoutError(operationName, timeoutMs));
-    }, timeoutMs);
-  });
-
-  try {
-    return await Promise.race([operation(), timeoutPromise]);
-  } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
   }
 }

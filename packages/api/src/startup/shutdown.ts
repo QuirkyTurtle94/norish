@@ -14,6 +14,7 @@ import { stopWorkers } from "@norish/queue/start-workers";
 import { serverLogger as log } from "@norish/shared-server/logger";
 import { stopRealtimeHub } from "@norish/shared-server/realtime/hub";
 import { closeRedisConnections } from "@norish/shared-server/redis/client";
+import { withTimeout } from "@norish/shared/lib/with-timeout";
 import { stopTrpcWebSocket } from "@norish/trpc/server";
 
 type ShutdownTask = {
@@ -27,28 +28,16 @@ const FORCE_EXIT_TIMEOUT_MS = 60_000; // 60 seconds total before force exit
 const SLOW_STEP_MS = 2_000; // a step this slow is named, so a slow shutdown says why
 
 /**
- * Execute a promise with a timeout. Rejects if the operation
- * doesn't complete within the specified time.
+ * Run a shutdown step with a timeout. Rejects if the step doesn't complete
+ * within the specified time.
  */
-async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  operation: string
-): Promise<T> {
-  let timeoutId: NodeJS.Timeout;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(new Error(`${operation} timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
-  });
-
+async function runStep<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
   // Named while it is still running, so a step a supervisor kills says so too.
   const slow = setTimeout(() => log.warn({ operation }, "Shutdown step is slow"), SLOW_STEP_MS);
 
   try {
-    return await Promise.race([promise, timeoutPromise]);
+    return await withTimeout(() => promise, timeoutMs, operation);
   } finally {
-    clearTimeout(timeoutId!);
     clearTimeout(slow);
   }
 }
@@ -115,23 +104,23 @@ async function performShutdown(
     // 2. Close every WebSocket with 1012 so clients reconnect to the next
     //    process — and so live sockets do not hold the HTTP close open.
     try {
-      await withTimeout(stopTrpcWebSocket(), SHUTDOWN_TIMEOUT_MS, "WebSocket server close");
+      await runStep(stopTrpcWebSocket(), SHUTDOWN_TIMEOUT_MS, "WebSocket server close");
     } catch (err) {
       log.warn({ err }, "WebSocket server close failed or timed out, continuing shutdown");
     }
 
     try {
-      await withTimeout(httpClosed, SHUTDOWN_TIMEOUT_MS, "HTTP server close");
+      await runStep(httpClosed, SHUTDOWN_TIMEOUT_MS, "HTTP server close");
     } catch (err) {
       log.warn({ err }, "HTTP server close failed or timed out, continuing shutdown");
     }
 
     // 3. Stop CalDAV sync service (releases its hub registrations)
-    await withTimeout(stopCaldavSync(), SHUTDOWN_TIMEOUT_MS, "Stop CalDAV sync");
+    await runStep(stopCaldavSync(), SHUTDOWN_TIMEOUT_MS, "Stop CalDAV sync");
     log.info("CalDAV sync service stopped");
 
     // 4. Stop listening for newly usable recipes
-    await withTimeout(
+    await runStep(
       stopRecipeEnrichmentListener(),
       SHUTDOWN_TIMEOUT_MS,
       "Stop Recipe Enrichment listener"
@@ -139,19 +128,19 @@ async function performShutdown(
     log.info("Recipe Enrichment listener stopped");
 
     // 5. Stop all BullMQ workers and close queues
-    await withTimeout(stopWorkers(), SHUTDOWN_TIMEOUT_MS, "Stop workers");
+    await runStep(stopWorkers(), SHUTDOWN_TIMEOUT_MS, "Stop workers");
 
     // 6. Stop extra runtime helpers that depend on HTTP/workers being drained first
     for (const task of shutdownTasks) {
-      await withTimeout(task.run(), SHUTDOWN_TIMEOUT_MS, task.name);
+      await runStep(task.run(), SHUTDOWN_TIMEOUT_MS, task.name);
       log.info(`${task.name} completed`);
     }
 
     // 7. Stop the realtime hub: every live subscription ends, the subscriber quits
-    await withTimeout(stopRealtimeHub(), SHUTDOWN_TIMEOUT_MS, "Stop realtime hub");
+    await runStep(stopRealtimeHub(), SHUTDOWN_TIMEOUT_MS, "Stop realtime hub");
 
     // 8. Close Redis connections (after all consumers stopped)
-    await withTimeout(closeRedisConnections(), SHUTDOWN_TIMEOUT_MS, "Close Redis");
+    await runStep(closeRedisConnections(), SHUTDOWN_TIMEOUT_MS, "Close Redis");
     log.info("Redis connections closed");
 
     clearTimeout(forceExitTimeout);

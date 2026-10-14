@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { withTimeout } from "@norish/queue/helpers";
+import { withTimeout } from "@norish/shared/lib/with-timeout";
 
 describe("withTimeout", () => {
   it("rejects when operation exceeds timeout", async () => {

@@ -11,6 +11,7 @@ import Redis from "ioredis";
 
 import { SERVER_CONFIG } from "@norish/config/env-config-server";
 import { createLogger, redactUrl } from "@norish/shared-server/logger";
+import { withTimeout } from "@norish/shared/lib/with-timeout";
 
 import { parseRedisUrl } from "./url";
 
@@ -90,26 +91,14 @@ const REDIS_HEALTH_TIMEOUT_MS = 2_000;
 
 /** PING through the publisher. A ping unanswered after two seconds counts as down. */
 export async function getRedisHealth() {
-  let timer: NodeJS.Timeout | undefined;
-
   try {
     const redis = await getPublisherClient();
 
-    await Promise.race([
-      redis.ping(),
-      new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error("Redis PING timed out")),
-          REDIS_HEALTH_TIMEOUT_MS
-        );
-      }),
-    ]);
+    await withTimeout(() => redis.ping(), REDIS_HEALTH_TIMEOUT_MS, "Redis PING");
 
     return { status: "ok" as const };
   } catch {
     return { status: "error" as const };
-  } finally {
-    clearTimeout(timer);
   }
 }
 
