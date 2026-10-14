@@ -3,23 +3,16 @@
  * The publisher through a real Redis outage: callers keep getting the one
  * client while it reconnects, a command sent during a restart is answered once
  * Redis is back, one sent during a longer outage fails instead of waiting for
- * ever, and no extra connection is left behind.
+ * ever, and no extra connection is left behind. The outage is a proxy in
+ * front of Redis that drops every connection and refuses new ones.
  */
-import { execFile } from "node:child_process";
-import { createServer } from "node:net";
-import { promisify } from "node:util";
 import type { StartedRedisContainer } from "@testcontainers/redis";
-import type { AddressInfo } from "node:net";
 import { RedisContainer } from "@testcontainers/redis";
 import Redis from "ioredis";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 
-import {
-  closeRedisConnections,
-  getPublisherClient,
-  getRedisConnectionOptions,
-} from "../../src/redis/client";
-import { REDIS_IMAGE } from "../helpers/redis";
+import { closeRedisConnections, getPublisherClient } from "../../src/redis/client";
+import { freezableProxy, REDIS_IMAGE } from "../helpers/redis";
 
 const config = vi.hoisted(() => ({ url: "" }));
 
@@ -31,31 +24,18 @@ vi.mock("@norish/config/env-config-server", () => ({
   },
 }));
 
-const docker = promisify(execFile);
 let container: StartedRedisContainer;
-
-/** A fixed host port, so the container is reachable at the same URL after a restart. */
-function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = createServer().listen(0, () => {
-      const { port } = server.address() as AddressInfo;
-
-      server.close(() => resolve(port));
-    });
-
-    server.on("error", reject);
-  });
-}
+let proxy: ReturnType<typeof freezableProxy>;
 
 beforeAll(async () => {
-  container = await new RedisContainer(REDIS_IMAGE)
-    .withExposedPorts({ container: 6379, host: await freePort() })
-    .start();
-  config.url = container.getConnectionUrl();
+  container = await new RedisContainer(REDIS_IMAGE).start();
+  proxy = freezableProxy({ host: container.getHost(), port: container.getPort() });
+  config.url = await proxy.listen();
 });
 
 afterAll(async () => {
   await closeRedisConnections();
+  await proxy?.close();
   await container?.stop();
 });
 
@@ -63,23 +43,22 @@ it("answers a command sent while Redis restarts", async () => {
   const publisher = await getPublisherClient();
 
   await publisher.set("session", "kept");
-  await docker("docker", ["stop", "-t", "1", container.getId()]);
+  await proxy.close();
 
   const read = publisher.get("session");
 
   // Down for two seconds: several reconnect attempts fail before it is back.
   await new Promise((resolve) => setTimeout(resolve, 2_000));
-  await docker("docker", ["start", container.getId()]);
+  await proxy.listen();
 
-  // Saved on the way down and loaded on the way up, as compose's Redis does.
   await expect(read).resolves.toBe("kept");
-}, 60_000);
+}, 30_000);
 
 it("keeps one publisher through an outage, and fails its commands meanwhile", async () => {
   const publisher = await getPublisherClient();
 
   await publisher.ping();
-  await docker("docker", ["stop", "-t", "1", container.getId()]);
+  await proxy.close();
   await expect.poll(() => publisher.status).not.toBe("ready");
 
   const during = await Promise.all([getPublisherClient(), getPublisherClient()]);
@@ -88,10 +67,10 @@ it("keeps one publisher through an outage, and fails its commands meanwhile", as
   expect(during[1]).toBe(publisher);
   await expect(publisher.get("anything")).rejects.toThrow("Command timed out");
 
-  await docker("docker", ["start", container.getId()]);
+  await proxy.listen();
   await expect.poll(() => publisher.status, { timeout: 20_000 }).toBe("ready");
 
-  const admin = new Redis(getRedisConnectionOptions(config.url));
+  const admin = new Redis(container.getConnectionUrl());
 
   try {
     const ownId = await admin.client("ID");
@@ -104,4 +83,4 @@ it("keeps one publisher through an outage, and fails its commands meanwhile", as
   } finally {
     admin.disconnect();
   }
-}, 60_000);
+}, 30_000);

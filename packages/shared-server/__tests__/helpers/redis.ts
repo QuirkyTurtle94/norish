@@ -25,8 +25,11 @@ function composeRedisImage(): string {
  * A TCP proxy to Redis whose open connections can be frozen: they stay open
  * and forward nothing, as a connection does when Redis restarts behind
  * Docker's port forwarding. Connections made after a freeze work normally.
+ * Closing it is an outage (every connection drops, new ones are refused), and
+ * listening again brings Redis back on the same port.
  */
 export function freezableProxy(target: { host: string; port: number }) {
+  let port = 0;
   const open: [Socket, Socket][] = [];
   const all: Socket[] = [];
   const server = createServer((client) => {
@@ -42,11 +45,12 @@ export function freezableProxy(target: { host: string; port: number }) {
   });
 
   return {
-    /** Listens on a free local port and resolves to its Redis URL. */
+    /** Listens on a free local port, then on that same one, and resolves to its Redis URL. */
     listen: () =>
       new Promise<string>((resolve) => {
-        server.listen(0, "127.0.0.1", () => {
-          resolve(`redis://127.0.0.1:${(server.address() as AddressInfo).port}`);
+        server.listen(port, "127.0.0.1", () => {
+          port = (server.address() as AddressInfo).port;
+          resolve(`redis://127.0.0.1:${port}`);
         });
       }),
     freeze() {
@@ -59,7 +63,8 @@ export function freezableProxy(target: { host: string; port: number }) {
     },
     close: () =>
       new Promise<void>((resolve) => {
-        for (const socket of all) socket.destroy();
+        for (const socket of all.splice(0)) socket.destroy();
+        open.length = 0;
         server.close(() => resolve());
       }),
   };
