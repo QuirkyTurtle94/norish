@@ -2,7 +2,7 @@
 
 import type { DateValue } from "@internationalized/date";
 import type { Key } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useCalendarContext } from "@/app/(app)/calendar/context";
 import { DateAndSlotFields } from "@/components/Panel/consumers/edit-planned-recipe-panel";
 import { Panel } from "@/components/Panel/Panel";
@@ -33,15 +33,22 @@ export function EditNotePanel({
   const [title, setTitle] = useState(initialTitle);
   const [selectedDate, setSelectedDate] = useState<DateValue>(() => parseDate(date));
   const [selectedSlot, setSelectedSlot] = useState<Slot>(slot);
+  const [seededFrom, setSeededFrom] = useState({ open, initialTitle, date, slot });
   const t = useTranslations("calendar.editNote");
   const tActions = useTranslations("common.actions");
-  useEffect(() => {
+  if (
+    seededFrom.open !== open ||
+    seededFrom.initialTitle !== initialTitle ||
+    seededFrom.date !== date ||
+    seededFrom.slot !== slot
+  ) {
+    setSeededFrom({ open, initialTitle, date, slot });
     if (open) {
       setTitle(initialTitle);
       setSelectedDate(parseDate(date));
       setSelectedSlot(slot);
     }
-  }, [open, initialTitle, date, slot]);
+  }
   const handleSave = () => {
     if (!title.trim()) return;
     const newDateStr = selectedDate.toString();

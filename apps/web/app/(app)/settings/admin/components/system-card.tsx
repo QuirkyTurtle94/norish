@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SettingRow } from "@/app/(app)/settings/components/setting-row";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
 import { ArrowPathIcon } from "@heroicons/react/16/solid";
@@ -23,11 +23,15 @@ export default function SystemCard() {
   const hasSchedulerChanges =
     schedulerCleanupMonths !== undefined && months !== schedulerCleanupMonths;
 
-  useEffect(() => {
+  const [prevSchedulerCleanupMonths, setPrevSchedulerCleanupMonths] =
+    useState(schedulerCleanupMonths);
+
+  if (schedulerCleanupMonths !== prevSchedulerCleanupMonths) {
+    setPrevSchedulerCleanupMonths(schedulerCleanupMonths);
     if (schedulerCleanupMonths !== undefined) {
       setMonths(schedulerCleanupMonths);
     }
-  }, [schedulerCleanupMonths]);
+  }
   const handleSaveScheduler = async () => {
     setSaving(true);
     try {

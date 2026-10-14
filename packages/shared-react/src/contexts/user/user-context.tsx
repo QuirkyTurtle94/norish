@@ -27,12 +27,17 @@ export function createUserContext({
   useFreshUserQuery,
 }: CreateUserContextOptions) {
   const SharedUserContext = createContext<UserContextValue | null>(null);
+  // Settled once here rather than called with `?.()`: the compiler only
+  // compiles a component whose hooks it sees called unconditionally.
+  const useFreshUserQueryOrNone = useFreshUserQuery ?? (() => undefined);
 
   function UserProvider({ children }: { children: React.ReactNode }) {
+    "use memo";
+
     const { user: sessionUser, isLoading } = useSessionUser();
     const signOut = useSignOut();
 
-    const freshUser = useFreshUserQuery?.(sessionUser?.id);
+    const freshUser = useFreshUserQueryOrNone(sessionUser?.id);
     const user = freshUser?.user ?? sessionUser;
 
     const value = useMemo<UserContextValue>(
@@ -48,6 +53,8 @@ export function createUserContext({
   }
 
   function useUserContext(): UserContextValue {
+    "use memo";
+
     const context = use(SharedUserContext);
 
     if (!context) {

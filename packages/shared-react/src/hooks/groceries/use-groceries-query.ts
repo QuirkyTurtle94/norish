@@ -7,6 +7,8 @@ import type { CreateGroceriesHooksOptions, GroceriesData, GroceriesQueryResult }
 
 export function createUseGroceriesQuery({ useTRPC }: CreateGroceriesHooksOptions) {
   return function useGroceriesQuery(): GroceriesQueryResult {
+    "use memo";
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 

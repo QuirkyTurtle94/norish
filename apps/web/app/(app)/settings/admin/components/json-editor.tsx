@@ -20,6 +20,8 @@ interface JsonEditorProps {
   disabled?: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
 }
+const toText = (value: unknown) => (value === undefined ? "" : JSON.stringify(value, null, 2));
+
 export default function JsonEditor({
   value,
   onSave,
@@ -31,23 +33,19 @@ export default function JsonEditor({
 }: JsonEditorProps) {
   const t = useTranslations("settings.admin.jsonEditor");
   const tActions = useTranslations("common.actions");
-  const [text, setText] = useState("");
+  const [text, setText] = useState(() => toText(value));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [prevValue, setPrevValue] = useState(value);
 
   // Initialize text when value changes
-  useEffect(() => {
-    if (value === undefined) {
-      setText("");
-      setIsDirty(false);
-      setError(null);
-      return;
-    }
-    setText(JSON.stringify(value, null, 2));
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setText(toText(value));
     setIsDirty(false);
     setError(null);
-  }, [value]);
+  }
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);

@@ -56,13 +56,16 @@ export default function ImageGenerationForm({ onDirtyChange }: ImageGenerationFo
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const [prevImageGenerationConfig, setPrevImageGenerationConfig] = useState(imageGenerationConfig);
+
+  if (imageGenerationConfig !== prevImageGenerationConfig) {
+    setPrevImageGenerationConfig(imageGenerationConfig);
     if (imageGenerationConfig) {
       setProvider(imageGenerationConfig.provider);
       setModel(imageGenerationConfig.model ?? "");
       setEndpoint(imageGenerationConfig.endpoint ?? "");
     }
-  }, [imageGenerationConfig]);
+  }
 
   const enabled = provider !== "disabled";
   const needsEndpoint = enabled && imageGenerationProviderNeedsEndpoint(provider);

@@ -50,6 +50,10 @@ type MobileTimelineProps = {
 };
 
 export function MobileTimeline({ onAddItem, onNoteClick, onRecipeClick }: MobileTimelineProps) {
+  // TanStack Virtual hands back one mutable instance, so compiled memoisation
+  // would keep its first rows.
+  "use no memo";
+
   const locale = useLocale();
 
   // Use calendar context (like recipe grid uses recipes context)

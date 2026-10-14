@@ -34,6 +34,8 @@ export function createGroceriesContext({
   const GroceriesContext = createContext<GroceriesContextValue | null>(null);
 
   function GroceriesProvider({ children }: { children: ReactNode }) {
+    "use memo";
+
     const { groceries, recurringGroceries, recipeMap, isLoading, getRecipeNameForGrocery } =
       useGroceriesQuery();
     const groceryMutations = useGroceriesMutations();
@@ -92,6 +94,8 @@ export function createGroceriesContext({
   }
 
   function useGroceriesContext() {
+    "use memo";
+
     const ctx = use(GroceriesContext);
 
     if (!ctx) throw new Error("useGroceriesContext must be used within GroceriesProvider");

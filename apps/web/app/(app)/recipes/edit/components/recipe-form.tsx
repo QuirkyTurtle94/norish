@@ -3,7 +3,7 @@
 import type { ParsedIngredient } from "@/components/recipes/ingredient-input";
 import type { RecipeGalleryMedia } from "@/components/recipes/media-gallery-input";
 import type { Step } from "@/components/recipes/step-input";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import IngredientInput from "@/components/recipes/ingredient-input";
 import MeasurementSystemSelector from "@/components/recipes/measurement-system-selector";
@@ -34,6 +34,7 @@ import { useRecipeFormDirtyState } from "./use-recipe-form-dirty-state";
 
 const log = createClientLogger("RecipeForm");
 const ALL_CATEGORIES: RecipeCategory[] = ["Breakfast", "Lunch", "Dinner", "Snack"];
+const subscribeToNothing = () => () => {};
 export interface RecipeFormProps {
   mode: "create" | "edit";
   initialData?: FullRecipeDTO;
@@ -50,11 +51,7 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   const tCommon = useTranslations("common.actions");
 
   // Use hook for ID reservation
-  const {
-    recipeId,
-    isLoading: isLoadingRecipeId,
-    error: recipeIdError,
-  } = useRecipeId(mode, initialData?.id);
+  const { recipeId, isLoading: isLoadingRecipeId } = useRecipeId(mode, initialData?.id);
 
   // Form state
   const [name, setName] = useState(initialData?.name ?? "");
@@ -76,7 +73,19 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   );
   const [detectedSystem, setDetectedSystem] = useState<MeasurementSystem | null>(null);
   const [manuallySetSystem, setManuallySetSystem] = useState(false);
-  const initializedRecipeIdRef = useRef<string | null>(null);
+  const [initializedRecipeId, setInitializedRecipeId] = useState<string | null>(null);
+  // False on the server and while hydrating, so the browser's first render matches
+  // the server's form, which never has the lines filled in.
+  const isHydrated = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false
+  );
+  const [detectedFor, setDetectedFor] = useState({
+    ingredients,
+    manuallySetSystem,
+    isLoadingUnits,
+  });
 
   // Media state - unified array of images and videos
   const [media, setMedia] = useState<RecipeGalleryMedia[]>(() => {
@@ -191,7 +200,7 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
   const hasUnsavedChanges = useRecipeFormDirtyState({
     current: currentFormState,
     initialData,
-    initializedRecipeId: initializedRecipeIdRef.current,
+    initializedRecipeId,
     locale,
     mode,
     units,
@@ -212,22 +221,15 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
     navigateBack();
   }, [allowNavigation, confirmDiscardChanges, navigateBack]);
 
-  // Show recipe ID error if reservation failed
-  useEffect(() => {
-    if (recipeIdError) {
-      setErrors((prev) => ({
-        ...prev,
-        general: recipeIdError,
-      }));
-    }
-  }, [recipeIdError]);
-
   // Initialize ingredients and steps from initialData
   // Filter by the current systemUsed to only show items for the active measurement system
-  useEffect(() => {
-    if (mode !== "edit" || !initialData || isLoadingUnits) return;
-    if (initializedRecipeIdRef.current === initialData.id) return;
-
+  if (
+    isHydrated &&
+    mode === "edit" &&
+    initialData &&
+    !isLoadingUnits &&
+    initializedRecipeId !== initialData.id
+  ) {
     // Filter ingredients by the recipe's measurement system
     const filteredIngredients = initialData.recipeIngredients.filter(
       (ing) => ing.systemUsed === initialData.systemUsed
@@ -254,42 +256,48 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
       stepIngredients: s.stepIngredients || [],
     }));
     setSteps(initSteps);
-    initializedRecipeIdRef.current = initialData.id;
-  }, [initialData, isLoadingUnits, locale, mode, units]);
+    setInitializedRecipeId(initialData.id);
+  }
 
   // Detect measurement system from ingredients and auto-select for new recipes only.
   // Existing recipes already have an explicit active system, and re-detection can flip it on save.
-  useEffect(() => {
-    if (mode !== "create" || ingredients.length === 0 || manuallySetSystem) return;
+  if (
+    detectedFor.ingredients !== ingredients ||
+    detectedFor.manuallySetSystem !== manuallySetSystem ||
+    detectedFor.isLoadingUnits !== isLoadingUnits
+  ) {
+    setDetectedFor({ ingredients, manuallySetSystem, isLoadingUnits });
 
-    const ingredientLines = ingredients.map((ing) =>
-      `${ing.amount ?? ""} ${ing.unit ?? ""} ${ing.ingredientName}`.trim()
-    );
-    const parsed = parseIngredientWithDefaults(ingredientLines, units);
-
-    if (parsed.length > 0) {
-      const detected = inferSystemUsedFromParsed(parsed);
-
-      setDetectedSystem(detected);
-      setSystemUsed(detected);
-      setIngredients((prev) =>
-        prev.some((ing) => ing.systemUsed !== detected)
-          ? prev.map((ing) => ({
-              ...ing,
-              systemUsed: detected,
-            }))
-          : prev
+    if (mode === "create" && ingredients.length > 0 && !manuallySetSystem) {
+      const ingredientLines = ingredients.map((ing) =>
+        `${ing.amount ?? ""} ${ing.unit ?? ""} ${ing.ingredientName}`.trim()
       );
-      setSteps((prev) =>
-        prev.some((step) => step.systemUsed !== detected)
-          ? prev.map((step) => ({
-              ...step,
-              systemUsed: detected,
-            }))
-          : prev
-      );
+      const parsed = parseIngredientWithDefaults(ingredientLines, units);
+
+      if (parsed.length > 0) {
+        const detected = inferSystemUsedFromParsed(parsed);
+
+        setDetectedSystem(detected);
+        setSystemUsed(detected);
+        setIngredients((prev) =>
+          prev.some((ing) => ing.systemUsed !== detected)
+            ? prev.map((ing) => ({
+                ...ing,
+                systemUsed: detected,
+              }))
+            : prev
+        );
+        setSteps((prev) =>
+          prev.some((step) => step.systemUsed !== detected)
+            ? prev.map((step) => ({
+                ...step,
+                systemUsed: detected,
+              }))
+            : prev
+        );
+      }
     }
-  }, [ingredients, manuallySetSystem, mode, units]);
+  }
   const toggleCategory = useCallback((category: RecipeCategory) => {
     setCategories((prev) =>
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]

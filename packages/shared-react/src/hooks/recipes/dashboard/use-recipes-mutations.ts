@@ -331,6 +331,8 @@ export function createUseRecipesMutations(
     onError?: RecipesMutationErrorHandler,
     onRecipeAlreadyExists?: RecipeAlreadyExistsAdapter
   ): RecipesMutationsResult {
+    "use memo";
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const {
@@ -383,6 +385,7 @@ export function createUseRecipesMutations(
         },
       })
     );
+    const { mutate: mutateImport } = importMutation;
     const imageImportMutation = useMutation(
       trpc.recipes.importFromImages.mutationOptions({
         onMutate: () => {
@@ -406,6 +409,7 @@ export function createUseRecipesMutations(
         },
       })
     );
+    const { mutate: mutateImageImport } = imageImportMutation;
     const pasteImportMutation = useMutation(
       trpc.recipes.importFromPaste.mutationOptions({
         onMutate: () => {
@@ -446,6 +450,7 @@ export function createUseRecipesMutations(
         },
       })
     );
+    const { mutate: mutatePasteImport } = pasteImportMutation;
     const createMutation = useMutation(
       trpc.recipes.create.mutationOptions({
         onMutate: async (input) => {
@@ -476,6 +481,7 @@ export function createUseRecipesMutations(
         },
       })
     );
+    const { mutate: mutateCreate } = createMutation;
     const updateMutation = useMutation(
       trpc.recipes.update.mutationOptions({
         onMutate: async ({ id, data }) => {
@@ -515,6 +521,7 @@ export function createUseRecipesMutations(
         },
       })
     );
+    const { mutate: mutateUpdate } = updateMutation;
     const deleteMutation = useMutation(
       trpc.recipes.delete.mutationOptions({
         onMutate: async ({ id }) => {
@@ -555,7 +562,10 @@ export function createUseRecipesMutations(
         },
       })
     );
-    const convertMutation = useMutation(trpc.recipes.convertMeasurements.mutationOptions());
+    const { mutate: mutateDelete } = deleteMutation;
+    const { mutate: mutateConvert } = useMutation(
+      trpc.recipes.convertMeasurements.mutationOptions()
+    );
 
     const restoreDeletedRecipe = (context: DeleteMutationContext | undefined): void => {
       if (!context) {
@@ -588,15 +598,15 @@ export function createUseRecipesMutations(
     };
 
     const importRecipe = (url: string): void => {
-      importMutation.mutate({ url });
+      mutateImport({ url });
     };
 
     const importRecipeWithAI = (url: string): void => {
-      importMutation.mutate({ url, forceAI: true });
+      mutateImport({ url, forceAI: true });
     };
 
     const createRecipe = (input: FullRecipeInsertDTO): void => {
-      createMutation.mutate(input, {
+      mutateCreate(input, {
         onError: (error, _variables, context) => {
           onError?.(error, "create");
 
@@ -619,7 +629,7 @@ export function createUseRecipesMutations(
     };
 
     const updateRecipe = (id: string, input: FullRecipeUpdateDTO): void => {
-      updateMutation.mutate(
+      mutateUpdate(
         { id, version: input.version ?? 1, data: input },
         {
           onError: (error, _variables, context) => {
@@ -643,7 +653,7 @@ export function createUseRecipesMutations(
     };
 
     const deleteRecipe = (id: string, version: number): void => {
-      deleteMutation.mutate({ id, version });
+      mutateDelete({ id, version });
     };
 
     const convertMeasurements = (
@@ -651,7 +661,7 @@ export function createUseRecipesMutations(
       targetSystem: MeasurementSystem,
       version: number
     ): void => {
-      convertMutation.mutate(
+      mutateConvert(
         { recipeId, targetSystem, version },
         {
           onError: (error) => {
@@ -674,15 +684,15 @@ export function createUseRecipesMutations(
 
       const imageInput = formData as Parameters<typeof imageImportMutation.mutate>[0];
 
-      imageImportMutation.mutate(imageInput);
+      mutateImageImport(imageInput);
     };
 
     const importRecipeFromPaste = (text: string): void => {
-      pasteImportMutation.mutate({ text });
+      mutatePasteImport({ text });
     };
 
     const importRecipeFromPasteWithAI = (text: string): void => {
-      pasteImportMutation.mutate({ text, forceAI: true });
+      mutatePasteImport({ text, forceAI: true });
     };
 
     return {

@@ -2,7 +2,7 @@
 
 import type { StepIngredientDraft } from "@/components/recipes/step-ingredient-chips";
 import type { SmartTextInputIngredientSuggestion } from "@/components/shared/smart-text-input";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { StepIngredientChips } from "@/components/recipes/step-ingredient-chips";
 import SmartTextInput from "@/components/shared/smart-text-input";
 import { useRecipeImages } from "@/hooks/recipes";
@@ -72,6 +72,22 @@ function createStepItem(
     version,
   };
 }
+// The editor's rows for the given steps, plus the empty row to type into.
+function seedStepItems(steps: Step[]): StepItem[] {
+  return [
+    ...steps.map((s) =>
+      createStepItem(
+        s.step,
+        s.images || [],
+        s.version,
+        [...(s.stepIngredients ?? [])]
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .map((ref) => ({ ingredientOrder: ref.ingredientOrder, share: ref.share }))
+      )
+    ),
+    createStepItem("", []),
+  ];
+}
 export default function StepInput({
   steps,
   onChange,
@@ -80,7 +96,8 @@ export default function StepInput({
   ingredients = [],
 }: StepInputProps) {
   const t = useTranslations("recipes.stepInput");
-  const [items, setItems] = useState<StepItem[]>(() => [createStepItem("", [])]);
+  const [items, setItems] = useState<StepItem[]>(() => seedStepItems(steps));
+  const [seededLength, setSeededLength] = useState(steps.length);
   // A freshly mentioned line whose chip should ask for its amount: the row
   // it landed on, and the line's order for the chips to open once rendered.
   const [pendingMentionEntry, setPendingMentionEntry] = useState<{
@@ -110,30 +127,22 @@ export default function StepInput({
     [chipLines]
   );
 
-  // Initialize from steps prop
-  useEffect(() => {
+  // Seeds the editor once when the steps load; a later change to them must not
+  // overwrite what is being typed.
+  if (steps.length !== seededLength) {
+    setSeededLength(steps.length);
     const first = items[0];
 
-    if (!first) return;
-    if (steps.length > 0 && items.length === 1 && first.text === "" && first.images.length === 0) {
-      setItems([
-        ...steps.map((s) =>
-          createStepItem(
-            s.step,
-            s.images || [],
-            s.version,
-            [...(s.stepIngredients ?? [])]
-              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-              .map((ref) => ({ ingredientOrder: ref.ingredientOrder, share: ref.share }))
-          )
-        ),
-        createStepItem("", []),
-      ]);
+    if (
+      first &&
+      steps.length > 0 &&
+      items.length === 1 &&
+      first.text === "" &&
+      first.images.length === 0
+    ) {
+      setItems(seedStepItems(steps));
     }
-    // Seeds the editor once when the steps load; a later change to them must not
-    // overwrite what is being typed.
-    // eslint-disable-next-line @eslint-react/exhaustive-deps
-  }, [steps.length]);
+  }
   const emitChanges = useCallback(
     (updatedItems: StepItem[]) => {
       const parsed = updatedItems

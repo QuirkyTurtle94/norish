@@ -15,6 +15,8 @@ const SUMMARY_REFETCH_INTERVAL_MS = 15_000;
 
 export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
   function useJobListQuery({ queue, states, enabled = true }: JobListFilter = {}) {
+    "use memo";
+
     const trpc = useTRPC();
     const { data, error, isLoading, refetch } = useQuery({
       ...trpc.admin.jobs.list.queryOptions({
@@ -31,6 +33,8 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
   }
 
   function useJobDetailQuery(options: { queue: string; jobId: string; enabled?: boolean }) {
+    "use memo";
+
     const trpc = useTRPC();
     const { queue, jobId, enabled = true } = options;
     const { data, error, isLoading } = useQuery({
@@ -47,6 +51,8 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
   }
 
   function useQueueSummaryQuery({ enabled = true }: { enabled?: boolean } = {}) {
+    "use memo";
+
     const trpc = useTRPC();
     const { data, error, isLoading, refetch } = useQuery({
       ...trpc.admin.jobs.summary.queryOptions(),
@@ -59,6 +65,8 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
   }
 
   function useJobQueueMutations() {
+    "use memo";
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 
@@ -77,10 +85,14 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
         },
       })
     );
+    const { mutateAsync: mutateRetryAsync } = retryMutation;
     const removeMutation = useMutation(
       trpc.admin.jobs.remove.mutationOptions({ onSuccess: invalidateJobQueries })
     );
-    const cancelMutation = useMutation(trpc.admin.jobs.cancel.mutationOptions());
+    const { mutateAsync: mutateRemoveAsync } = removeMutation;
+    const { mutateAsync: mutateCancelAsync } = useMutation(
+      trpc.admin.jobs.cancel.mutationOptions()
+    );
     const retentionMutation = useMutation(
       trpc.admin.jobs.updateRetention.mutationOptions({
         onSuccess: () => {
@@ -88,11 +100,12 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
         },
       })
     );
+    const { mutateAsync: mutateRetentionAsync } = retentionMutation;
 
     return {
       retryJob: async (queue: string, jobId: string) => {
         try {
-          await retryMutation.mutateAsync({ queue: queue as never, jobId });
+          await mutateRetryAsync({ queue: queue as never, jobId });
 
           return { success: true as const };
         } catch (error) {
@@ -104,7 +117,7 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
       },
       cancelJob: async (queue: string, jobId: string) => {
         try {
-          await cancelMutation.mutateAsync({ queue: queue as never, jobId });
+          await mutateCancelAsync({ queue: queue as never, jobId });
 
           return { success: true as const };
         } catch (error) {
@@ -116,7 +129,7 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
       },
       removeJob: async (queue: string, jobId: string) => {
         try {
-          await removeMutation.mutateAsync({ queue: queue as never, jobId });
+          await mutateRemoveAsync({ queue: queue as never, jobId });
 
           return { success: true as const };
         } catch (error) {
@@ -128,7 +141,7 @@ export function createUseJobQueue({ useTRPC }: CreateAdminHooksOptions) {
       },
       updateJobRetention: async (retention: JobRetentionConfig) => {
         try {
-          await retentionMutation.mutateAsync(retention);
+          await mutateRetentionAsync(retention);
 
           return { success: true as const };
         } catch (error) {

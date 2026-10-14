@@ -150,11 +150,13 @@ describe("RecipeDetailContext", () => {
     }),
     useActiveAllergies: () => ({ allergies: [], allergySet: new Set<string>() }),
     useConvertMutation: (recipeId: string) => {
-      const [error, setError] = React.useState<unknown>(null);
-      const reset = React.useCallback(() => setError(null), []);
-
       const convert = React.useCallback(
-        (targetSystem: "metric" | "us", version: number) => {
+        (
+          targetSystem: "metric" | "us",
+          version: number,
+          _withAI?: boolean,
+          options?: { onError?: (error: unknown) => void }
+        ) => {
           const canSwitchLocally = hasLocalMeasurementSystem(recipeFixture, targetSystem);
           const previousSystem = recipeFixture.systemUsed;
 
@@ -186,12 +188,12 @@ describe("RecipeDetailContext", () => {
             );
           }
 
-          setError(convertError);
+          options?.onError?.(convertError);
         },
         [recipeId]
       );
 
-      return { convertMeasurements: convert, error, reset };
+      return { convertMeasurements: convert };
     },
     useRatingQuery: () => ({ userRating: null }),
     useRatingsMutation: () => ({ rateRecipe: vi.fn() }),

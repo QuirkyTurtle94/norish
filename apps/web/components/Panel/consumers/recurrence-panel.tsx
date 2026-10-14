@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Panel from "@/components/Panel/Panel";
 import {
   ActionButton,
@@ -40,6 +40,7 @@ export function RecurrencePanel({
   const t = useTranslations("common.recurrence");
   const tActions = useTranslations("common.actions");
   const [pattern, setPattern] = useState<RecurrencePattern | null>(initialPattern || null);
+  const [seededFrom, setSeededFrom] = useState({ open, initialPattern });
 
   // Build translations object for the formatter
   const formatterTranslations: RecurrenceTranslations = {
@@ -66,11 +67,12 @@ export function RecurrencePanel({
   };
 
   // Initialize pattern when panel opens
-  useEffect(() => {
+  if (seededFrom.open !== open || seededFrom.initialPattern !== initialPattern) {
+    setSeededFrom({ open, initialPattern });
     if (open) {
       setPattern(initialPattern || null);
     }
-  }, [open, initialPattern]);
+  }
   const handlePatternChange = (newPattern: RecurrencePattern) => {
     setPattern(newPattern);
   };

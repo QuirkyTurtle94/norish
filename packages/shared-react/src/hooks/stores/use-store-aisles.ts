@@ -55,6 +55,8 @@ export interface StoreAislesResult {
 
 export function createUseStoreAisles({ useTRPC }: CreateStoresHooksOptions) {
   return function useStoreAisles(): StoreAislesResult {
+    "use memo";
+
     const trpc = useTRPC();
     const { data, isLoading } = useQuery(trpc.stores.aisleLinks.queryOptions());
     const byKey = useMemo(() => {
@@ -110,6 +112,8 @@ export function createUseStoreAisles({ useTRPC }: CreateStoresHooksOptions) {
  */
 export function createUseStoreAislesSubscription({ useTRPC }: CreateStoresHooksOptions) {
   return function useStoreAislesSubscription() {
+    "use memo";
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const queryKey = trpc.stores.aisleLinks.queryKey();

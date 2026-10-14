@@ -45,6 +45,8 @@ export function createPermissionsContext({
   const PermissionsContext = createContext<PermissionsContextValue | null>(null);
 
   function PermissionsProvider({ children }: { children: React.ReactNode }) {
+    "use memo";
+
     const userId = useCurrentUserId();
     const { data, isLoading: isLoadingPermissions } = usePermissionsQuery();
     const normalized = useMemo(() => normalizePermissionsData(data), [data]);
@@ -95,6 +97,8 @@ export function createPermissionsContext({
   }
 
   function usePermissionsContext(): PermissionsContextValue {
+    "use memo";
+
     const context = use(PermissionsContext);
 
     if (!context) {

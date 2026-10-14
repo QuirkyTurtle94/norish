@@ -86,6 +86,8 @@ export function createUserSettingsContext({
   const UserSettingsContext = createContext<UserSettingsContextValue | null>(null);
 
   function UserSettingsProvider({ children }: { children: React.ReactNode }) {
+    "use memo";
+
     const { user, apiKeys, allergies, isLoading } = useUserSettingsQuery();
     const mutations = useUserMutations();
     const errorHandler = useErrorHandler();
@@ -99,14 +101,14 @@ export function createUserSettingsContext({
           return;
         }
 
-        try {
-          const result = await mutations.updateName(name);
-
-          if (!result.success && result.error) {
-            errorHandler.showError(result.error, "user-settings:update-name");
-          }
-        } catch (error) {
+        const result = await mutations.updateName(name).catch((error: unknown) => {
           errorHandler.showError(error, "user-settings:update-name");
+
+          return null;
+        });
+
+        if (result && !result.success && result.error) {
+          errorHandler.showError(result.error, "user-settings:update-name");
         }
       },
       [mutations, errorHandler]
@@ -114,16 +116,14 @@ export function createUserSettingsContext({
 
     const updateImage = useCallback(
       async (file: File) => {
-        try {
-          const result = await mutations.uploadAvatar(file);
-
-          if (!result.success && result.error) {
-            errorHandler.showError(result.error, "user-settings:upload-avatar");
-            throw new Error(result.error);
-          }
-        } catch (error) {
+        const result = await mutations.uploadAvatar(file).catch((error: unknown) => {
           errorHandler.showError(error, "user-settings:upload-avatar");
           throw error;
+        });
+
+        if (!result.success && result.error) {
+          errorHandler.showError(result.error, "user-settings:upload-avatar");
+          throw new Error(result.error);
         }
       },
       [mutations, errorHandler]
@@ -191,32 +191,28 @@ export function createUserSettingsContext({
 
     const updatePreferences = useCallback(
       async (preferences: Partial<UserPreferencesDto>) => {
-        try {
-          const result = await mutations.updatePreferences(preferences);
-
-          if (!result.success && result.error) {
-            errorHandler.showError(result.error, "user-settings:update-preferences");
-          }
-
-          return;
-        } catch (error) {
+        const result = await mutations.updatePreferences(preferences).catch((error: unknown) => {
           errorHandler.showError(error, "user-settings:update-preferences");
+
+          return null;
+        });
+
+        if (result && !result.success && result.error) {
+          errorHandler.showError(result.error, "user-settings:update-preferences");
         }
       },
       [mutations, errorHandler]
     );
 
     const deleteImage = useCallback(async () => {
-      try {
-        const result = await mutations.deleteAvatar();
-
-        if (!result.success && result.error) {
-          errorHandler.showError(result.error, "user-settings:delete-avatar");
-          throw new Error(result.error);
-        }
-      } catch (error) {
+      const result = await mutations.deleteAvatar().catch((error: unknown) => {
         errorHandler.showError(error, "user-settings:delete-avatar");
         throw error;
+      });
+
+      if (!result.success && result.error) {
+        errorHandler.showError(result.error, "user-settings:delete-avatar");
+        throw new Error(result.error);
       }
     }, [mutations, errorHandler]);
 
@@ -250,6 +246,8 @@ export function createUserSettingsContext({
   }
 
   function useUserSettingsContext(): UserSettingsContextValue {
+    "use memo";
+
     const context = use(UserSettingsContext);
 
     if (!context) {

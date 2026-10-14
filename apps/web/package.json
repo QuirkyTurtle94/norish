@@ -82,6 +82,7 @@
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "^5.0.4",
     "ai": "^7.0.139",
+    "babel-plugin-react-compiler": "1.0.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "eslint": "catalog:",

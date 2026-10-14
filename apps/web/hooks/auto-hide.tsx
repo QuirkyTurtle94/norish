@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMotionValueEvent, useScroll } from "motion/react";
 
@@ -41,6 +41,8 @@ export function useAutoHide({
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const [isVisible, setIsVisible] = useState(true);
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  const [wasDisabled, setWasDisabled] = useState(disabled);
   const lastScrollYRef = useRef(0);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isHoveringRef = useRef(false);
@@ -53,18 +55,34 @@ export function useAutoHide({
   // Store disabled in ref to avoid callback dependency changes
   const disabledRef = useRef(disabled);
 
-  disabledRef.current = disabled;
+  useLayoutEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
+
+  // A new page starts with the nav shown
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setIsVisible(true);
+  }
+
+  // Stay visible when disabled
+  if (disabled !== wasDisabled) {
+    setWasDisabled(disabled);
+
+    if (disabled) setIsVisible(true);
+  }
 
   // Check if page is scrollable
   useEffect(() => {
+    const hasVerticalScroll = () => document.documentElement.scrollHeight > window.innerHeight;
     const checkScrollable = () => {
-      const hasVerticalScroll = document.documentElement.scrollHeight > window.innerHeight;
+      const scrollable = hasVerticalScroll();
       const wasScrollable = isScrollableRef.current;
 
-      isScrollableRef.current = hasVerticalScroll;
+      isScrollableRef.current = scrollable;
 
       // If became non-scrollable, show navbar
-      if (wasScrollable && !hasVerticalScroll) {
+      if (wasScrollable && !scrollable) {
         setIsVisible(true);
       }
 
@@ -76,7 +94,8 @@ export function useAutoHide({
       }
     };
 
-    checkScrollable();
+    // The nav starts visible, so on mount only the measurement is news.
+    isScrollableRef.current = hasVerticalScroll();
     window.addEventListener("resize", checkScrollable);
 
     // Check scrollability periodically instead of on every DOM mutation
@@ -106,9 +125,8 @@ export function useAutoHide({
     }
   }, []);
 
-  // Reset state on route change - show nav and ignore scroll events briefly
+  // Reset state on route change - ignore scroll events briefly
   useEffect(() => {
-    setIsVisible(true);
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
       scrollTimeoutRef.current = null;
@@ -176,14 +194,11 @@ export function useAutoHide({
     }
   });
 
-  // Clear timeout and stay visible when disabled
+  // Clear timeout when disabled
   useEffect(() => {
-    if (disabled) {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-        scrollTimeoutRef.current = null;
-      }
-      setIsVisible(true);
+    if (disabled && scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
     }
   }, [disabled]);
 

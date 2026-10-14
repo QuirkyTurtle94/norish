@@ -56,14 +56,17 @@ export default function DecisionModelForm({ onDirtyChange }: DecisionModelFormPr
   const [testResult, setTestResult] = useState<{ success: boolean; error?: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const [prevDecisionConfig, setPrevDecisionConfig] = useState(decisionConfig);
+
+  if (decisionConfig !== prevDecisionConfig) {
+    setPrevDecisionConfig(decisionConfig);
     if (decisionConfig) {
       setProvider(decisionConfig.provider);
       setModel(decisionConfig.model ?? DEFAULT_DECISION_MODEL);
       setEndpoint(decisionConfig.endpoint ?? "");
       setUses(decisionConfig.uses ?? [...DECISION_USES]);
     }
-  }, [decisionConfig]);
+  }
 
   const enabled = provider !== "disabled";
   const aiEnabled = aiConfig?.enabled ?? false;

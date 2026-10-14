@@ -191,7 +191,10 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
     }
     return options;
   }, [availableModels, visionModel]);
-  useEffect(() => {
+  const [prevAiConfig, setPrevAiConfig] = useState(aiConfig);
+
+  if (aiConfig !== prevAiConfig) {
+    setPrevAiConfig(aiConfig);
     if (aiConfig) {
       setEnabled(aiConfig.enabled);
       setProvider(aiConfig.provider);
@@ -207,7 +210,7 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
       setAutomaticEnrichment(aiConfig.automaticEnrichment ?? DEFAULT_AUTOMATIC_ENRICHMENT);
       setAutomaticIngredients(aiConfig.automaticIngredients ?? DEFAULT_AUTOMATIC_INGREDIENTS);
     }
-  }, [aiConfig]);
+  }
 
   // Validation: Can't enable AI without valid config
   const hasValidConfig =

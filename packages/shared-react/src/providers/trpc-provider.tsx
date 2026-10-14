@@ -57,10 +57,14 @@ export function createTRPCProviderBundle<TRouter extends AnyTRPCRouter>({
   const TRPCClientContext = createContext<TRPCClient<TRouter> | null>(null);
 
   function useConnectionStatus() {
+    "use memo";
+
     return use(ConnectionContext);
   }
 
   function useTRPCClient(): TRPCClient<TRouter> {
+    "use memo";
+
     const client = use(TRPCClientContext);
 
     if (!client) {
@@ -71,6 +75,8 @@ export function createTRPCProviderBundle<TRouter extends AnyTRPCRouter>({
   }
 
   function TRPCProviderWrapper({ children }: { children: ReactNode }) {
+    "use memo";
+
     const [status, setStatus] = useState<ConnectionStatus>("idle");
     const webSocketClientRef = useRef<{ close: () => Promise<void> } | null>(null);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ArchiveExportButton from "@/app/(app)/settings/components/archive-export-button";
 import { SettingRow, SwitchRow } from "@/app/(app)/settings/components/setting-row";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
@@ -24,8 +24,12 @@ export default function GeneralCard() {
   const [defaultLocale, setDefaultLocale] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize local state from config
-  useEffect(() => {
+  // Initialize local state from config; starts unset so a config present on
+  // the first render seeds it too.
+  const [prevLocaleConfig, setPrevLocaleConfig] = useState<typeof localeConfig>();
+
+  if (localeConfig !== prevLocaleConfig) {
+    setPrevLocaleConfig(localeConfig);
     if (localeConfig) {
       const enabled = Object.entries(localeConfig.locales)
         .filter(([_, entry]) => entry.enabled)
@@ -33,7 +37,7 @@ export default function GeneralCard() {
       setEnabledLocales(enabled);
       setDefaultLocale(localeConfig.defaultLocale);
     }
-  }, [localeConfig]);
+  }
   const handleRegistrationToggle = async (checked: boolean) => {
     await updateRegistration(checked);
   };

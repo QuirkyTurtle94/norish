@@ -98,6 +98,10 @@ const VirtualizedRecipeList = memo(function VirtualizedRecipeList({
   onPlan: (recipe: RecipeDashboardDTO, slot: Slot) => void;
   slot?: Slot;
 }) {
+  // TanStack Virtual hands back one mutable instance, so compiled memoisation
+  // would keep its first rows.
+  "use no memo";
+
   const parentRef = useRef<HTMLDivElement>(null);
   const loadMoreTriggeredRef = useRef(false);
   const virtualizer = useVirtualizer({

@@ -2,7 +2,7 @@
 
 import type { DateValue } from "@internationalized/date";
 import type { Key } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useCalendarContext } from "@/app/(app)/calendar/context";
 import { PlannedItemThumbnail } from "@/components/calendar/planned-item-thumbnail";
@@ -39,16 +39,18 @@ export function EditPlannedRecipePanel({
   const { deletePlanned, moveItem, planMeal } = useCalendarContext();
   const [selectedDate, setSelectedDate] = useState<DateValue>(() => parseDate(date));
   const [selectedSlot, setSelectedSlot] = useState<Slot>(slot);
+  const [seededFrom, setSeededFrom] = useState({ open, date, slot });
   const t = useTranslations("calendar.editPlannedRecipe");
   const tSlots = useTranslations("common.slots");
   const tActions = useTranslations("common.actions");
   const tTimeline = useTranslations("calendar.timeline");
-  useEffect(() => {
+  if (seededFrom.open !== open || seededFrom.date !== date || seededFrom.slot !== slot) {
+    setSeededFrom({ open, date, slot });
     if (open) {
       setSelectedDate(parseDate(date));
       setSelectedSlot(slot);
     }
-  }, [open, date, slot]);
+  }
   const handleSave = () => {
     const newDateStr = selectedDate.toString();
     const locationChanged = newDateStr !== date || selectedSlot !== slot;

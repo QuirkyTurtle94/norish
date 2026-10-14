@@ -88,9 +88,8 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
     serverForcedSnapshot
   );
 
+  // The loop below is the only writer of snapshot, and it writes this ref first.
   const snapshotRef = useRef<ConnectivitySnapshot>(snapshot);
-
-  snapshotRef.current = snapshot;
 
   // Imperative handle to force an out-of-band probe; swapped for a no-op on unmount.
   const probeNowRef = useRef<() => void>(() => {});

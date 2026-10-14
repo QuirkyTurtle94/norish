@@ -25,6 +25,8 @@ export function createHouseholdContext({
   const HouseholdContext = createContext<HouseholdContextValue | null>(null);
 
   function HouseholdProvider({ children }: { children: React.ReactNode }) {
+    "use memo";
+
     const { household, currentUserId, isLoading } = useHouseholdQuery();
 
     // Subscribe to WebSocket events
@@ -39,6 +41,8 @@ export function createHouseholdContext({
   }
 
   function useHouseholdContext(): HouseholdContextValue {
+    "use memo";
+
     const context = use(HouseholdContext);
 
     if (!context) {
@@ -77,6 +81,8 @@ export function createHouseholdSettingsContext({
   const HouseholdSettingsContext = createContext<HouseholdSettingsContextValue | null>(null);
 
   function HouseholdSettingsProvider({ children }: { children: React.ReactNode }) {
+    "use memo";
+
     const { household, currentUserId, isLoading } = useHouseholdContext();
     const {
       createHousehold,
@@ -116,6 +122,8 @@ export function createHouseholdSettingsContext({
   }
 
   function useHouseholdSettingsContext(): HouseholdSettingsContextValue {
+    "use memo";
+
     const context = use(HouseholdSettingsContext);
 
     if (!context) {

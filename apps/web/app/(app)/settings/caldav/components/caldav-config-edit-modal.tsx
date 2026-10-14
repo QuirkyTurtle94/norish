@@ -63,8 +63,14 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
   // Time format regex
   const timeRegex = /^\d{2}:\d{2}-\d{2}:\d{2}$/;
 
-  // Load existing config
-  useEffect(() => {
+  // Load existing config each time the modal opens or the config changes while open
+  const [loadedFor, setLoadedFor] = useState<{ config: typeof config; isOpen: boolean } | null>(
+    null
+  );
+
+  if (loadedFor?.config !== config || loadedFor?.isOpen !== isOpen) {
+    setLoadedFor({ config, isOpen });
+
     if (config && isOpen) {
       setServerUrl(config.serverUrl);
       setCalendarUrl(config.calendarUrl ?? null);
@@ -77,6 +83,11 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
       setSnackTime(config.snackTime);
       setTestResult(null);
       setCalendars([]);
+    }
+  }
+
+  useEffect(() => {
+    if (config && isOpen) {
       hasAutoTestedRef.current = false;
     }
   }, [config, isOpen]);

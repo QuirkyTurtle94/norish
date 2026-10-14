@@ -45,6 +45,10 @@ type DesktopTimelineProps = {
 };
 
 export function DesktopTimeline({ onAddItem, onNoteClick, onRecipeClick }: DesktopTimelineProps) {
+  // TanStack Virtual hands back one mutable instance, so compiled memoisation
+  // would keep its first rows.
+  "use no memo";
+
   const locale = useLocale();
   const tSlots = useTranslations("common.slots");
 
@@ -125,14 +129,18 @@ export function DesktopTimeline({ onAddItem, onNoteClick, onRecipeClick }: Deskt
   // Container ref for scroll margin calculation
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Calculate scroll margin from container position
-  const scrollMargin = useMemo(() => {
-    if (typeof window === "undefined" || !containerRef.current) return 0;
-    const rect = containerRef.current.getBoundingClientRect();
+  // Calculate scroll margin from container position. The container's offset is
+  // read, not tracked: a resize is what moves it, so it is measured on one and
+  // the timeline counts from the top of the page until then.
+  const [scrollMargin, setScrollMargin] = useState(0);
+  const measuredHeightRef = useRef(_windowHeight);
 
-    return rect.top + window.scrollY;
-    // The container's offset is read, not tracked; a resize is what moves it.
-    // eslint-disable-next-line @eslint-react/exhaustive-deps
+  useLayoutEffect(() => {
+    if (_windowHeight === measuredHeightRef.current) return;
+    measuredHeightRef.current = _windowHeight;
+    setScrollMargin(
+      containerRef.current ? containerRef.current.getBoundingClientRect().top + window.scrollY : 0
+    );
   }, [_windowHeight]);
 
   // Window virtualizer (like mobile/recipe grid)

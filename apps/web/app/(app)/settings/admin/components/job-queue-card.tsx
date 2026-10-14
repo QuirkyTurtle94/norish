@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
 import { ChipButton } from "@/components/shared/chip-button";
 import DataTable from "@/components/ui/data-table";
@@ -76,10 +76,16 @@ export default function JobQueueCard() {
     DEFAULT_JOB_RETENTION;
   const { keepCompleted, keepFailed, maxAgeDays } = storedRetention;
   const [retention, setRetention] = useState<JobRetentionConfig>(storedRetention);
+  const [prevRetention, setPrevRetention] = useState(storedRetention);
 
-  useEffect(() => {
+  if (
+    keepCompleted !== prevRetention.keepCompleted ||
+    keepFailed !== prevRetention.keepFailed ||
+    maxAgeDays !== prevRetention.maxAgeDays
+  ) {
+    setPrevRetention(storedRetention);
     setRetention({ keepCompleted, keepFailed, maxAgeDays });
-  }, [keepCompleted, keepFailed, maxAgeDays]);
+  }
 
   const hasRetentionChanges =
     retention.keepCompleted !== storedRetention.keepCompleted ||

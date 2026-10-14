@@ -13,6 +13,8 @@ export type RandomRecipeResult = {
 
 export function createUseRandomRecipe({ useTRPC }: CreateRecipeHooksOptions) {
   return function useRandomRecipe() {
+    "use memo";
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 

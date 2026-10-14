@@ -68,11 +68,11 @@ export function useCalendarDnd() {
   const clonedItemsRef = useRef<CalendarItemsState | null>(null);
 
   // Track previous plannedItemsByDate to detect external changes
-  const prevPlannedItemsRef = useRef<Record<string, PlannedItemFromQuery[]>>(plannedItemsByDate);
+  const [prevPlannedItems, setPrevPlannedItems] = useState(plannedItemsByDate);
 
   // Sync with external data only when not actively dragging
-  if (!activeId && plannedItemsByDate !== prevPlannedItemsRef.current) {
-    prevPlannedItemsRef.current = plannedItemsByDate;
+  if (!activeId && plannedItemsByDate !== prevPlannedItems) {
+    setPrevPlannedItems(plannedItemsByDate);
     const newItems = buildItemsState(plannedItemsByDate);
     const itemsChanged =
       JSON.stringify(Object.keys(newItems).sort()) !== JSON.stringify(Object.keys(items).sort()) ||

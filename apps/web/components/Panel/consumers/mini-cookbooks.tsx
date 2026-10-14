@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import CookbookCover from "@/components/cookbooks/cookbook-cover";
 import { SelectableRow } from "@/components/cookbooks/selectable-row";
 import Panel from "@/components/Panel/Panel";
@@ -52,14 +52,16 @@ export default function MiniCookbooks({ open, onOpenChange, recipeId }: MiniCook
   const [pending, setPending] = useState<PendingCookbook[]>([]);
   // Monotonic, so removing a row cannot hand its key to the next one.
   const nextKeyRef = useRef(0);
+  const [wasOpen, setWasOpen] = useState(open);
 
-  useEffect(() => {
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (!open) {
       setNewTitle("");
       setStaged({});
       setPending([]);
     }
-  }, [open]);
+  }
 
   const stageNew = useCallback(() => {
     const title = newTitle.trim();

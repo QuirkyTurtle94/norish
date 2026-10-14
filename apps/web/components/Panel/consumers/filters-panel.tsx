@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import SearchFieldToggles from "@/components/dashboard/search-field-toggles";
 import Panel from "@/components/Panel/Panel";
 import { ActionButton, ActionButtonGroup } from "@/components/shared/action-button";
@@ -127,9 +127,11 @@ export default function FiltersPanel({ open, onOpenChange }: FiltersPanelProps) 
   const [localSearchFields, setLocalSearchFields] = useState<SearchField[]>([
     ...filters.searchFields,
   ]);
+  const [prevFilters, setPrevFilters] = useState(filters);
   const { tags: allTags, isLoading } = useTagsQuery();
 
-  useEffect(() => {
+  if (filters !== prevFilters) {
+    setPrevFilters(filters);
     setWorkingTags(filters.searchTags);
     setWorkingCategories(filters.categories);
     setLocalFilterMode(filters.filterMode);
@@ -139,7 +141,7 @@ export default function FiltersPanel({ open, onOpenChange }: FiltersPanelProps) 
     setLocalMinRating(filters.minRating);
     setLocalMaxCookingTime(filters.maxCookingTime ?? null);
     setLocalSearchFields([...filters.searchFields]);
-  }, [filters]);
+  }
   const toggleTag = useCallback((tag: string) => {
     setWorkingTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   }, []);

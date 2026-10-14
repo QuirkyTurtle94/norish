@@ -222,14 +222,20 @@ export default function MiniGroceries({
     return { toBuy: buy, inPantry: have };
   }, [scaledIngredients, isInPantry]);
 
-  useEffect(() => {
-    hasInitializedRef.current = false;
-    knownIngredientIdsRef.current = new Set();
-    knownInPantryIdsRef.current = new Set();
+  const [session, setSession] = useState({ open, recipeId });
+
+  if (session.open !== open || session.recipeId !== recipeId) {
+    setSession({ open, recipeId });
     setSelectedIds([]);
     setEditingId(null);
     setEditValue("");
     setEditedIngredients({});
+  }
+
+  useEffect(() => {
+    hasInitializedRef.current = false;
+    knownIngredientIdsRef.current = new Set();
+    knownInPantryIdsRef.current = new Set();
   }, [open, recipeId]);
 
   useEffect(() => {

@@ -57,15 +57,15 @@ export function useGroceryDnd({
   // Sync items state when groceries, stores or filings change from an external
   // source: a housemate's filing moves a row between containers too.
   const source = { groceries, stores, aisleFor };
-  const prevSourceRef = useRef(source);
+  const [prevSource, setPrevSource] = useState(source);
 
   if (
     !activeId &&
-    (groceries !== prevSourceRef.current.groceries ||
-      stores !== prevSourceRef.current.stores ||
-      aisleFor !== prevSourceRef.current.aisleFor)
+    (groceries !== prevSource.groceries ||
+      stores !== prevSource.stores ||
+      aisleFor !== prevSource.aisleFor)
   ) {
-    prevSourceRef.current = source;
+    setPrevSource(source);
     const newItems = buildItemsState(groceries, stores, aisleFor);
     const itemsChanged =
       JSON.stringify(Object.keys(newItems).sort()) !== JSON.stringify(Object.keys(items).sort()) ||
@@ -84,14 +84,16 @@ export function useGroceryDnd({
     });
   }, [items]);
 
-  const collisionDetection = useMemo(
-    () =>
+  // Built per call rather than once per render: the refs it reads are read
+  // mid-drag, never while rendering.
+  const collisionDetection = useCallback<CollisionDetection>(
+    (args) =>
       createMultiContainerCollisionDetection(
         items,
         activeId,
         lastOverIdRef,
         recentlyMovedToNewContainerRef
-      ),
+      )(args),
     [items, activeId]
   );
 

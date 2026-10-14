@@ -141,7 +141,8 @@ export default function SwipeableRow({
 
   const swipeItemWidthRef = useRef(0);
   const actionsWidthPxRef = useRef(0);
-  const buttonSizeRef = useRef(calculateButtonSize(rowHeight));
+  const [actionsWidth, setActionsWidth] = useState(0);
+  const [buttonSize, setButtonSize] = useState(() => calculateButtonSize(rowHeight));
   const dragControls = useDragControls();
   const [dragConstraints, setDragConstraints] = useState({ left: 0, right: 0 });
   const [stacked, setStacked] = useState(false);
@@ -155,8 +156,9 @@ export default function SwipeableRow({
     const fit = fitActions(actions.length, rect.width, rect.height, rowHeight);
 
     swipeItemWidthRef.current = rect.width;
-    buttonSizeRef.current = fit.buttonSize;
     actionsWidthPxRef.current = fit.actionsWidth;
+    setActionsWidth(fit.actionsWidth);
+    setButtonSize(fit.buttonSize);
     setStacked(fit.stacked);
   }, [actions.length, rowHeight]);
 
@@ -181,10 +183,10 @@ export default function SwipeableRow({
       if (!w || !swipeContainerRef.current) return;
 
       // Start overlay at one button width
-      const startW = buttonSizeRef.current + CONTAINER_PADDING;
+      const startW = buttonSize + CONTAINER_PADDING;
 
       setCommitting(action);
-      overlayWidth.set(startW);
+      overlayWidth.jump(startW);
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
 
       const expand = animate(overlayWidth, w, { duration: 0.22, ease: "easeOut" });
@@ -201,10 +203,10 @@ export default function SwipeableRow({
       swipeAmount.jump(0);
       if (swipeItemRef.current) swipeItemRef.current.style.opacity = "1";
       if (swipeContainerRef.current) swipeContainerRef.current.style.opacity = "1";
-      overlayWidth.set(0);
+      overlayWidth.jump(0);
       setCommitting(null);
     },
-    [overlayWidth, swipeAmount]
+    [buttonSize, overlayWidth, swipeAmount]
   );
 
   // Imperative API
@@ -355,7 +357,8 @@ export default function SwipeableRow({
         const primary = actions.find((a) => a.primary);
 
         if (primary) {
-          swipeAmount.set(-w);
+          // `false` keeps the drag's release animation running.
+          swipeAmount.jump(-w, false);
           commitDelete(primary);
 
           return;
@@ -426,7 +429,7 @@ export default function SwipeableRow({
             className={`absolute right-0 z-30 ${committingColors.bg} pointer-events-none flex items-center justify-center rounded-full`}
             style={{
               width: overlayWidth,
-              height: buttonSizeRef.current,
+              height: buttonSize,
               top: "50%",
               transform: "translateY(-50%)",
             }}
@@ -440,8 +443,8 @@ export default function SwipeableRow({
         {/* Actions behind: dynamic width */}
         <ActionsGroup
           actions={actions}
-          actionsWidth={actionsWidthPxRef.current}
-          buttonSize={buttonSizeRef.current}
+          actionsWidth={actionsWidth}
+          buttonSize={buttonSize}
           closeRow={closeRow}
           commitDelete={commitDelete}
           focusedIndex={focusedActionIndex}

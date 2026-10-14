@@ -1,7 +1,7 @@
 "use client";
 
 import type { PackSizeWords } from "@/lib/format-price";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { FIELD_CLASS, FIELD_STYLE } from "@/components/groceries/grocery-field";
 import { GroceryPurchaseAmount } from "@/components/groceries/grocery-purchase-amount";
 import { ProductDetailsPanel } from "@/components/groceries/product-details-panel";
@@ -270,11 +270,15 @@ export function GroceryProductField({
   // The name the field itself put in the box. That is an answer, not a
   // question: writing a choice into the input must never send the household
   // back to the shop to ask about the product they have just chosen.
-  const answeredWithRef = useRef<string | null>(null);
+  const [answeredWith, setAnsweredWith] = useState<string | null>(null);
   // A row the field took by itself, and whether it took it for the grocery's
   // own name rather than for something the shopper typed here.
-  const autoPickedRef = useRef<{ key: string; forName: boolean } | null>(null);
-  const lastNameRef = useRef(groceryName);
+  const [autoPicked, setAutoPicked] = useState<{ key: string; forName: boolean } | null>(null);
+  // What the field took or let go of by itself, while rendering, for the
+  // effect below to hand to the panel once it is on screen.
+  const [ownChoice, setOwnChoice] = useState<{ choice: StoreProductChoice | null } | null>(null);
+  const [lastName, setLastName] = useState(groceryName);
+  const [lastOpensWith, setLastOpensWith] = useState(opensWith);
 
   // Until the shopper types, the question is the grocery's own name, which the
   // panel above may still be being filled in; after they type it is what they
@@ -285,12 +289,19 @@ export function GroceryProductField({
   useEffect(() => {
     const next = typed ? term.trim() || groceryName.trim() : groceryName.trim();
 
-    if (typed && answeredWithRef.current === term) return;
+    if (typed && answeredWith === term) return;
     if (next === searchedTerm) return;
     const timer = setTimeout(() => setSearchedTerm(next), SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [term, groceryName, typed, searchedTerm]);
+  }, [term, groceryName, typed, searchedTerm, answeredWith]);
+
+  // The panel's own setter is no reason to hand the same choice over again.
+  const handOver = useEffectEvent((next: StoreProductChoice | null) => onChoice(next));
+
+  useEffect(() => {
+    if (ownChoice) handOver(ownChoice.choice);
+  }, [ownChoice]);
 
   // Nobody has answered this name: nothing is linked, and that is known
   // rather than still being read.
@@ -393,22 +404,23 @@ export function GroceryProductField({
       setManualPackQuantity(pack ? String(pack.quantity) : "");
       setManualPackUnit(pack?.unit ?? "");
       setManualUrl(productPage ?? "");
-      heldByHandRef.current = "";
     },
     []
   );
 
-  /** This row is the answer, however it came to be: tapped, or unmistakable. */
+  /**
+   * This row is the answer, however it came to be: tapped, or unmistakable.
+   * Whoever took it hands its choice to the panel.
+   */
   const take = useCallback(
     (row: ProductRow) => {
-      answeredWithRef.current = row.name;
+      setAnsweredWith(row.name);
       setUnlinked(false);
       setPicked(row.key);
       setTerm(row.name);
       showAs(row.name, row.price, row.currency, row.pack, row.pageUrl);
-      onChoice(row.choice);
     },
-    [onChoice, showAs]
+    [showAs]
   );
 
   // The one row a human would not hesitate over, by the rule the lookup queue
@@ -429,20 +441,19 @@ export function GroceryProductField({
       ? chooseUnmistakable(rows, question)
       : null;
 
-  useEffect(() => {
-    if (!unmistakable) return;
-    autoPickedRef.current = { key: unmistakable.key, forName: !typed };
+  if (unmistakable) {
+    setAutoPicked({ key: unmistakable.key, forName: !typed });
     take(unmistakable);
-  }, [unmistakable, take, typed]);
+    setOwnChoice({ choice: unmistakable.choice });
+  }
 
   /**
    * The field's own answer, let go of: the question it answered is gone, and
    * so is the question itself, until the typing stops and a new one is asked.
    */
   const untake = useCallback(() => {
-    autoPickedRef.current = null;
-    answeredWithRef.current = null;
-    heldByHandRef.current = "";
+    setAutoPicked(null);
+    setAnsweredWith(null);
     setPicked(null);
     setTerm("");
     setSearchedTerm("");
@@ -453,8 +464,7 @@ export function GroceryProductField({
     setManualPackQuantity("");
     setManualPackUnit("");
     setManualUrl("");
-    onChoice(null);
-  }, [onChoice]);
+  }, []);
 
   /**
    * The product the grocery is linked to is not it, says the shopper. The
@@ -472,50 +482,61 @@ export function GroceryProductField({
   // longer asking about "kaas", so the row is let go and the new name is held
   // against the rows afresh — or the shop is asked again. A row the shopper
   // tapped, or one taken for a term they typed here, is theirs and stays.
-  useEffect(() => {
-    if (lastNameRef.current === groceryName) return;
-    lastNameRef.current = groceryName;
-    if (autoPickedRef.current?.forName) untake();
-  }, [groceryName, untake]);
+  if (lastName !== groceryName) {
+    setLastName(groceryName);
+    if (autoPicked?.forName) {
+      untake();
+      setOwnChoice({ choice: null });
+    }
+  }
 
-  useEffect(() => {
+  if (lastOpensWith !== opensWith) {
+    setLastOpensWith(opensWith);
     setTerm(opensWith);
-  }, [opensWith]);
-
-  // Read by the effect below without being a reason for it to run: a tap sets
-  // `picked` and the fields in the same breath, and must not be undone by it.
-  const pickedRef = useRef(picked);
-
-  useEffect(() => {
-    pickedRef.current = picked;
-  }, [picked]);
+  }
 
   // What the grocery is linked to now is what the fields open reading, so the
   // panel has its whole shape from the first frame. A name with nothing linked
-  // and nothing picked has no price to show yet — not the last name's.
-  useEffect(() => {
-    if (byHand || unlinked) return;
-    if (linkedProduct) {
-      const linkedPack = packSizeOf(linkedProduct);
+  // and nothing picked has no price to show yet — not the last name's. Only
+  // these are a reason to read them again: a tap sets `picked` and the fields
+  // in the same breath, and must not be undone by it.
+  const [readFrom, setReadFrom] = useState<{
+    byHand: boolean;
+    groceryName: string;
+    linkedProduct: StoreProductDto | null;
+    unlinked: boolean;
+  } | null>(null);
 
-      setManualName(linkedProduct.name);
-      setManualPrice(String(linkedProduct.price));
-      setManualCurrency(linkedProduct.currency);
-      setManualPackQuantity(linkedPack ? String(linkedPack.quantity) : "");
-      setManualPackUnit(linkedPack?.unit ?? "");
-      setManualUrl(linkedProduct.pageUrl ?? "");
+  if (
+    !readFrom ||
+    readFrom.byHand !== byHand ||
+    readFrom.groceryName !== groceryName ||
+    readFrom.linkedProduct !== linkedProduct ||
+    readFrom.unlinked !== unlinked
+  ) {
+    setReadFrom({ byHand, groceryName, linkedProduct, unlinked });
+    if (!byHand && !unlinked) {
+      if (linkedProduct) {
+        const linkedPack = packSizeOf(linkedProduct);
 
-      return;
+        setManualName(linkedProduct.name);
+        setManualPrice(String(linkedProduct.price));
+        setManualCurrency(linkedProduct.currency);
+        setManualPackQuantity(linkedPack ? String(linkedPack.quantity) : "");
+        setManualPackUnit(linkedPack?.unit ?? "");
+        setManualUrl(linkedProduct.pageUrl ?? "");
+      } else {
+        setManualName(groceryName);
+        if (!picked) {
+          setManualPrice("");
+          setManualCurrency("");
+          setManualPackQuantity("");
+          setManualPackUnit("");
+          setManualUrl("");
+        }
+      }
     }
-    setManualName(groceryName);
-    if (!pickedRef.current) {
-      setManualPrice("");
-      setManualCurrency("");
-      setManualPackQuantity("");
-      setManualPackUnit("");
-      setManualUrl("");
-    }
-  }, [byHand, groceryName, linkedProduct, unlinked]);
+  }
 
   // The product the fields describe: the row that is picked, else what the
   // grocery is linked to. Its pack, size words, regular price and deal words
@@ -570,7 +591,13 @@ export function GroceryProductField({
   // same Sale under a corrected name or price. Whether it is still a Sale is
   // decided by the price typed against the regular one, as everywhere else.
   useEffect(() => {
-    if (!byHand) return;
+    // Fields the shop's numbers were shown in again start over: whatever is
+    // typed over them next is handed to the panel, even if it was before.
+    if (!byHand) {
+      heldByHandRef.current = "";
+
+      return;
+    }
     const packWords = JSON.stringify(typedPack);
     const held = hasTypedPrice
       ? `${manualTarget}|${manualName}|${typedPrice}|${currency}|${selectedSize ?? ""}|${packWords}|${pageUrl ?? ""}|${selectedRegularPrice ?? ""}|${selectedDealWords ?? ""}`
@@ -663,8 +690,9 @@ export function GroceryProductField({
           const row = rows.find((candidate) => candidate.key === String(key));
 
           if (!row) return;
-          autoPickedRef.current = null;
+          setAutoPicked(null);
           take(row);
+          onChoice(row.choice);
         }}
       >
         <div className="flex items-baseline justify-between gap-3">

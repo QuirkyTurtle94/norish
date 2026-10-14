@@ -13,7 +13,12 @@ type ConvertMutationContext = {
 };
 
 export type ConvertMutationResult = {
-  convertMeasurements: (targetSystem: MeasurementSystem, version: number, withAI?: boolean) => void;
+  convertMeasurements: (
+    targetSystem: MeasurementSystem,
+    version: number,
+    withAI?: boolean,
+    options?: { onError?: (error: unknown) => void }
+  ) => void;
   error: unknown;
   reset: () => void;
   isConverting: boolean;
@@ -34,6 +39,8 @@ export function createUseConvertMutation({
   shouldPreserveOptimisticUpdate,
 }: CreateRecipeHooksOptions) {
   return function useConvertMutation(recipeId: string): ConvertMutationResult {
+    "use memo";
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
     const detailQueryKey = trpc.recipes.get.queryKey({ id: recipeId });
@@ -85,10 +92,11 @@ export function createUseConvertMutation({
         },
       })
     );
+    const { mutate: mutateMutation } = mutation;
 
     return {
-      convertMeasurements: (targetSystem: MeasurementSystem, version: number, withAI = false) => {
-        mutation.mutate({ recipeId, targetSystem, version, withAI });
+      convertMeasurements: (targetSystem, version, withAI = false, options) => {
+        mutateMutation({ recipeId, targetSystem, version, withAI }, options);
       },
       error: mutation.error,
       reset: mutation.reset,

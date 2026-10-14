@@ -73,7 +73,10 @@ export default function VideoProcessingForm({ onDirtyChange }: VideoProcessingFo
     videoConfig?.transcriptionModel ?? ""
   );
   const [saving, setSaving] = useState(false);
-  useEffect(() => {
+  const [prevVideoConfig, setPrevVideoConfig] = useState(videoConfig);
+
+  if (videoConfig !== prevVideoConfig) {
+    setPrevVideoConfig(videoConfig);
     if (videoConfig) {
       setEnabled(videoConfig.enabled);
       setMaxLengthSeconds(videoConfig.maxLengthSeconds);
@@ -83,7 +86,7 @@ export default function VideoProcessingForm({ onDirtyChange }: VideoProcessingFo
       setTranscriptionEndpoint(videoConfig.transcriptionEndpoint ?? "");
       setTranscriptionModel(videoConfig.transcriptionModel);
     }
-  }, [videoConfig]);
+  }
   const transcriptionEnabled = transcriptionProvider !== "disabled";
   const needsTranscriptionEndpoint = transcriptionProviderNeedsEndpoint(transcriptionProvider);
   // API key only required for cloud providers, not for local models (generic-openai, ollama)
@@ -163,18 +166,16 @@ export default function VideoProcessingForm({ onDirtyChange }: VideoProcessingFo
   }, [availableTranscriptionModels, transcriptionModel]);
 
   // Auto-select first available model if none selected
-  useEffect(() => {
-    if (
-      !transcriptionModel &&
-      availableTranscriptionModels.length > 0 &&
-      !isLoadingTranscriptionModels
-    ) {
-      const firstModel = (availableTranscriptionModels as TranscriptionModel[])[0];
-      if (firstModel) {
-        setTranscriptionModel(firstModel.id);
-      }
+  if (
+    !transcriptionModel &&
+    availableTranscriptionModels.length > 0 &&
+    !isLoadingTranscriptionModels
+  ) {
+    const firstModel = (availableTranscriptionModels as TranscriptionModel[])[0];
+    if (firstModel) {
+      setTranscriptionModel(firstModel.id);
     }
-  }, [availableTranscriptionModels, transcriptionModel, isLoadingTranscriptionModels]);
+  }
 
   // Clear transcription config when provider changes - will auto-select first available model
   const handleTranscriptionProviderChange = (newProvider: TranscriptionProvider) => {

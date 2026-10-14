@@ -79,11 +79,9 @@ export default function CookingMode({
     adjustedIngredients?.length > 0 ? adjustedIngredients : recipe.recipeIngredients;
   const currentStep = clampStep(activeStep, steps.length);
 
-  useEffect(() => {
-    if (activeStep !== currentStep) {
-      setActiveStep(currentStep);
-    }
-  }, [activeStep, currentStep]);
+  if (activeStep !== currentStep) {
+    setActiveStep(currentStep);
+  }
 
   useEffect(() => {
     if (!isOpen || !isSupported || isActive || wakeLockOwnedRef.current) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   IngredientIcon,
   IngredientIconsProvider,
@@ -51,6 +51,20 @@ function createItem(
     ...meta,
   };
 }
+// The editor's rows for the given ingredients, plus the empty row to type into.
+function seedItems(ingredients: ParsedIngredient[]): IngredientItem[] {
+  const formatted = ingredients.map((ing) => {
+    const parts: string[] = [];
+    if (ing.amount !== null) parts.push(String(ing.amount));
+    if (ing.unit) parts.push(ing.unit);
+    if (ing.ingredientName) parts.push(ing.ingredientName);
+    return createItem(parts.join(" "), {
+      recipeIngredientId: ing.id,
+      version: ing.version,
+    });
+  });
+  return [...formatted, createItem("")];
+}
 export default function IngredientInput({
   ingredients,
   onChange,
@@ -59,32 +73,21 @@ export default function IngredientInput({
 }: IngredientInputProps) {
   const { units } = useUnitsQuery();
   const t = useTranslations("recipes.ingredientInput");
-  const [items, setItems] = useState<IngredientItem[]>(() => [createItem("")]);
+  const [items, setItems] = useState<IngredientItem[]>(() => seedItems(ingredients));
+  const [seededLength, setSeededLength] = useState(ingredients.length);
   const textareasRef = useRef<(HTMLTextAreaElement | null)[]>([]);
   const dragConstraintsRef = useRef<HTMLUListElement>(null);
 
-  // Initialize from ingredients prop
-  useEffect(() => {
+  // Seeds the editor once when the ingredients load; a later change to them
+  // must not overwrite what is being typed.
+  if (ingredients.length !== seededLength) {
+    setSeededLength(ingredients.length);
     const first = items[0];
 
-    if (!first) return;
-    if (ingredients.length > 0 && items.length === 1 && first.text === "") {
-      const formatted = ingredients.map((ing) => {
-        const parts: string[] = [];
-        if (ing.amount !== null) parts.push(String(ing.amount));
-        if (ing.unit) parts.push(ing.unit);
-        if (ing.ingredientName) parts.push(ing.ingredientName);
-        return createItem(parts.join(" "), {
-          recipeIngredientId: ing.id,
-          version: ing.version,
-        });
-      });
-      setItems([...formatted, createItem("")]);
+    if (first && ingredients.length > 0 && items.length === 1 && first.text === "") {
+      setItems(seedItems(ingredients));
     }
-    // Seeds the editor once when the ingredients load; a later change to them
-    // must not overwrite what is being typed.
-    // eslint-disable-next-line @eslint-react/exhaustive-deps
-  }, [ingredients.length]);
+  }
   const parseIngredient = useCallback(
     (item: IngredientItem, order: number): ParsedIngredient | null => {
       const trimmed = item.text.trim();

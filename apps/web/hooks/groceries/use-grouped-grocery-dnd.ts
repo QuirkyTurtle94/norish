@@ -76,15 +76,14 @@ export function useGroupedGroceryDnd({
   // Sync groupItems when groupedGroceries/stores change externally. A filing
   // regroups the list, so a housemate's filing arrives as new groups here.
   const source = { groupedGroceries, stores };
-  const prevSourceRef = useRef(source);
+  const [prevSource, setPrevSource] = useState(source);
 
   // Only rebuild if we're not actively dragging and the source changed
   if (
     !activeGroupKey &&
-    (groupedGroceries !== prevSourceRef.current.groupedGroceries ||
-      stores !== prevSourceRef.current.stores)
+    (groupedGroceries !== prevSource.groupedGroceries || stores !== prevSource.stores)
   ) {
-    prevSourceRef.current = source;
+    setPrevSource(source);
     const newGroupItems = buildGroupItemsState(groupedGroceries, stores);
     const itemsChanged =
       JSON.stringify(Object.keys(newGroupItems).sort()) !==
@@ -105,14 +104,16 @@ export function useGroupedGroceryDnd({
     });
   }, [groupItems]);
 
-  const collisionDetection = useMemo(
-    () =>
+  // Built per call rather than once per render: the refs it reads are read
+  // mid-drag, never while rendering.
+  const collisionDetection = useCallback<CollisionDetection>(
+    (args) =>
       createMultiContainerCollisionDetection(
         groupItems,
         activeGroupKey,
         lastOverIdRef,
         recentlyMovedToNewContainerRef
-      ),
+      )(args),
     [groupItems, activeGroupKey]
   );
 

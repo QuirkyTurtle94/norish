@@ -48,21 +48,18 @@ export default function ImageLightbox({
     () => getSafeIndex(initialIndex, images.length),
     [images.length, initialIndex]
   );
+  const [seededFor, setSeededFor] = useState({ isOpen, index: safeInitialIndex });
+
+  if (isOpen !== seededFor.isOpen || safeInitialIndex !== seededFor.index) {
+    setSeededFor({ isOpen, index: safeInitialIndex });
+
+    if (isOpen) setCurrentIndex(safeInitialIndex);
+  }
+
   const currentImage = images[getSafeIndex(currentIndex, images.length)];
   const showNavigation = images.length > 1;
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setCurrentIndex(safeInitialIndex);
-  }, [isOpen, safeInitialIndex]);
-
-  useEffect(() => {
-    if (!api || !isOpen || images.length === 0) return;
-
-    api.scrollTo(safeInitialIndex, true);
-  }, [api, images.length, isOpen, safeInitialIndex]);
-
+  // Listens before the scroll below, so the slide it lands on is never missed.
   useEffect(() => {
     if (!api) return;
 
@@ -70,7 +67,6 @@ export default function ImageLightbox({
       setCurrentIndex(api.selectedScrollSnap());
     };
 
-    syncSelectedIndex();
     api.on("select", syncSelectedIndex);
     api.on("reInit", syncSelectedIndex);
 
@@ -79,6 +75,12 @@ export default function ImageLightbox({
       api.off("reInit", syncSelectedIndex);
     };
   }, [api]);
+
+  useEffect(() => {
+    if (!api || !isOpen || images.length === 0) return;
+
+    api.scrollTo(safeInitialIndex, true);
+  }, [api, images.length, isOpen, safeInitialIndex]);
 
   if (!isOpen || images.length === 0 || !currentImage) return null;
 

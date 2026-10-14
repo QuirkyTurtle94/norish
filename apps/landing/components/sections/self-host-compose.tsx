@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { links } from "@/lib/css-tokens";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
 
@@ -65,11 +65,17 @@ function generateMasterKey() {
  * Renders the docker-compose snippet with a MASTER_KEY generated locally in the
  * browser, so the copied file is unique and ready to run with no extra steps.
  */
-export function SelfHostCompose() {
-  const [masterKey, setMasterKey] = useState(PLACEHOLDER);
+let generatedKey: string | undefined;
+const noSubscription = () => () => {};
 
-  // Generated after mount to keep SSR markup stable and the secret client-only.
-  useEffect(() => setMasterKey(generateMasterKey()), []);
+export function SelfHostCompose() {
+  // Generated in the browser only, once per page load: the server and the
+  // hydrating render show the placeholder, so the secret never reaches markup.
+  const masterKey = useSyncExternalStore(
+    noSubscription,
+    () => (generatedKey ??= generateMasterKey()),
+    () => PLACEHOLDER
+  );
 
   const ready = masterKey !== PLACEHOLDER;
 

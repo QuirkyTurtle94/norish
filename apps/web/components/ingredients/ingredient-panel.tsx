@@ -123,9 +123,7 @@ export function IngredientPanel({
   const [usesOf, setUsesOf] = useState<{ id: string; name: string } | null>(null);
   const [usesOpen, setUsesOpen] = useState(false);
 
-  useEffect(() => {
-    if (current) setShown(current);
-  }, [current]);
+  if (current && current !== shown) setShown(current);
 
   // Another food asked for, not read yet: nothing, rather than the last one.
   if (!shown || (open && id !== null && shown.id !== id && !current)) return null;

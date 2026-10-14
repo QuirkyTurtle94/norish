@@ -39,22 +39,29 @@ export default function TimerKeywordsEditor({
   const t = useTranslations("settings.admin.contentDetection.timerKeywords");
   const tActions = useTranslations("common.actions");
   const [isEnabled, setIsEnabled] = useState(enabled);
-  const [hoursText, setHoursText] = useState("");
-  const [minutesText, setMinutesText] = useState("");
-  const [secondsText, setSecondsText] = useState("");
+  const [hoursText, setHoursText] = useState(() => hours.join(", "));
+  const [minutesText, setMinutesText] = useState(() => minutes.join(", "));
+  const [secondsText, setSecondsText] = useState(() => seconds.join(", "));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [prevKeywords, setPrevKeywords] = useState({ enabled, hours, minutes, seconds });
 
   // Initialize text when keywords change
-  useEffect(() => {
+  if (
+    enabled !== prevKeywords.enabled ||
+    hours !== prevKeywords.hours ||
+    minutes !== prevKeywords.minutes ||
+    seconds !== prevKeywords.seconds
+  ) {
+    setPrevKeywords({ enabled, hours, minutes, seconds });
     setHoursText(hours.join(", "));
     setMinutesText(minutes.join(", "));
     setSecondsText(seconds.join(", "));
     setIsEnabled(enabled);
     setIsDirty(false);
     setError(null);
-  }, [enabled, hours, minutes, seconds]);
+  }
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);

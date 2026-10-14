@@ -2,7 +2,7 @@
 
 import type { Mutation } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { createContext, use, useCallback, useMemo, useRef, useState } from "react";
+import { createContext, use, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useConnectivity } from "@/app/providers/connectivity-provider";
 import { useTRPC } from "@/app/providers/trpc-provider";
 import { useUserCacheHelpers } from "@/hooks/user/use-user-cache";
@@ -111,7 +111,9 @@ export function DevicePreferencesProvider({
   }, [profileWins, stored, unsettled, kind, seed?.values, changes]);
   const valuesRef = useRef(values);
 
-  valuesRef.current = values;
+  useLayoutEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
 
   const set = useCallback(
     (update: DevicePreferencesUpdate) => {
@@ -163,7 +165,9 @@ export function useDevicePreference<K extends keyof DevicePreferences>(
   const value = values[key];
   const valueRef = useRef(value);
 
-  valueRef.current = value;
+  useLayoutEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const setValue = useCallback<SetDevicePreference<DevicePreferences[K]>>(
     (next) => {

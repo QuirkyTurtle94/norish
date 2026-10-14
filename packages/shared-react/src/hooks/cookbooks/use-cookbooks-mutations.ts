@@ -21,7 +21,13 @@ export function createUseCookbooksMutations({
   useCurrentUserId,
   useCookbooksCacheHelpers,
 }: Dependencies) {
+  // Settled once here rather than called with `?.()`: the compiler only
+  // compiles a hook whose hooks it sees called unconditionally.
+  const useCurrentUserIdOrNone = useCurrentUserId ?? (() => undefined);
+
   return function useCookbooksMutations(): CookbooksMutationsResult {
+    "use memo";
+
     const trpc = useTRPC();
     const {
       setAllCookbooksData,
@@ -31,13 +37,18 @@ export function createUseCookbooksMutations({
       patchRecipeMembership,
       seedCookbook,
     } = useCookbooksCacheHelpers();
-    const currentUserId = useCurrentUserId?.();
+    const currentUserId = useCurrentUserIdOrNone();
 
     const createMutation = useMutation(trpc.cookbooks.create.mutationOptions());
+    const { mutate: mutateCreate } = createMutation;
     const updateMutation = useMutation(trpc.cookbooks.update.mutationOptions());
+    const { mutate: mutateUpdate } = updateMutation;
     const deleteMutation = useMutation(trpc.cookbooks.remove.mutationOptions());
+    const { mutate: mutateDelete } = deleteMutation;
     const membershipMutation = useMutation(trpc.cookbooks.setMembership.mutationOptions());
+    const { mutate: mutateMembership } = membershipMutation;
     const uploadImageMutation = useMutation(trpc.cookbooks.uploadImage.mutationOptions());
+    const { mutateAsync: mutateUploadImageAsync } = uploadImageMutation;
 
     const invalidateUnlessQueued = invalidateUnlessPreserved(invalidate, preserve);
 
@@ -70,7 +81,7 @@ export function createUseCookbooksMutations({
         };
 
         return new Promise<string>((resolve, reject) => {
-          createMutation.mutate(
+          mutateCreate(
             { id, title, recipeId },
             {
               onSuccess: (cookbook) => {
@@ -201,7 +212,7 @@ export function createUseCookbooksMutations({
           patchRecipeMembership(recipeId, patched, isMember);
         }
 
-        membershipMutation.mutate(
+        mutateMembership(
           { cookbookId, recipeId, isMember },
           {
             onSuccess: () => {
@@ -259,7 +270,7 @@ export function createUseCookbooksMutations({
           };
         });
 
-        updateMutation.mutate(
+        mutateUpdate(
           { id, title, image, version },
           {
             onSuccess: () => invalidateCookbook(id),
@@ -289,7 +300,7 @@ export function createUseCookbooksMutations({
           };
         });
 
-        deleteMutation.mutate({ id, version }, { onError: invalidateUnlessQueued });
+        mutateDelete({ id, version }, { onError: invalidateUnlessQueued });
       },
       [deleteMutation, setAllCookbooksData, invalidateUnlessQueued]
     );
@@ -302,7 +313,7 @@ export function createUseCookbooksMutations({
         formData.append("cookbookId", cookbookId);
         formData.append("image", file);
 
-        const result = await uploadImageMutation.mutateAsync(formData);
+        const result = await mutateUploadImageAsync(formData);
 
         if (!result.success) throw new Error(result.error);
 

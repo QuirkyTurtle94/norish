@@ -117,6 +117,8 @@ export function createUseRecipeEnrichment({ useTRPC }: CreateRecipeHooksOptions)
     currentUserId?: string | null,
     callbacks: RecipeEnrichmentCallbacks = {}
   ): RecipeEnrichmentResult {
+    "use memo";
+
     const trpc = useTRPC();
     const queryClient = useQueryClient();
 
@@ -302,6 +304,7 @@ export function createUseRecipeEnrichment({ useTRPC }: CreateRecipeHooksOptions)
         },
       })
     );
+    const { mutate: mutateMutation } = mutation;
 
     const request = useCallback(
       (kind: RecipeEnrichmentKind) => {
@@ -320,7 +323,7 @@ export function createUseRecipeEnrichment({ useTRPC }: CreateRecipeHooksOptions)
           },
           true
         );
-        mutation.mutate({ recipeId, kind });
+        mutateMutation({ recipeId, kind });
       },
       [recipeId, mutation, applyLifecycle]
     );

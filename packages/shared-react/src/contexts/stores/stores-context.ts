@@ -94,6 +94,8 @@ export function createStoresContext({
   const StoresContext = createContext<StoresContextValue | null>(null);
 
   function StoresContextProvider({ children }: { children: ReactNode }) {
+    "use memo";
+
     // Data hooks
     const { stores, isLoading } = useStoresQuery();
     const storeMutations = useStoresMutations();
@@ -146,6 +148,8 @@ export function createStoresContext({
   }
 
   function useStoresContext() {
+    "use memo";
+
     const ctx = use(StoresContext);
 
     if (!ctx) throw new Error("useStoresContext must be used within StoresContextProvider");

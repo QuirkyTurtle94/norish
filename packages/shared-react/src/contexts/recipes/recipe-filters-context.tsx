@@ -32,6 +32,8 @@ export function createRecipeFiltersContext({
   const RecipeFiltersContext = createContext<RecipeFiltersContextValue | null>(null);
 
   function RecipeFiltersProvider({ children }: { children: React.ReactNode }) {
+    "use memo";
+
     const [filterState, setFilterState] = useState(DEFAULT_RECIPE_FILTERS);
     const [isHydrated, setIsHydrated] = useState(storageAdapter === undefined);
 
@@ -40,32 +42,22 @@ export function createRecipeFiltersContext({
 
       let mounted = true;
 
-      const loadPersistedFilters = async () => {
-        try {
-          const rawValue = await storageAdapter.getItem(storageKey);
+      void Promise.resolve()
+        .then(() => storageAdapter.getItem(storageKey))
+        .then((rawValue) => {
+          if (!mounted || !rawValue) return;
 
-          if (!mounted) return;
-
-          if (!rawValue) {
-            setIsHydrated(true);
-
-            return;
-          }
-
-          const parsed = JSON.parse(rawValue) as unknown;
-          const normalized = normalizePersistedRecipeFilters(parsed);
+          const normalized = normalizePersistedRecipeFilters(JSON.parse(rawValue) as unknown);
 
           if (normalized) {
             setFilterState((previous) => ({ ...previous, ...normalized }));
           }
-        } finally {
+        })
+        .finally(() => {
           if (mounted) {
             setIsHydrated(true);
           }
-        }
-      };
-
-      void loadPersistedFilters();
+        });
 
       return () => {
         mounted = false;
@@ -110,6 +102,8 @@ export function createRecipeFiltersContext({
   }
 
   function useRecipeFiltersContext() {
+    "use memo";
+
     const context = useOptionalRecipeFiltersContext();
 
     if (!context) {
@@ -128,6 +122,8 @@ export function createRecipeFiltersContext({
    * happens to be one.
    */
   function useOptionalRecipeFiltersContext() {
+    "use memo";
+
     return use(RecipeFiltersContext);
   }
 

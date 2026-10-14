@@ -51,6 +51,8 @@ const withNextIntl = createNextIntlPlugin(getNextIntlRequestConfigPath());
 
 export default withSerwist(
   withNextIntl({
+    // Infer mode, through the Babel plugin (not the experimental Rust one).
+    reactCompiler: true,
     transpilePackages: workspacePackages,
     turbopack: {
       root: resolve(configDirectory, "../.."),

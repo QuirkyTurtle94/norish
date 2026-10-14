@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { RollingText } from "@/components/shared/rolling-text";
 import { useRecipesFiltersContext } from "@/context/recipes-filters-context";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
@@ -97,12 +97,13 @@ export default function LibraryHeading({ id }: { id: string }) {
   // Which way the word travels: forward along the chips rolls up, back rolls
   // down, so the heading moves with the control the reader just used.
   const position = LIBRARY_TYPE_FILTERS.indexOf(filters.libraryType);
-  const previousPositionRef = useRef(position);
-  const isRising = position >= previousPositionRef.current;
+  const [roll, setRoll] = useState({ position, isRising: true });
 
-  useEffect(() => {
-    previousPositionRef.current = position;
-  }, [position]);
+  if (position !== roll.position) {
+    setRoll({ position, isRising: position > roll.position });
+  }
+
+  const { isRising } = roll;
 
   if (prefersReducedMotion) {
     return (

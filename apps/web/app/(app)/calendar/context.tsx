@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, use, useCallback, useMemo, useState } from "react";
 import { useCalendarMutations } from "@/hooks/calendar/use-calendar-mutations";
 import { useCalendarQuery } from "@/hooks/calendar/use-calendar-query";
 import { useCalendarSubscription } from "@/hooks/calendar/use-calendar-subscription";
@@ -31,16 +31,14 @@ export function CalendarContextProvider({
   const { createItem, deleteItem, moveItem, updateItem } = useCalendarMutations(startISO, endISO);
 
   // Track if initial load has completed (only show skeleton on first load)
-  const hasLoadedOnceRef = useRef(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
-  useEffect(() => {
-    if (!isQueryLoading && !hasLoadedOnceRef.current) {
-      hasLoadedOnceRef.current = true;
-    }
-  }, [isQueryLoading]);
+  if (!isQueryLoading && !hasLoadedOnce) {
+    setHasLoadedOnce(true);
+  }
 
   // isInitialLoading is true only for the very first load
-  const isInitialLoading = isQueryLoading && !hasLoadedOnceRef.current;
+  const isInitialLoading = isQueryLoading && !hasLoadedOnce;
 
   useCalendarSubscription(startISO, endISO);
 

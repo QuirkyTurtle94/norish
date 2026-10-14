@@ -582,6 +582,9 @@ importers:
       ai:
         specifier: ^7.0.139
         version: 7.0.139(zod@4.6.7)
+      babel-plugin-react-compiler:
+        specifier: 1.0.0
+        version: 1.0.0
       embla-carousel:
         specifier: ^8.6.0
         version: 8.6.0
@@ -9625,7 +9628,6 @@ snapshots:
   babel-plugin-react-compiler@1.0.0:
     dependencies:
       '@babel/types': 7.29.8
-    optional: true
 
   bail@2.0.2: {}
 

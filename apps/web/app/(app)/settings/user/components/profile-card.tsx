@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
 import UserAvatar from "@/components/shared/user-avatar";
 import { TrashIcon } from "@heroicons/react/16/solid";
@@ -14,18 +14,20 @@ import { useUserSettingsContext } from "../context";
 export default function ProfileCard() {
   const t = useTranslations("settings.user.profile");
   const { user, updateName, updateImage, deleteImage, isDeletingAvatar } = useUserSettingsContext();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(user?.name || "");
+  const [syncedName, setSyncedName] = useState(user?.name);
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update name when user data loads
-  useEffect(() => {
+  if (user?.name !== syncedName) {
+    setSyncedName(user?.name);
     if (user?.name) {
       setName(user.name);
     }
-  }, [user?.name]);
+  }
   const handleSaveProfile = async () => {
     const hasNameChanges = name !== user?.name;
     const hasImageChanges = pendingImageFile !== null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { RollingText } from "@/components/shared/rolling-text";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
@@ -33,12 +33,13 @@ function magnitude(value: string): number {
  */
 export function AnimatedNumber({ value, className = "" }: AnimatedNumberProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const previousRef = useRef(value);
-  const isRising = magnitude(value) >= magnitude(previousRef.current);
+  const [previous, setPrevious] = useState(value);
+  const [isRising, setIsRising] = useState(true);
 
-  useEffect(() => {
-    previousRef.current = value;
-  }, [value]);
+  if (value !== previous) {
+    setPrevious(value);
+    setIsRising(magnitude(value) >= magnitude(previous));
+  }
 
   if (prefersReducedMotion) {
     return <span className={`tabular-nums ${className}`}>{value}</span>;

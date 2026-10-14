@@ -64,15 +64,13 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenSupported, setFullscreenSupported] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
 
-  // Check if fullscreen is supported
+  // Check if fullscreen is supported, and pick up a duration the video learned
+  // before hydration attached its listeners
   useEffect(() => {
-    if (typeof document === "undefined") {
-      setFullscreenSupported(false);
-
-      return;
-    }
     setFullscreenSupported(isFullscreenControlSupported(document, videoRef.current));
+    setVideoDuration(videoRef.current?.duration ?? 0);
   }, []);
 
   // Handle fullscreen change events (user exits via native controls or Escape)
@@ -367,6 +365,7 @@ export default function VideoPlayer({
         muted={isMuted}
         poster={poster}
         src={src}
+        onDurationChange={(e) => setVideoDuration(e.currentTarget.duration)}
         onLoadedData={handleLoadedData}
         onPlaying={() => setIsLoading(false)}
         onTimeUpdate={handleTimeUpdate}
@@ -446,7 +445,7 @@ export default function VideoPlayer({
                   <span>{formatTime(currentTime)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span>{formatTime(duration || videoRef.current?.duration || 0)}</span>
+                  <span>{formatTime(duration || videoDuration || 0)}</span>
                   {fullscreenSupported && (
                     <Button
                       isIconOnly

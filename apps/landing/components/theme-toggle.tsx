@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "next-themes";
 import { flushSync } from "react-dom";
@@ -10,6 +10,8 @@ type DocumentWithViewTransition = Document & {
   startViewTransition?: (update: () => void) => unknown;
 };
 
+const noSubscription = () => () => {};
+
 /**
  * Light/dark switch. Where the View Transition API exists, the new theme
  * sweeps out from this button as a growing circle (see `theme-reveal` in
@@ -18,10 +20,13 @@ type DocumentWithViewTransition = Document & {
  */
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  // False on the server and while hydrating, true once in the browser.
+  const mounted = useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false
+  );
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => setMounted(true), []);
 
   const isDark = resolvedTheme === "dark";
   // Before mount, resolvedTheme is unknown — use a neutral label so the server

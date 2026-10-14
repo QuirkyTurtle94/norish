@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const QUERY = "(min-width: 768px)";
+
+function subscribe(onChange: () => void): () => void {
+  const mediaQuery = window.matchMedia(QUERY);
+
+  mediaQuery.addEventListener("change", onChange);
+
+  return () => mediaQuery.removeEventListener("change", onChange);
+}
 
 export function useIsDesktopCookingMode() {
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)");
-    const updateIsDesktop = () => setIsDesktop(mediaQuery.matches);
-
-    updateIsDesktop();
-    mediaQuery.addEventListener("change", updateIsDesktop);
-
-    return () => mediaQuery.removeEventListener("change", updateIsDesktop);
-  }, []);
-
-  return isDesktop;
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(QUERY).matches,
+    () => false
+  );
 }

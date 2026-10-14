@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/16/solid";
 import { Description, InputGroup, Label, TextField } from "@heroui/react";
 import { useTranslations } from "next-intl";
@@ -56,15 +56,18 @@ export default function SecretInput({
   const [storedSecret, setStoredSecret] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [wasConfigured, setWasConfigured] = useState(isConfigured);
 
   // A secret that was deleted, or a provider that changed under the form, is no
   // longer the one on screen.
-  useEffect(() => {
+  if (isConfigured !== wasConfigured) {
+    setWasConfigured(isConfigured);
+
     if (!isConfigured) {
       setStoredSecret(null);
       setIsVisible(false);
     }
-  }, [isConfigured]);
+  }
 
   // What is typed wins over what is stored; with neither, the field is empty
   // and its placeholder says a value is already saved.

@@ -50,12 +50,14 @@ export default function PromptsForm({ onDirtyChange }: PromptsFormProps) {
   const [values, setValues] = useState<PromptValues>(EMPTY_VALUES);
   const [saving, setSaving] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  // Starts unset so prompts present on the first render seed the form too.
+  const [prevPrompts, setPrevPrompts] = useState<typeof prompts>();
 
   // Initialize from context. A prompt added after the stored config was
   // written has no stored value; the loader falls back to the shipped file
   // until an administrator saves one.
-  useEffect(() => {
+  if (prompts !== prevPrompts) {
+    setPrevPrompts(prompts);
     if (prompts) {
       setValues(
         Object.fromEntries(
@@ -63,14 +65,12 @@ export default function PromptsForm({ onDirtyChange }: PromptsFormProps) {
         ) as PromptValues
       );
     }
-  }, [prompts]);
+  }
 
   // Track changes
-  useEffect(() => {
-    if (prompts) {
-      setHasChanges(PROMPT_FIELDS.some(({ key }) => values[key] !== (prompts[key] ?? "")));
-    }
-  }, [values, prompts]);
+  const hasChanges =
+    !!prompts && PROMPT_FIELDS.some(({ key }) => values[key] !== (prompts[key] ?? ""));
+
   useEffect(() => {
     onDirtyChange?.(hasChanges);
   }, [hasChanges, onDirtyChange]);

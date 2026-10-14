@@ -19,6 +19,27 @@ export const reactConfig = defineConfig(
           message:
             "crypto.randomUUID is undefined outside a secure context. Use createClientId() from @norish/shared/lib/operation-helpers.",
         },
+        // The React Compiler knows a hook only by its name. An alias without the
+        // `use` prefix is compiled as a plain call, which it may memoise into a
+        // conditional one.
+        ...[
+          "VariableDeclarator[id.type='Identifier'][id.name!=/^use[A-Z0-9]/][init.type='MemberExpression'][init.property.name=/^use[A-Z0-9]/]",
+          "VariableDeclarator[id.type='Identifier'][id.name!=/^use[A-Z0-9]/][init.type='Identifier'][init.name=/^use[A-Z0-9]/]",
+          "ObjectPattern > Property[key.name=/^use[A-Z0-9]/][value.type='Identifier'][value.name!=/^use[A-Z0-9]/]",
+        ].map((selector) => ({
+          selector,
+          message: "A hook alias keeps the `use` prefix, so the React Compiler still sees a hook.",
+        })),
+        // The compiler's infer mode compiles top-level components and hooks
+        // only: one a factory builds is skipped unless it opts in.
+        ...[
+          ":function :function[id.name=/^(use[A-Z0-9]|[A-Z])/]:not([body.body.0.directive='use memo'])",
+          ":function VariableDeclarator[id.name=/^(use[A-Z0-9]|[A-Z])/] > :function:not([body.body.0.directive='use memo'])",
+        ].map((selector) => ({
+          selector,
+          message:
+            'A hook or component built inside a function starts with "use memo", or the React Compiler skips it.',
+        })),
       ],
     },
   },
@@ -34,11 +55,12 @@ export const reactConfig = defineConfig(
       },
     },
     rules: {
-      // The preset already leaves refs and immutability off and exhaustive-deps
-      // a warning, as Norish wants them.
-      // Off: editors copy data that arrives after mount (a panel opening, a query
-      // resolving) into their draft from an effect. On, it flags 178 of them.
-      "@eslint-react/set-state-in-effect": "off",
+      // What the React Compiler assumes of a component, checked as it is
+      // written: no ref read or written during render, nothing a render
+      // received mutated, and no state set synchronously in an effect.
+      "@eslint-react/refs": "error",
+      "@eslint-react/immutability": "error",
+      "@eslint-react/set-state-in-effect": "error",
       "@stylistic/jsx-self-closing-comp": "warn",
       "@stylistic/jsx-sort-props": [
         "warn",
