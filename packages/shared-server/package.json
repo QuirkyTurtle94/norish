@@ -80,6 +80,7 @@
     "@ai-sdk/openai": "^4.0.93",
     "@ai-sdk/openai-compatible": "^3.0.68",
     "@ai-sdk/perplexity": "^5.0.11",
+    "@ai-sdk/provider": "^4.0.27",
     "@ai-sdk/typesafe-ai": "^3.0.18",
     "@norish/config": "workspace:*",
     "@norish/db": "workspace:*",
@@ -105,12 +106,13 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@ai-sdk/provider": "^4.0.27",
     "@norish/eslint-config": "workspace:*",
     "@norish/prettier-config": "workspace:*",
     "@norish/tsconfig": "workspace:*",
+    "@testcontainers/redis": "catalog:",
     "@types/archiver": "catalog:",
     "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:",

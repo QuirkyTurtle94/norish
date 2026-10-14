@@ -20,11 +20,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "dist-server/**", ".cache/**", "**/*.tsbuildinfo"]
-    },
-    "build:server": {
-      "dependsOn": ["^build:server"],
-      "cache": false
+      "outputs": ["dist/**", ".cache/**", "**/*.tsbuildinfo"]
     },
     "dev": {
       "dependsOn": ["^dev"],

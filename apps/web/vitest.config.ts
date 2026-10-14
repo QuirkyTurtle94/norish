@@ -24,18 +24,11 @@ export default defineConfig({
     hookTimeout: 60000,
     testTimeout: 15000,
     include: ["**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["node_modules", "**/node_modules/**", "dist-server", ".next"],
+    exclude: ["node_modules", "**/node_modules/**", ".next"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
-      exclude: [
-        "node_modules",
-        "dist-server",
-        ".next",
-        "**/*.d.ts",
-        "**/*.config.*",
-        "**/types/**",
-      ],
+      exclude: ["node_modules", ".next", "**/*.d.ts", "**/*.config.*", "**/types/**"],
     },
   },
   resolve: {

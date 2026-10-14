@@ -107,7 +107,7 @@ jobs:
       - name: Setup toolchain and install dependencies
         uses: ./tooling/github/setup
 
-      # The suites boot dist-server/index.mjs (the harness at
+      # The suites boot the server's source with the built .next (the harness at
       # apps/web/__tests__/e2e/harness/production-stack.ts), so the web app and
       # what it depends on is all a shard builds.
       - name: Build

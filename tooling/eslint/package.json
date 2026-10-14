@@ -17,6 +17,7 @@
     "@eslint/js": "catalog:",
     "@next/eslint-plugin-next": "^16.4.0",
     "@stylistic/eslint-plugin": "^5.10.0",
+    "eslint": "catalog:",
     "eslint-plugin-jsx-a11y-x": "^0.2.0",
     "eslint-plugin-turbo": "^2.11.7",
     "eslint-plugin-unused-imports": "^4.4.1",
@@ -27,7 +28,6 @@
     "@norish/prettier-config": "workspace:*",
     "@norish/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },

@@ -109,45 +109,19 @@ RUN pnpm run build && \
   rm -rf apps/web/.next/standalone/node_modules/typescript \
   apps/web/.next/standalone/node_modules/ffmpeg-static
 
-# Create isolated production deployment with pnpm deploy. It installs the
-# versions pnpm-lock.yaml records (a --legacy deploy re-resolved every range on
-# each build, so the image held whatever was newest that day).
+# Create the production deployment with pnpm deploy, isolated like every
+# other install: node_modules/.pnpm is the store, and every package, the
+# @norish/* workspace copies included, loads its own dependencies from it. It
+# installs the versions pnpm-lock.yaml records.
 RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
-  cd /app/deploy/node_modules && \
-  # pnpm 12's deploy also writes a copy of every package to a virtual store
-  # in .pnpm (about 880 MB), although nodeLinker is hoisted and an install
-  # writes none. Nothing links into it; the hoisted tree has its own copies.
-  rm -rf .pnpm && \
-  # Remove workspace copies (source is in packages/, server code in dist-server/)
-  rm -rf @norish && \
-  # Remove build-only tools that leak through transitive deps
-  rm -rf typescript @esbuild esbuild tsx \
-  @prisma prisma drizzle-kit \
-  eslint @eslint @typescript-eslint eslint-* \
-  prettier prettier-plugin-* \
-  @tailwindcss tailwindcss postcss postcss-* \
-  vitest @vitest @testing-library jsdom \
-  @babel babel-plugin-* babel-preset-* \
-  jest-* @jest fast-check axe-core \
-  rollup terser vite rolldown @rolldown @types \
-  turbo turbo-* && \
-  # Remove packages superseded by system binaries (apk add ffmpeg)
-  rm -rf ffmpeg-static && \
-  # Remove wrong-platform native binaries (keep only linux musl variants for Alpine)
-  # pnpm deploy creates a flat node_modules: scoped packages are at @scope/pkg-name
-  cd @next && find . -maxdepth 1 -type d -name 'swc-*' \
-  ! -name '*linux-x64-musl*' ! -name '*linux-arm64-musl*' \
-  -exec rm -rf {} + && cd .. && \
-  cd @swc && find . -maxdepth 1 -type d -name 'core-*' \
-  ! -name '*linux-x64-musl*' ! -name '*linux-arm64-musl*' \
-  -exec rm -rf {} + && cd .. && \
-  cd @img && find . -maxdepth 1 -type d -name 'sharp-*' \
-  ! -name '*linuxmusl-x64*' ! -name '*linuxmusl-arm64*' \
-  -exec rm -rf {} + && cd .. && \
-  find . -maxdepth 1 -type d -name 'lightningcss-*' \
-  ! -name '*linux-x64-musl*' ! -name '*linux-arm64-musl*' \
-  -exec rm -rf {} + && \
-  rm -rf @next/eslint-plugin-next
+  cd /app/deploy/node_modules/.pnpm && \
+  # Build-time packages that reach the production closure through peers:
+  # TypeScript as tRPC's peer, drizzle-kit as better-auth's optional peer, and
+  # Babel, type declarations and Tailwind with them. The server runs through
+  # tsx and esbuild, so those two stay. ffmpeg-static is superseded by the
+  # system ffmpeg (apk add ffmpeg below).
+  rm -rf typescript@* drizzle-kit@* @babel+* @types+* tailwindcss@* @tailwindcss+* \
+  ffmpeg-static@*
 
 # Strip test files and dev configs from packages/ before they get copied to runtime.
 # This avoids shipping test fixtures, vitest configs, and TS build configs.
@@ -226,13 +200,15 @@ RUN if [ "${UID}" != "1000" ] || [ "${GID}" != "1000" ]; then \
   fi
 
 # --- Minimal Next.js runtime files for the custom server ---
-# We run our own bundled server from dist-server, so we only need the built
-# `.next` output plus the small config files Next reads at startup.
+# The custom server runs from source, so only the built `.next` output and the
+# small config files Next reads at startup come over.
 COPY --from=build --chown=${UID}:${GID} /app/apps/web/.next/standalone/apps/web/.next/ ./apps/web/.next/
 COPY --from=build --chown=${UID}:${GID} /app/apps/web/next.config.js ./apps/web/next.config.js
 COPY --from=build --chown=${UID}:${GID} /app/apps/web/config/next-intl-request-config-path.js ./apps/web/config/next-intl-request-config-path.js
 
 # --- Production node_modules from pnpm deploy (complete runtime deps) ---
+# It stays at /app/node_modules: Next's links in .next/node_modules (pg, pino,
+# sharp) point at ../../../../node_modules/.pnpm/…, which resolves only from here.
 COPY --from=build --chown=${UID}:${GID} /app/deploy/node_modules/ ./node_modules/
 
 # --- Static + public assets (not included in standalone trace) ---
@@ -241,12 +217,16 @@ COPY --from=build --chown=${UID}:${GID} /app/apps/web/public/ ./apps/web/public/
 COPY --from=build --chown=${UID}:${GID} /app/apps/parser-api/ ./apps/parser-api/
 COPY --from=build --chown=${UID}:${GID} /app/.uv/python/ /app/.uv/python/
 
-# --- Custom server entry point (@norish/* code is compiled into this bundle) ---
-COPY --from=build --chown=${UID}:${GID} /app/dist-server/ ./dist-server/
+# --- Custom server, run from source through tsx ---
+# Its package.json says "type": "module". No tsconfig.json comes over: from
+# /app or /app/apps/web, tsx would apply apps/web's @norish/queue/* path alias
+# into /app/packages and load a second queue registry.
+COPY --from=build --chown=${UID}:${GID} /app/apps/web/server/ ./apps/web/server/
+COPY --from=build --chown=${UID}:${GID} /app/apps/web/package.json ./apps/web/package.json
 
 # --- Workspace packages: runtime data files (AI prompts, migrations, etc.) ---
-# The @norish/* TypeScript code is compiled into dist-server, but some packages
-# contain runtime data files (e.g. .txt prompt templates) read from disk.
+# The @norish/* code runs from the deployed copies in node_modules, but some
+# packages contain runtime data files (e.g. .txt prompt templates) read from disk.
 COPY --from=build --chown=${UID}:${GID} /app/packages/ ./packages/
 
 # Create upload and bin parent directories only.
@@ -274,4 +254,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 ENTRYPOINT ["norish-entrypoint"]
 
 # Run directly with node; the custom server starts the embedded parser API when needed
-CMD ["node", "/app/dist-server/index.mjs"]
+CMD ["node", "--import", "tsx", "/app/apps/web/server/index.ts"]

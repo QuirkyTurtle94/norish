@@ -5,10 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch server/index.ts",
-    "build": "pnpm run build:web && pnpm run build:server",
+    "build": "pnpm run build:web",
     "build:web": "next build",
-    "build:server": "tsdown --config ./tsdown.config.ts",
-    "start": "node ../../dist-server/index.mjs",
+    "start": "node --import tsx server/index.ts",
     "test": "vitest --config ./vitest.config.ts",
     "test:run": "vitest run --config ./vitest.config.ts",
     "test:e2e": "playwright test -c __tests__/e2e/playwright.config.ts",
@@ -68,6 +67,7 @@
     "server-only": "catalog:",
     "serwist": "^9.5.13",
     "tailwind-merge": "^3.7.0",
+    "tsx": "catalog:",
     "use-sound": "^5.0.0",
     "usehooks-ts": "^3.1.1",
     "vaul": "^1.1.2",
@@ -75,6 +75,8 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.68",
+    "@ai-sdk/typesafe-ai": "^3.0.18",
     "@norish/eslint-config": "workspace:*",
     "@norish/prettier-config": "workspace:*",
     "@norish/tailwind-config": "workspace:*",
@@ -92,18 +94,19 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "^5.0.4",
+    "ai": "^7.0.139",
     "eslint": "catalog:",
     "fake-indexeddb": "^6.0.0",
     "jsdom": "catalog:",
     "pg": "catalog:",
     "postcss": "catalog:",
     "prettier": "catalog:",
+    "sharp": "^0.35.5",
     "tailwindcss": "catalog:",
-    "tsdown": "^0.23.1",
-    "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "zod": "catalog:"
   },
   "prettier": "@norish/prettier-config"
 }

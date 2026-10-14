@@ -50,7 +50,6 @@ export const baseConfig = defineConfig(
       "**/*.css",
       "**/.changeset",
       "**/dist",
-      "**/dist-server",
       "esm/*",
       "public/*",
       "tests/*",

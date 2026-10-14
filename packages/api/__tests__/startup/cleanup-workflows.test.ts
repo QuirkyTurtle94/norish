@@ -22,9 +22,9 @@ import {
 import { cleanupOldCalendarData } from "@norish/queue/scheduler/old-calendar-cleanup";
 import { cleanupOldGroceries } from "@norish/queue/scheduler/old-groceries-cleanup";
 
-import type { TestDb } from "../../../helpers/db-test-helpers";
-import { createTestRecipeStep, getTestDb } from "../../../helpers/db-test-helpers";
-import { RepositoryTestBase } from "../../../helpers/repository-test-base";
+import type { TestDb } from "../../../db/__tests__/helpers/db-test-helpers";
+import { createTestRecipeStep, getTestDb } from "../../../db/__tests__/helpers/db-test-helpers";
+import { RepositoryTestBase } from "../../../db/__tests__/helpers/repository-test-base";
 
 const testBase = new RepositoryTestBase("cleanup_workflows");
 

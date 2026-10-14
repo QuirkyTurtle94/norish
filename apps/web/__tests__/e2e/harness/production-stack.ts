@@ -13,8 +13,7 @@ import { Client } from "pg";
 import { REDIS_IMAGE } from "../../../../../packages/shared-server/__tests__/helpers/redis";
 
 const WEB_DIR = path.resolve(import.meta.dirname, "../../..");
-const REPO_ROOT = path.resolve(import.meta.dirname, "../../../../..");
-const DIST_SERVER_ENTRY = path.join(REPO_ROOT, "dist-server/index.mjs");
+const BUILD_ID = path.join(WEB_DIR, ".next/BUILD_ID");
 const E2E_RUNTIME_DIR = path.resolve(import.meta.dirname, "../.runtime");
 const START_TIMEOUT_MS = 90_000;
 const STOP_TIMEOUT_MS = 15_000;
@@ -50,9 +49,9 @@ export interface ProductionServer {
 }
 
 function ensureBuilt(): void {
-  if (!existsSync(DIST_SERVER_ENTRY)) {
+  if (!existsSync(BUILD_ID)) {
     throw new Error(
-      `Missing ${DIST_SERVER_ENTRY}. Run pnpm test:e2e at the repository root to build and run the complete browser gate.`
+      `Missing ${BUILD_ID}. Run pnpm test:e2e at the repository root to build and run the complete browser gate.`
     );
   }
 }
@@ -291,7 +290,8 @@ export class ProductionStack {
     }
 
     const capture = this.options.captureLogs === true;
-    const child: ChildProcess = spawn(process.execPath, [DIST_SERVER_ENTRY], {
+    // As production starts it: the server's source through tsx, from apps/web.
+    const child: ChildProcess = spawn(process.execPath, ["--import", "tsx", "server/index.ts"], {
       cwd: WEB_DIR,
       env: this.serverEnvironment(),
       stdio: ["ignore", capture ? "pipe" : "inherit", capture ? "pipe" : "inherit"],

@@ -19,7 +19,7 @@ import { seedDefaultTimerKeywords } from "@norish/api/startup/seed-config";
 import { ServerConfigKeys } from "@norish/config/zod/server-config";
 import { deleteConfig, getConfig, setConfig } from "@norish/db/repositories/server-config";
 
-import { RepositoryTestBase } from "../../../helpers/repository-test-base";
+import { RepositoryTestBase } from "../../../db/__tests__/helpers/repository-test-base";
 
 describe("Timer Keywords Configuration - Seeding & Override Behavior", () => {
   let testUserId: string;
@@ -28,7 +28,7 @@ describe("Timer Keywords Configuration - Seeding & Override Behavior", () => {
   // Default config from file
   const DEFAULT_KEYWORDS = JSON.parse(
     fs.readFileSync(
-      path.resolve(import.meta.dirname, "../../../../../config/src/timer-keywords.default.json"),
+      path.resolve(import.meta.dirname, "../../../config/src/timer-keywords.default.json"),
       "utf-8"
     )
   );

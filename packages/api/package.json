@@ -42,8 +42,11 @@
     "@norish/prettier-config": "workspace:*",
     "@norish/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "domhandler": "^5.0.3",
     "eslint": "catalog:",
+    "heic-convert": "^2.1.0",
     "prettier": "catalog:",
+    "sharp": "^0.35.5",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

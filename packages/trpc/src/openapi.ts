@@ -86,7 +86,7 @@ export function handleOpenApiRequest(req: Request) {
 
 // The spec is published on the docs site, so the server is a variable each reader
 // fills in with their own instance.
-export function getOpenApiDocument() {
+export function getOpenApiDocument(): ReturnType<typeof generateOpenApiDocument> {
   const serverUrl = "{server}/api/v1";
   const document = generateOpenApiDocument(openApiRouter, {
     title: "Norish Recipe API",

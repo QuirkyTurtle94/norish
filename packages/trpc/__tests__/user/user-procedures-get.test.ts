@@ -35,10 +35,6 @@ vi.mock("@norish/shared-server/cache/household", () => ({
   getCachedHouseholdForUser: vi.fn(),
 }));
 
-vi.mock("@norish/api/startup/media-cleanup", () => ({
-  deleteAvatarByFilename: vi.fn(),
-}));
-
 vi.mock("@norish/config/env-config-server", () => ({
   SERVER_CONFIG: {
     MASTER_KEY: "QmFzZTY0RW5jb2RlZE1hc3RlcktleU1pbjMyQ2hhcnM=",

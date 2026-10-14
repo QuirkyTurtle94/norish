@@ -3,7 +3,7 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "outputs": [".next/**", "dist-server/**"]
+      "outputs": [".next/**"]
     },
     "test": {
       "env": ["DATABASE_URL", "MASTER_KEY", "AUTH_URL"]

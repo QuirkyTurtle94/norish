@@ -77,7 +77,7 @@
             "pattern": "tooling/*/"
           }
         ],
-        "prettier.prettierPath": "./node_modules/prettier",
+        "prettier.prettierPath": "./tooling/prettier/node_modules/prettier",
         "prettier.requireConfig": true
       }
     }
