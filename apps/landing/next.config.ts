@@ -24,9 +24,6 @@ const nextConfig: NextConfig = {
     root: resolve(configDirectory, "../.."),
   },
   devIndicators: false,
-  // Otherwise `next build` fails under a coding agent whenever the installed
-  // Next has an advisory. Renovate is where new advisories surface.
-  experimental: { agentUpgrade: false },
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
