@@ -78,7 +78,7 @@ export default function IngredientInput({
       });
       setItems([...formatted, createItem("")]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [ingredients.length]);
   const parseIngredient = useCallback(
     (item: IngredientItem, order: number): ParsedIngredient | null => {

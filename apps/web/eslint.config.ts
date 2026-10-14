@@ -36,7 +36,7 @@ export default defineConfig(
     rules: {
       // Playwright names its fixture callback `use`, and the React Hooks rule
       // reads every call of it as the `use` hook. Nothing here is a component.
-      "react-hooks/rules-of-hooks": "off",
+      "@eslint-react/rules-of-hooks": "off",
       // `async ({}, use) => {}` is how a fixture declares it takes no fixtures.
       "no-empty-pattern": "off",
       // The harness composes the environment of a real server child process,

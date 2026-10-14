@@ -131,7 +131,7 @@ export function DesktopTimeline({ onAddItem, onNoteClick, onRecipeClick }: Deskt
     const rect = containerRef.current.getBoundingClientRect();
 
     return rect.top + window.scrollY;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [_windowHeight]);
 
   // Window virtualizer (like mobile/recipe grid)

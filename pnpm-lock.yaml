@@ -1437,9 +1437,6 @@ importers:
       eslint-plugin-jsx-a11y-x:
         specifier: ^0.2.0
         version: 0.2.0(eslint@10.12.0(jiti@2.7.0))
-      eslint-plugin-react-hooks:
-        specifier: ^7.1.1
-        version: 7.1.1(eslint@10.12.0(jiti@2.7.0))
       eslint-plugin-turbo:
         specifier: ^2.11.7
         version: 2.11.7(eslint@10.12.0(jiti@2.7.0))(turbo@2.11.7)
@@ -4852,12 +4849,6 @@ packages:
       eslint:
         optional: true
 
-  eslint-plugin-react-hooks@7.1.1:
-    resolution: {integrity: sha512-f2I7Gw6JbvCexzIInuSbZpfdQ44D7iqdWX01FKLvrPgqxoE7oMj8clOfto8U6vYiz4yd5oKu39rRSVOe1zRu0g==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0 || ^10.0.0
-
   eslint-plugin-react-jsx@5.26.5:
     resolution: {integrity: sha512-OR4E+Lur+QpooICY4YWbgic0Dox9I4mfjXmVDOJqVZ2QpkjF3qUrI2I/BjBvG2TLrCgblaIV3n/KCRA17pJrbg==}
     engines: {node: '>=20.19.0'}
@@ -5180,12 +5171,6 @@ packages:
 
   help-me@5.0.0:
     resolution: {integrity: sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==}
-
-  hermes-estree@0.25.1:
-    resolution: {integrity: sha512-0wUoCcLp+5Ev5pDW2OriHC2MJCbwLwuRx+gAqMTOkGKJJiBCLjtrvy4PWUGn6MIVefecRpzoOZ/UV6iGdOr+Cw==}
-
-  hermes-parser@0.25.1:
-    resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
   hookable@6.1.2:
     resolution: {integrity: sha512-+abwxtiEA52GCVIsQqut3S/uKTbUwYIp4Pe/vv+6py5XiXBCqMZHg6pA6Y5qhgLSEys0/cYuPbO0z1QFj5ZCmg==}
@@ -7160,12 +7145,6 @@ packages:
     peerDependencies:
       zod: 4.6.7
 
-  zod-validation-error@4.0.2:
-    resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      zod: 4.6.7
-
   zod@4.6.7:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
@@ -7326,7 +7305,8 @@ snapshots:
       js-tokens: 4.0.0
       picocolors: 1.1.1
 
-  '@babel/compat-data@7.29.7': {}
+  '@babel/compat-data@7.29.7':
+    optional: true
 
   '@babel/core@7.29.7':
     dependencies:
@@ -7347,6 +7327,7 @@ snapshots:
       semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   '@babel/generator@7.29.8':
     dependencies:
@@ -7363,6 +7344,7 @@ snapshots:
       browserslist: 4.29.3
       lru-cache: 5.1.1
       semver: 6.3.1
+    optional: true
 
   '@babel/helper-globals@7.29.7': {}
 
@@ -7372,6 +7354,7 @@ snapshots:
       '@babel/types': 7.29.8
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   '@babel/helper-module-transforms@7.29.7(@babel/core@7.29.7)':
     dependencies:
@@ -7381,17 +7364,20 @@ snapshots:
       '@babel/traverse': 7.29.10
     transitivePeerDependencies:
       - supports-color
+    optional: true
 
   '@babel/helper-string-parser@7.29.7': {}
 
   '@babel/helper-validator-identifier@7.29.7': {}
 
-  '@babel/helper-validator-option@7.29.7': {}
+  '@babel/helper-validator-option@7.29.7':
+    optional: true
 
   '@babel/helpers@7.29.10':
     dependencies:
       '@babel/template': 7.29.7
       '@babel/types': 7.29.8
+    optional: true
 
   '@babel/parser@7.29.9':
     dependencies:
@@ -9653,7 +9639,8 @@ snapshots:
 
   content-type@2.1.0: {}
 
-  convert-source-map@2.0.0: {}
+  convert-source-map@2.0.0:
+    optional: true
 
   cookie-es@1.2.3: {}
 
@@ -9981,17 +9968,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@7.1.1(eslint@10.12.0(jiti@2.7.0)):
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/parser': 7.29.9
-      eslint: 10.12.0(jiti@2.7.0)
-      hermes-parser: 0.25.1
-      zod: 4.6.7
-      zod-validation-error: 4.0.2(zod@4.6.7)
-    transitivePeerDependencies:
-      - supports-color
-
   eslint-plugin-react-jsx@5.26.5(eslint@10.12.0(jiti@2.7.0))(typescript@6.0.3):
     dependencies:
       '@eslint-react/ast': 5.26.5(eslint@10.12.0(jiti@2.7.0))(typescript@6.0.3)
@@ -10269,7 +10245,8 @@ snapshots:
 
   fuse.js@7.5.0: {}
 
-  gensync@1.0.0-beta.2: {}
+  gensync@1.0.0-beta.2:
+    optional: true
 
   get-caller-file@2.0.5: {}
 
@@ -10385,12 +10362,6 @@ snapshots:
       libheif-js: 1.23.5
 
   help-me@5.0.0: {}
-
-  hermes-estree@0.25.1: {}
-
-  hermes-parser@0.25.1:
-    dependencies:
-      hermes-estree: 0.25.1
 
   hookable@6.1.2: {}
 
@@ -10577,7 +10548,8 @@ snapshots:
 
   json-stable-stringify-without-jsonify@1.0.1: {}
 
-  json5@2.2.3: {}
+  json5@2.2.3:
+    optional: true
 
   jsonrepair@3.15.0: {}
 
@@ -10746,6 +10718,7 @@ snapshots:
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
+    optional: true
 
   luxon@3.7.2: {}
 
@@ -11680,7 +11653,8 @@ snapshots:
 
   secure-json-parse@4.1.1: {}
 
-  semver@6.3.1: {}
+  semver@6.3.1:
+    optional: true
 
   semver@7.8.5: {}
 
@@ -12337,7 +12311,8 @@ snapshots:
 
   y18n@5.0.8: {}
 
-  yallist@3.1.1: {}
+  yallist@3.1.1:
+    optional: true
 
   yaml@2.9.1: {}
 
@@ -12398,10 +12373,6 @@ snapshots:
       readable-stream: 4.8.0
 
   zod-openapi@5.4.6(zod@4.6.7):
-    dependencies:
-      zod: 4.6.7
-
-  zod-validation-error@4.0.2(zod@4.6.7):
     dependencies:
       zod: 4.6.7
 

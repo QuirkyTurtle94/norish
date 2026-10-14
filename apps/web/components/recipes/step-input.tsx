@@ -132,7 +132,7 @@ export default function StepInput({
         createStepItem("", []),
       ]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [steps.length]);
   const emitChanges = useCallback(
     (updatedItems: StepItem[]) => {

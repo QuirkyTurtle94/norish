@@ -39,7 +39,7 @@ export default function SearchInput() {
       skipNextDebounceRef.current = true;
       setInputValue(filters.rawInput);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line @eslint-react/exhaustive-deps
   }, [filters.rawInput]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

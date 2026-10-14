@@ -65,7 +65,10 @@ export default function JoinCodeCard() {
   // Now TypeScript knows household has joinCode fields
   const adminHousehold = household as HouseholdAdminSettingsDto;
   const joinCodeExpired = adminHousehold.joinCodeExpiresAt
-    ? new Date(adminHousehold.joinCodeExpiresAt) < new Date()
+    ? // The countdown above re-renders this card every second, so the clock read
+      // here is never older than that.
+      // eslint-disable-next-line @eslint-react/purity
+      new Date(adminHousehold.joinCodeExpiresAt) < new Date()
     : true;
   const handleCopyJoinCode = async () => {
     // Type guard ensures household has joinCode

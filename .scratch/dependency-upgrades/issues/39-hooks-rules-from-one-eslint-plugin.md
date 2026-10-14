@@ -1,6 +1,6 @@
 # 39 — Hooks rules from one ESLint plugin
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md` decision 10, ticket 12. Found in the branch review on 2026-10-13.
@@ -25,10 +25,13 @@ Today two plugins check the same things, and one set is switched off by hand.
 
 ## Acceptance criteria
 
-- [ ] `tooling/eslint` no longer depends on eslint-plugin-react-hooks, and no rule is switched off for being a duplicate.
-- [ ] `pnpm lint` reports no new errors, and the warning count does not grow.
+- [x] `tooling/eslint` no longer depends on eslint-plugin-react-hooks, and no rule is switched off for being a duplicate.
+- [x] `pnpm lint` reports no new errors, and the warning count does not grow.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
 - 2026-10-14 — The maintainer confirmed: remove eslint-plugin-react-hooks for good, with no later re-add for the two compiler-only rules. Lands before 47.
+- 2026-10-14 (implemented) — eslint-plugin-react-hooks is gone from `tooling/eslint` and the lockfile. The `recommended-typescript` preset already has `exhaustive-deps` as a warning and leaves `refs` and `immutability` off, so the only override left is `set-state-in-effect: off`. The six `eslint-disable` comments and the E2E `rules-of-hooks` override now name `@eslint-react`.
+  - @eslint-react's `purity` is stricter than react-hooks' compiler-based one and found three render-time clock reads: the calendar's initial date became a lazy initial state, and the join-code card (re-rendered every second by its countdown) and the landing footer (a server component) carry a disable with the reason. Its `globals` is not in the preset, so it is off; react-hooks' version had reported nothing.
+  - Lint, errors/warnings: apps/web 0/599 → 0/598 (the calendar's lazy state removed one `use-state` warning), apps/landing 0/15 → 0/15, shared-react 0/2 and ui 0/0 unchanged.
