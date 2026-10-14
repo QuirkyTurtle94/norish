@@ -45,6 +45,18 @@ export default defineConfig(
     },
   },
   {
+    // The service worker has its own type program (tsconfig.sw.json, with the
+    // WebWorker lib), which the project service does not find for it.
+    files: ["app/sw.ts"],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        project: "./tsconfig.sw.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
     // A skeleton's rows are placeholders: they have no identity and never
     // reorder, so their position is the only key they have.
     files: ["components/skeleton/**/*.tsx"],

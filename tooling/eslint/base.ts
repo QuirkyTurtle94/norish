@@ -6,6 +6,8 @@ import { defineConfig, includeIgnoreFile } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+import { sonarjsConfig } from "./sonarjs.ts";
+
 const turboRecommendedRules =
   (
     turboPlugin as {
@@ -133,6 +135,30 @@ export const baseConfig = defineConfig(
           next: ["const", "let", "var"],
         },
       ],
+    },
+  },
+  sonarjsConfig,
+  {
+    // Rules that still have findings, each off until the ticket named fixes
+    // them (.scratch/sonarjs-lint). This block goes with the last of them.
+    rules: {
+      // 02
+      "sonarjs/assertions-in-tests": "off",
+      "sonarjs/file-permissions": "off",
+      "sonarjs/jsx-no-leaked-render": "off",
+      "sonarjs/no-all-duplicated-branches": "off",
+      "sonarjs/no-alphabetical-sort": "off",
+      "sonarjs/no-clear-text-protocols": "off",
+      "sonarjs/no-floating-point-equality": "off",
+      "sonarjs/no-globals-shadowing": "off",
+      "sonarjs/no-invariant-returns": "off",
+      "sonarjs/no-os-command-from-path": "off",
+      "sonarjs/no-try-promise": "off",
+      "sonarjs/pseudo-random": "off",
+      // 03
+      "sonarjs/super-linear-regex": "off",
+      // 04
+      "sonarjs/deprecation": "off",
     },
   },
   {
