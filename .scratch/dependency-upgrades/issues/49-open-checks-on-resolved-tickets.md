@@ -33,3 +33,4 @@ Tickets 17 "Upgraded instance" and 18 "Boot twice" stay as they are: the maintai
 
 - Filed 2026-10-13 from the branch review.
 - 2026-10-14 — Ticket 24's Warm idle check removed; the maintainer confirmed the lazy workers go (architecture ticket 01).
+- 2026-10-14 (worked) — **18, Production smoke: done**, ticked in 18 (a Job Scheduler run fired on the production image). **16, pnpm 12 everywhere:** devcontainer and Docker pass; CI waits for the branch to be pushed after the release-age block lifts (~18:15 CEST). **16, Reproducible:** two builds an hour apart from the same lockfile are identical, but not a day apart. Both stay open in 16 with what was seen. Status stays `ready-for-agent` until those two close.

@@ -45,7 +45,7 @@ After ticket 17, the remaining breaking surface doesn't touch Norish:
 - [x] **One ioredis.** `pnpm why ioredis` shows one 6.x copy, and every client sets `protocol: 2`.
 - [ ] **Boot twice.** A real-Redis test starts from a 5.x-created repeatable, boots twice on 6, and ends with exactly one scheduler per task and no legacy keys.
 - [x] **Tests.** The queue tests pass, including ticket 17's scheduler and client assertions.
-- [ ] **Production smoke.** On a production build: a scheduled task fires, an enrichment runs, a URL import and a paste import run, and the admin job-queue view lists jobs.
+- [x] **Production smoke.** On a production build: a scheduled task fires, an enrichment runs, a URL import and a paste import run, and the admin job-queue view lists jobs.
 - [x] **Docs.** The Redis version is aligned in `README.md` and the docs.
 - [x] **Release notes.** An Upgrade note that the queue upgrade is one-way: back up Redis before upgrading if you might roll back.
 - [x] **Ticket 24.** Its outcome is recorded in its comments.
@@ -61,3 +61,4 @@ After ticket 17, the remaining breaking surface doesn't touch Norish:
   - **Docs:** README and `QuickStartCompose` now show `redis:8.10.1`, as the compose files do. **Release notes:** the one-way queue upgrade note.
   - **E2E:** 173 passed. The realtime restart flake was traced to the scenario before it and fixed in its own commit; one enrichment scenario failure is being chased as a flake (it passes alone).
 
+- 2026-10-14 (ticket 49) — Production smoke closed. On the production image built for ticket 43 (Postgres, Redis 8.10.1, Obscura), the boot registered six Job Schedulers at `0 0 * * *`. Promoting the scheduler's next run of `groceries-cleanup` (`repeat:groceries-cleanup:1792022400000`, due at midnight) made the scheduled-tasks worker log "Processing scheduled task" and "Old groceries cleanup complete"; the job ended `completed`, and the scheduler had queued the following midnight's run (`…:1792108800000`). A URL import ran in the same session; enrichment, paste imports and the admin job views are covered by the E2E suite, as recorded above.
