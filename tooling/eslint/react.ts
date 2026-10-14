@@ -40,6 +40,16 @@ export const reactConfig = defineConfig(
           message:
             'A hook or component built inside a function starts with "use memo", or the React Compiler skips it.',
         })),
+        // React Compiler 1.0 cannot lower a `finally`, and skips the whole
+        // component or hook that has one, event handlers included.
+        ...[
+          ":function[id.name=/^(use[A-Z0-9]|[A-Z])/] TryStatement[finalizer]",
+          "VariableDeclarator[id.name=/^(use[A-Z0-9]|[A-Z])/] > :function TryStatement[finalizer]",
+        ].map((selector) => ({
+          selector,
+          message:
+            "The React Compiler skips a component or hook with a `finally` in it: chain `.finally()` on the promise instead.",
+        })),
       ],
     },
   },
