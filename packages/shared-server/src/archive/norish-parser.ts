@@ -177,6 +177,8 @@ export type ParsedNorishRecipe = {
   droppedCuisines: string[];
   importedRating?: number;
   importedFavorite?: boolean;
+  /** Titles of the cookbooks the exporter filed the recipe under */
+  cookbooks: string[];
 };
 
 /**
@@ -261,6 +263,7 @@ export async function parseNorishRecipeToDTO(
     authorName: _authorName,
     rating,
     favorite,
+    cookbooks,
     steps,
     image: wireImage,
     images: wireImages,
@@ -366,5 +369,6 @@ export async function parseNorishRecipeToDTO(
     droppedCuisines,
     importedRating: rating,
     importedFavorite: favorite,
+    cookbooks,
   };
 }

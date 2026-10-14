@@ -197,27 +197,33 @@ export async function recipeExistsByUrlForPolicy(
   return { exists: existing !== null, existingRecipeId: existing?.id };
 }
 
+/** The recipe an archive entry overwrites, and how it was found. */
+export type ExistingRecipeMatch = { recipeId: string; by: "url" | "name" };
+
 /**
  * Check if a recipe already exists within a household context.
  * First checks by URL (if provided), then falls back to exact title match.
- * Returns the existing recipe ID if found, null otherwise.
+ * A title match never crosses URLs: where both recipes carry one and they
+ * differ, they are two recipes sharing a name (ADR-0022).
  */
 export async function findExistingRecipe(
   userIds: string[],
   url: string | null | undefined,
   title: string
-): Promise<string | null> {
+): Promise<ExistingRecipeMatch | null> {
+  const trimmedUrl = url?.trim();
+
   // First try to find by URL if provided (most reliable)
-  if (url && url.trim()) {
+  if (trimmedUrl) {
     const byUrl = await db.query.recipes.findFirst({
-      where: and(inArray(recipes.userId, userIds), eq(recipes.url, url.trim())),
+      where: and(inArray(recipes.userId, userIds), eq(recipes.url, trimmedUrl)),
       columns: { id: true },
     });
 
     if (byUrl) {
       dbLogger.debug({ url, recipeId: byUrl.id }, "Found existing recipe by URL");
 
-      return byUrl.id;
+      return { recipeId: byUrl.id, by: "url" };
     }
   }
 
@@ -225,8 +231,13 @@ export async function findExistingRecipe(
   const trimmedTitle = title.trim();
 
   if (trimmedTitle) {
+    const titleMatch = and(inArray(recipes.userId, userIds), ilike(recipes.name, trimmedTitle));
     const byTitle = await db.query.recipes.findFirst({
-      where: and(inArray(recipes.userId, userIds), ilike(recipes.name, trimmedTitle)),
+      // Any URL a stored recipe carries here differs from this one, or the
+      // URL lookup above would have found it.
+      where: trimmedUrl
+        ? and(titleMatch, or(isNull(recipes.url), eq(recipes.url, "")))
+        : titleMatch,
       columns: { id: true },
     });
 
@@ -236,7 +247,7 @@ export async function findExistingRecipe(
         "Found existing recipe by title"
       );
 
-      return byTitle.id;
+      return { recipeId: byTitle.id, by: "name" };
     }
   }
 

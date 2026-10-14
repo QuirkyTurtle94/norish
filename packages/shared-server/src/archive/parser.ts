@@ -3,8 +3,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import JSZip from "jszip";
 
+import type { CreateRecipeResult } from "@norish/db/repositories/recipes";
 import { SERVER_CONFIG } from "@norish/config/env-config-server";
 import { dashboardRecipe, findExistingRecipe } from "@norish/db";
+import {
+  addRecipeToCookbook,
+  createCookbook,
+  findOwnCookbookIdByTitle,
+} from "@norish/db/repositories/cookbooks";
 import { listCuisines } from "@norish/db/repositories/cuisines";
 import { addFavorite } from "@norish/db/repositories/favorites";
 import { rateRecipe } from "@norish/db/repositories/ratings";
@@ -53,6 +59,12 @@ export enum ArchiveFormat {
 
 export type ImportResult = {
   imported: RecipeDashboardDTO[];
+  /**
+   * The creation results of the recipes this run inserted, for the enrichment
+   * hand-off. A recipe the run overwrote is not here: like every other import
+   * path, an existing recipe is not announced again.
+   */
+  inserted: CreateRecipeResult[];
   errors: Array<{ file: string; error: string }>; // keep going on partial failures
   /** Recipes that landed, minus something — an unknown cuisine name, say */
   notes: Array<{ file: string; note: string }>;
@@ -294,6 +306,8 @@ export type RecipeImportItem = {
   importedRating?: number;
   /** Optional favourite mark to apply for the importing user */
   importedFavorite?: boolean;
+  /** Titles of the cookbooks the source files this recipe under */
+  cookbooks?: string[];
   /** What this recipe lost on the way in, surfaced in the import result */
   note?: { file: string; note: string };
 };
@@ -339,6 +353,42 @@ async function applyImportedMarks(
 }
 
 /**
+ * Files landed recipes into the importer's own cookbooks by title (ADR-0022):
+ * the one already bearing it, or a new one. Each title is looked up once per
+ * run, filing only ever adds a membership, and a failure is logged and never
+ * fails the import, like the imported rating.
+ */
+function createCookbookFiler(userId: string | undefined) {
+  const cookbookIds = new Map<string, string>();
+
+  return async (recipeId: string, titles: string[] | undefined): Promise<void> => {
+    if (!userId || !titles) return;
+
+    for (const title of titles) {
+      const trimmed = title.trim();
+      const key = trimmed.toLowerCase();
+
+      if (!trimmed) continue;
+
+      try {
+        let cookbookId = cookbookIds.get(key);
+
+        if (!cookbookId) {
+          cookbookId =
+            (await findOwnCookbookIdByTitle(userId, trimmed)) ??
+            (await createCookbook({ userId, title: trimmed })).id;
+          cookbookIds.set(key, cookbookId);
+        }
+
+        await addRecipeToCookbook(cookbookId, recipeId);
+      } catch (error) {
+        log.warn({ err: error, recipeId, title: trimmed }, "Failed to file imported recipe");
+      }
+    }
+  };
+}
+
+/**
  * Generic import loop that handles duplicate detection, persistence, and progress reporting.
  * Takes an async generator that yields parsed recipe DTOs or parsing errors.
  */
@@ -354,8 +404,14 @@ export async function importRecipeItems(
   ) => void
 ): Promise<ImportResult> {
   const imported: RecipeDashboardDTO[] = [];
+  const inserted: CreateRecipeResult[] = [];
   const errors: Array<{ file: string; error: string }> = [];
   const notes: Array<{ file: string; note: string }> = [];
+  // Every recipe this run has written. A second entry sharing its name is a
+  // different recipe, never a correction, so it is found again by URL only:
+  // an archive never overwrites its own recipes by name (ADR-0022).
+  const landed = new Set<string>();
+  const fileIntoCookbooks = createCookbookFiler(userId);
   let current = 0;
 
   for await (const item of items) {
@@ -371,7 +427,7 @@ export async function importRecipeItems(
     }
 
     // Handle regular import items
-    const { dto, fileName, importedRating, importedFavorite, note } = item;
+    const { dto, fileName, importedRating, importedFavorite, cookbooks, note } = item;
 
     // Recorded only once the recipe actually lands: an entry that then fails
     // is reported as an error, and has nothing to say about what it lost.
@@ -381,7 +437,9 @@ export async function importRecipeItems(
 
     try {
       // Check for duplicates
-      const existingId = await findExistingRecipe(userIds, dto.url, dto.name);
+      const match = await findExistingRecipe(userIds, dto.url, dto.name);
+      const existingId =
+        match && (match.by === "url" || !landed.has(match.recipeId)) ? match.recipeId : null;
 
       if (existingId) {
         const overwriteUserId = userId ?? userIds[0];
@@ -401,7 +459,9 @@ export async function importRecipeItems(
           { userId: overwriteUserId }
         );
 
+        landed.add(existingId);
         await applyImportedMarks(userId, existingId, importedRating, importedFavorite);
+        await fileIntoCookbooks(existingId, cookbooks);
 
         const updatedRecipe = await dashboardRecipe(existingId);
 
@@ -425,7 +485,10 @@ export async function importRecipeItems(
       });
 
       if (created) {
+        landed.add(created.recipeId);
+        if (created.status === "inserted") inserted.push(created);
         await applyImportedMarks(userId, created.recipeId, importedRating, importedFavorite);
+        await fileIntoCookbooks(created.recipeId, cookbooks);
       }
 
       // Fetch recipe AFTER saving rating so averageRating is included in the DTO
@@ -444,7 +507,7 @@ export async function importRecipeItems(
     }
   }
 
-  return { imported, errors, notes };
+  return { imported, inserted, errors, notes };
 }
 
 /**
@@ -471,7 +534,7 @@ async function* generateNorishRecipes(
     }
 
     try {
-      const { dto, droppedCuisines, importedRating, importedFavorite } =
+      const { dto, droppedCuisines, importedRating, importedFavorite, cookbooks } =
         await parseNorishRecipeToDTO(
           entry.json,
           createArchiveRecipeId(),
@@ -486,6 +549,7 @@ async function* generateNorishRecipes(
         fileName,
         importedRating,
         importedFavorite,
+        cookbooks,
         note:
           droppedCuisines.length > 0
             ? {

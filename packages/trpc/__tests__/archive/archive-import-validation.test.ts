@@ -8,7 +8,7 @@ import { archive } from "../mocks/realtime/archive";
 import { recipes } from "../mocks/realtime/recipes";
 
 const mockArchiveParser = vi.hoisted(() => ({
-  importArchive: vi.fn().mockResolvedValue({ imported: [], skipped: [], errors: [] }),
+  importArchive: vi.fn().mockResolvedValue({ imported: [], inserted: [], errors: [], notes: [] }),
   calculateBatchSize: vi.fn(() => 10),
   getArchiveInfo: vi.fn().mockResolvedValue({ format: "paprika", count: 1 }),
   ArchiveFormat: {
@@ -22,6 +22,12 @@ const mockArchiveParser = vi.hoisted(() => ({
 }));
 
 vi.mock("@norish/shared-server/archive/parser", () => mockArchiveParser);
+
+const mockAnnounceUsableRecipe = vi.hoisted(() => vi.fn());
+
+vi.mock("@norish/queue/enrichment/announce", () => ({
+  announceUsableRecipe: mockAnnounceUsableRecipe,
+}));
 
 vi.mock("@norish/shared-server/logger", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@norish/shared-server/logger")>();
@@ -151,7 +157,7 @@ describe("archiveRouter.importArchive", () => {
       ) => {
         onProgress(1, recipe);
 
-        return { imported: [recipe], skipped: [], errors: [] };
+        return { imported: [recipe], inserted: [], errors: [], notes: [] };
       }
     );
 
@@ -201,5 +207,50 @@ describe("archiveRouter.importArchive", () => {
       expect.objectContaining({ imported: 1 }),
       { userId: "user-1" }
     );
+  });
+  it("announces each recipe the import inserted for automatic enrichment", async () => {
+    const inserted = { status: "inserted", recipeId: "recipe-new" };
+
+    mockArchiveParser.getArchiveInfo.mockResolvedValue({ format: "paprika", count: 2 });
+    mockArchiveParser.importArchive.mockResolvedValue({
+      imported: [{ id: "recipe-new" }, { id: "recipe-overwritten" }],
+      inserted: [inserted],
+      errors: [],
+      notes: [],
+    });
+
+    const caller = archiveRouter.createCaller({
+      user: { id: "user-1" },
+      userIds: ["user-1"],
+      householdKey: "house-1",
+    } as any);
+
+    const formData = new FormData();
+    const zip = new JSZip();
+
+    zip.file("recipe.paprikarecipe", "dummy");
+    const zipBuffer = await zip.generateAsync({ type: "uint8array" });
+    const zipArrayBuffer = zipBuffer.buffer.slice(
+      zipBuffer.byteOffset,
+      zipBuffer.byteOffset + zipBuffer.byteLength
+    ) as ArrayBuffer;
+
+    formData.append(
+      "file",
+      new File([zipArrayBuffer], "recipes.paprikarecipes", { type: "application/zip" })
+    );
+
+    await caller.importArchive(formData);
+
+    // The import runs detached from the mutation; let it settle.
+    for (let i = 0; i < 5; i += 1) await new Promise((resolve) => setImmediate(resolve));
+
+    // Only what the loop inserted: the overwritten recipe is not announced again.
+    expect(mockAnnounceUsableRecipe).toHaveBeenCalledTimes(1);
+    expect(mockAnnounceUsableRecipe).toHaveBeenCalledWith(inserted, {
+      userId: "user-1",
+      householdKey: "user-1",
+      householdUserIds: null,
+    });
   });
 });

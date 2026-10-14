@@ -60,6 +60,12 @@ vi.mock("@norish/db/repositories/favorites", () => ({
   addFavorite: mockAddFavorite,
 }));
 
+vi.mock("@norish/db/repositories/cookbooks", () => ({
+  findOwnCookbookIdByTitle: vi.fn(),
+  createCookbook: vi.fn(),
+  addRecipeToCookbook: vi.fn(),
+}));
+
 vi.mock("@norish/db/repositories/cuisines", () => ({
   listCuisines: vi.fn().mockResolvedValue([]),
 }));
@@ -161,7 +167,7 @@ describe("archive import loop favourite extra", () => {
   });
 
   it("applies the favourite to the matched-and-overwritten recipe for the importing user", async () => {
-    mockFindExistingRecipe.mockResolvedValue("existing-recipe-id");
+    mockFindExistingRecipe.mockResolvedValue({ recipeId: "existing-recipe-id", by: "name" });
     mockDashboardRecipe.mockResolvedValue({ id: "existing-recipe-id", name: "Marked Soup" });
 
     const { importRecipeItems } = await import("@norish/shared-server/archive/parser");

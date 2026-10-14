@@ -3,6 +3,7 @@ import type {
   ArchiveImportNote,
   RecipeDashboardDTO,
 } from "@norish/shared/contracts";
+import { announceUsableRecipe } from "@norish/queue/enrichment/announce";
 import {
   ArchiveFormat,
   calculateBatchSize,
@@ -14,6 +15,7 @@ import { trpcLogger as log } from "@norish/shared-server/logger";
 import { archive } from "@norish/shared-server/realtime/archive";
 import { recipes } from "@norish/shared-server/realtime/recipes";
 
+import type { AuthedProcedureContext } from "../../middleware";
 import { formDataInputSchema, getUploadedFile } from "../../form-data";
 import { authedProcedure } from "../../middleware";
 import { router } from "../../trpc";
@@ -94,16 +96,14 @@ const importArchive = authedProcedure
       );
 
       // Run import in background (fire-and-forget)
-      runArchiveImportAsync(ctx.user.id, ctx.userIds, ctx.householdKey, buffer, total).catch(
-        (err) => {
-          log.error({ err, userId: ctx.user.id }, "Archive import failed");
-          void archive.publish(
-            "archiveCompleted",
-            { imported: 0, notes: [], errors: [{ file: "archive", error: String(err) }] },
-            { userId: ctx.user.id }
-          );
-        }
-      );
+      runArchiveImportAsync(ctx, buffer, total).catch((err) => {
+        log.error({ err, userId: ctx.user.id }, "Archive import failed");
+        void archive.publish(
+          "archiveCompleted",
+          { imported: 0, notes: [], errors: [{ file: "archive", error: String(err) }] },
+          { userId: ctx.user.id }
+        );
+      });
 
       return { success: true, total };
     } catch (error) {
@@ -120,12 +120,12 @@ const importArchive = authedProcedure
  * Automatically detects Mela, Mealie or Tandoor format and uses appropriate parser.
  */
 async function runArchiveImportAsync(
-  userId: string,
-  userIds: string[],
-  householdKey: string,
+  ctx: Pick<AuthedProcedureContext, "user" | "userIds" | "householdKey" | "householdUserIds">,
   buffer: Buffer,
   total: number
 ): Promise<void> {
+  const { userIds, householdKey, householdUserIds } = ctx;
+  const userId = ctx.user.id;
   const allImported: RecipeDashboardDTO[] = [];
   const allErrors: ArchiveImportError[] = [];
   const allNotes: ArchiveImportNote[] = [];
@@ -208,6 +208,12 @@ async function runArchiveImportAsync(
   try {
     // Import archive (auto-detects format)
     const result = await runArchiveImport(userId, userIds, buffer, onProgress);
+
+    // An archive recipe enters the same automatic flow as one from any other
+    // import path; what it overwrote was announced when it was first made.
+    for (const created of result.inserted) {
+      await announceUsableRecipe(created, { userId, householdKey, householdUserIds });
+    }
 
     log.info(
       {
