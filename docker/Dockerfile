@@ -95,6 +95,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=cache,target=/root/.local/share/uv/python \
   UV_PYTHON_DOWNLOADS=0 uv sync --project /app/apps/parser-api --locked --python 3.15
 
+# What the parser never loads from the Python it runs on: the shared library
+# (the interpreter is linked statically, so nothing links it), Tk and its
+# demos, IDLE, the bundled pip and its installer, and the C headers.
+RUN cd /app/.uv/python/cpython-* && \
+  rm -rf lib/libpython3*.so* include share lib/tcl* lib/tk* lib/itcl* lib/thread* \
+  lib/python3.*/tkinter lib/python3.*/idlelib lib/python3.*/turtledemo \
+  lib/python3.*/ensurepip lib/python3.*/site-packages/pip* \
+  lib/python3.*/lib-dynload/_tkinter*
+
 # NODE_ENV matches what CI exports around the same `pnpm run build` (and turbo
 # passes it through to every package build), so the image build can never
 # silently diverge from the build the gates tested. `next build` forces
@@ -103,11 +112,12 @@ ENV NODE_ENV=production \
   DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
   SKIP_ENV_VALIDATION=1
 
+# The image takes .next as it is, less what only the build and the tracer
+# read: the caches, the type output, source maps and the trace files.
 RUN pnpm run build && \
   rm -rf apps/web/.next/cache apps/web/.next/trace \
   apps/web/.next/dev apps/web/.next/diagnostics apps/web/.next/types && \
-  rm -rf apps/web/.next/standalone/node_modules/typescript \
-  apps/web/.next/standalone/node_modules/ffmpeg-static
+  find apps/web/.next -type f \( -name '*.map' -o -name '*.nft.json' \) -delete
 
 # Create the production deployment with pnpm deploy, isolated like every
 # other install: node_modules/.pnpm is the store, and every package, the
@@ -121,17 +131,41 @@ RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   # tsx and esbuild, so those two stay. ffmpeg-static is superseded by the
   # system ffmpeg (apk add ffmpeg below).
   rm -rf typescript@* drizzle-kit@* @babel+* @types+* tailwindcss@* @tailwindcss+* \
-  ffmpeg-static@*
+  ffmpeg-static@* \
+  # SWC compiles only during next build.
+  @next+swc-* && \
+  # Next's ESM build, its docs and its development runtimes: the production
+  # server loads the CommonJS build alone.
+  rm -rf next@*/node_modules/next/dist/esm next@*/node_modules/next/dist/docs && \
+  find next@*/node_modules/next -name '*.runtime.dev.js' -delete && \
+  # Source maps, type declarations and documentation load at no point.
+  find /app/deploy/node_modules -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' \
+  -o -name '*.d.cts' -o -name '*.md' \) -delete && \
+  # Then every store folder nothing reaches any more: the optional peers pnpm
+  # filled from the workspace, and what only the folders above needed.
+  node /app/docker/prune-deploy.mjs /app/deploy/node_modules
 
-# Strip test files and dev configs from packages/ before they get copied to runtime.
-# This avoids shipping test fixtures, vitest configs, and TS build configs.
-RUN rm -rf /app/packages/*/node_modules; \
-  find /app/packages -type d -name '__tests__' -exec rm -rf {} + 2>/dev/null; \
-  find /app/packages -type f \( \
-  -name '*.test.ts' -o -name '*.test.tsx' -o -name '*.spec.ts' -o -name '*.spec.tsx' \
-  -o -name 'vitest.config.*' -o -name 'tsconfig*.json' -o -name 'eslint.config.*' \
-  \) -delete 2>/dev/null; \
-  true
+# The deployed @norish/* copies are the only copy of the workspace code: their
+# tests, build configs and type output (dist holds declarations only) go, and
+# /app/packages/<dir> keeps just package.json and a src link into the copy, so
+# the data read from packages/<dir>/src (prompts, migrations, the icon set)
+# resolves from /app as before. The links resolve once the deploy sits at
+# /app/node_modules.
+RUN for copy in /app/deploy/node_modules/.pnpm/*/node_modules/@norish/*; do \
+  rm -rf "$copy/dist" && \
+  find "$copy" -type d -name '__tests__' -prune -exec rm -rf {} + && \
+  find "$copy" -type f \( -name '*.test.ts' -o -name '*.test.tsx' -o -name 'vitest.config.*' \
+  -o -name 'tsconfig*.json' -o -name 'eslint.config.*' -o -name 'turbo.json' \) -delete; \
+  done && \
+  for dir in /app/packages/*/; do \
+  name=$(node -p "require('${dir}package.json').name") && \
+  copy=$(cd /app/deploy && ls -d node_modules/.pnpm/$(echo $name | tr / +)@*/node_modules/$name 2>/dev/null | head -1) && \
+  if [ -n "$copy" ]; then \
+  mkdir -p "/app/runtime-packages/$(basename $dir)" && \
+  cp "${dir}package.json" "/app/runtime-packages/$(basename $dir)/" && \
+  ln -s "../../$copy/src" "/app/runtime-packages/$(basename $dir)/src"; \
+  fi; \
+  done
 
 ##############################
 # yt-dlp download (cached separately from app build)
@@ -200,19 +234,16 @@ RUN if [ "${UID}" != "1000" ] || [ "${GID}" != "1000" ]; then \
   fi
 
 # --- Minimal Next.js runtime files for the custom server ---
-# The custom server runs from source, so only the built `.next` output and the
-# small config files Next reads at startup come over.
-COPY --from=build --chown=${UID}:${GID} /app/apps/web/.next/standalone/apps/web/.next/ ./apps/web/.next/
-COPY --from=build --chown=${UID}:${GID} /app/apps/web/next.config.js ./apps/web/next.config.js
-COPY --from=build --chown=${UID}:${GID} /app/apps/web/config/next-intl-request-config-path.js ./apps/web/config/next-intl-request-config-path.js
+# The custom server runs from source, so only the built `.next` output comes
+# over: it reads Next's config from .next/required-server-files.json.
+COPY --from=build --chown=${UID}:${GID} /app/apps/web/.next/ ./apps/web/.next/
 
 # --- Production node_modules from pnpm deploy (complete runtime deps) ---
 # It stays at /app/node_modules: Next's links in .next/node_modules (pg, pino,
 # sharp) point at ../../../../node_modules/.pnpm/…, which resolves only from here.
 COPY --from=build --chown=${UID}:${GID} /app/deploy/node_modules/ ./node_modules/
 
-# --- Static + public assets (not included in standalone trace) ---
-COPY --from=build --chown=${UID}:${GID} /app/apps/web/.next/static/ ./apps/web/.next/static/
+# --- Public assets and the parser ---
 COPY --from=build --chown=${UID}:${GID} /app/apps/web/public/ ./apps/web/public/
 COPY --from=build --chown=${UID}:${GID} /app/apps/parser-api/ ./apps/parser-api/
 COPY --from=build --chown=${UID}:${GID} /app/.uv/python/ /app/.uv/python/
@@ -224,10 +255,10 @@ COPY --from=build --chown=${UID}:${GID} /app/.uv/python/ /app/.uv/python/
 COPY --from=build --chown=${UID}:${GID} /app/apps/web/server/ ./apps/web/server/
 COPY --from=build --chown=${UID}:${GID} /app/apps/web/package.json ./apps/web/package.json
 
-# --- Workspace packages: runtime data files (AI prompts, migrations, etc.) ---
-# The @norish/* code runs from the deployed copies in node_modules, but some
-# packages contain runtime data files (e.g. .txt prompt templates) read from disk.
-COPY --from=build --chown=${UID}:${GID} /app/packages/ ./packages/
+# --- Workspace packages: package.json and a src link into the deployed copy ---
+# The code runs from node_modules; the links serve the data files read from
+# packages/<dir>/src (AI prompts, migrations, the icon set).
+COPY --from=build --chown=${UID}:${GID} /app/runtime-packages/ ./packages/
 
 # Create upload and bin parent directories only.
 # Subdirectories (recipes/, avatars/, video-temp/) are created on-demand

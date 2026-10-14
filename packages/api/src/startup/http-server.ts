@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import http from "node:http";
 import { join } from "node:path";
 import next from "next";
@@ -13,6 +14,16 @@ export async function createServer() {
   const dev = SERVER_CONFIG.NODE_ENV === "development";
   const hostname = dev ? "0.0.0.0" : SERVER_CONFIG.HOST;
   const port = SERVER_CONFIG.PORT;
+
+  // Production reads the config `next build` resolved, as Next's own
+  // standalone server does: next.config.js and what it imports at build time
+  // (next-intl's plugin, Serwist) neither ship in the image nor run at boot.
+  if (!dev) {
+    process.env.__NEXT_PRIVATE_STANDALONE_CONFIG ??= JSON.stringify(
+      JSON.parse(readFileSync(join(WEB_APP_DIR, ".next", "required-server-files.json"), "utf8"))
+        .config
+    );
+  }
 
   const app = next({ dev, dir: WEB_APP_DIR, hostname, port, turbopack: dev });
   const handle = app.getRequestHandler();

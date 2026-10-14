@@ -8,6 +8,9 @@ node_modules
 **/.ruff_cache
 *.py[cod]
 .next
+**/.next
+# Local data: development uploads, the production copy and its key.
+.runtime
 .git
 .gitignore
 .env*

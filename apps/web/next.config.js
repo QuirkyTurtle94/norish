@@ -51,7 +51,6 @@ const withNextIntl = createNextIntlPlugin(getNextIntlRequestConfigPath());
 
 export default withSerwist(
   withNextIntl({
-    output: "standalone",
     transpilePackages: workspacePackages,
     turbopack: {
       root: resolve(configDirectory, "../.."),
