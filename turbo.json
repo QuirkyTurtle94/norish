@@ -22,9 +22,6 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "dist-server/**", ".cache/**", "**/*.tsbuildinfo"]
     },
-    "@norish/trpc#build": {
-      "outputs": ["dist/**", ".cache/**", "**/*.tsbuildinfo"]
-    },
     "build:server": {
       "dependsOn": ["^build:server"],
       "cache": false
@@ -44,18 +41,6 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "outputs": ["**/*.tsbuildinfo", ".cache/**"]
-    },
-    "@norish/api#typecheck": {
-      "dependsOn": ["^typecheck", "@norish/trpc#build"],
-      "outputs": ["**/*.tsbuildinfo", ".cache/**"]
-    },
-    "@norish/shared-react#typecheck": {
-      "dependsOn": ["^typecheck", "@norish/trpc#build"],
-      "outputs": ["**/*.tsbuildinfo", ".cache/**"]
-    },
-    "@norish/web#typecheck": {
-      "dependsOn": ["^typecheck", "@norish/trpc#build"],
       "outputs": ["**/*.tsbuildinfo", ".cache/**"]
     },
     "test": {

@@ -12,6 +12,9 @@
       "cache": false,
       "persistent": true,
       "env": ["DATABASE_URL", "MASTER_KEY", "AUTH_URL"]
+    },
+    "typecheck": {
+      "dependsOn": ["$TURBO_EXTENDS$", "@norish/trpc#build"]
     }
   }
 }
