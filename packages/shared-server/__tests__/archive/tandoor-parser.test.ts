@@ -463,14 +463,15 @@ describe("Tandoor Parser", () => {
       expect(dto.categories).toContain("Snack");
     });
 
-    it("calculates total time from working_time + waiting_time", async () => {
+    it("reads working time as prep and waiting time as Other Time", async () => {
       mockRecipe.working_time = 20;
       mockRecipe.waiting_time = 40;
 
       const dto = await parseTandoorRecipeToDTO(mockRecipe, "123e4567-e89b-42d3-a456-426614174000");
 
       expect(dto.prepMinutes).toBe(20);
-      expect(dto.cookMinutes).toBe(40);
+      // Waiting is not cooking: it shows as the rest of the total.
+      expect(dto.cookMinutes).toBeUndefined();
       expect(dto.totalMinutes).toBe(60);
     });
 
@@ -540,7 +541,7 @@ describe("Tandoor Parser", () => {
       expect(dto.systemUsed).toBe("metric");
     });
 
-    it("skips header ingredients", async () => {
+    it("skips a header row with no note, whatever food it carries", async () => {
       mockRecipe.steps[0].ingredients = [
         {
           food: { name: "Dry Ingredients", supermarket_category: null },
@@ -562,6 +563,137 @@ describe("Tandoor Parser", () => {
 
       expect(dto.recipeIngredients).toHaveLength(1);
       expect(dto.recipeIngredients![0].ingredientName).toBe("flour");
+    });
+
+    describe("what a Tandoor reader sees", () => {
+      const recipeId = "123e4567-e89b-42d3-a456-426614174000";
+      const food = (name: string, plural_name?: string) => ({
+        name,
+        plural_name,
+        supermarket_category: null,
+      });
+
+      it("keeps a header row as a Heading from its note, ignoring a stale food", async () => {
+        mockRecipe.steps = [
+          {
+            instruction: "Mix.",
+            ingredients: [
+              { food: food("Dry ingredients"), note: "For the dough", is_header: true },
+              { food: food("flour"), unit: { name: "g" }, amount: 200 },
+            ],
+            order: 0,
+          },
+        ];
+
+        const dto = await parseTandoorRecipeToDTO(mockRecipe, recipeId);
+
+        expect(dto.recipeIngredients).toMatchObject([
+          { ingredientName: "# For the dough", amount: null, unit: null, order: 0 },
+          { ingredientName: "flour", amount: 200, unit: "g", order: 1, foodText: "flour" },
+        ]);
+        // The Heading counts as a line, but is never one of the step's ingredients.
+        expect(dto.steps![0].stepIngredients).toEqual([{ ingredientOrder: 1, share: 1, order: 0 }]);
+      });
+
+      it("keeps a line's note, and a line that is a note alone", async () => {
+        mockRecipe.steps = [
+          {
+            instruction: "Serve.",
+            ingredients: [
+              { food: food("parsley"), amount: 1, note: "chopped" },
+              { note: "salt and pepper to taste" },
+            ],
+            order: 0,
+          },
+        ];
+
+        const dto = await parseTandoorRecipeToDTO(mockRecipe, recipeId);
+
+        expect(dto.recipeIngredients!.map((line) => line.ingredientName)).toEqual([
+          "parsley, chopped",
+          "salt and pepper to taste",
+        ]);
+        expect(dto.steps![0].stepIngredients).toHaveLength(2);
+      });
+
+      it("gives no amount or unit to a line Tandoor says has none", async () => {
+        mockRecipe.steps = [
+          {
+            instruction: "Season.",
+            ingredients: [
+              { food: food("salt"), unit: { name: "pinch" }, amount: 1, no_amount: true },
+              { food: food("pepper"), unit: { name: "g" }, amount: 0 },
+            ],
+            order: 0,
+          },
+        ];
+
+        const dto = await parseTandoorRecipeToDTO(mockRecipe, recipeId);
+
+        expect(dto.recipeIngredients).toMatchObject([
+          { ingredientName: "salt", amount: null, unit: null },
+          { ingredientName: "pepper", amount: null, unit: null },
+        ]);
+      });
+
+      it("names a food in its plural when the amount is not 1", async () => {
+        mockRecipe.steps = [
+          {
+            instruction: "Peel.",
+            ingredients: [
+              { food: food("onion", "onions"), amount: 3 },
+              { food: food("lemon", "lemons"), amount: 1 },
+            ],
+            order: 0,
+          },
+        ];
+
+        const dto = await parseTandoorRecipeToDTO(mockRecipe, recipeId);
+
+        expect(dto.recipeIngredients).toMatchObject([
+          // The line reads as Tandoor shows it and resolves from the food's name.
+          { ingredientName: "onions", foodText: "onion" },
+          { ingredientName: "lemon", foodText: "lemon" },
+        ]);
+      });
+
+      it("renders templated step text, counting header rows in the index", async () => {
+        mockRecipe.steps = [
+          {
+            instruction:
+              "Whisk {{ ingredients[1] }} with {{ingredients[2].food}} ({{ ingredients[2].note }}) for {{ scale(2) }} {minutes}.",
+            ingredients: [
+              { note: "For the batter", is_header: true },
+              { food: food("egg", "eggs"), amount: 2 },
+              {
+                food: food("sugar"),
+                unit: { name: "g", plural_name: "g" },
+                amount: 50,
+                note: "caster",
+              },
+            ],
+            order: 0,
+          },
+        ];
+
+        const dto = await parseTandoorRecipeToDTO(mockRecipe, recipeId);
+
+        expect(dto.steps![0].step).toBe("Whisk 2 eggs with sugar (caster) for 2 minutes.");
+      });
+
+      it("walks the lines in the order the steps are shown", async () => {
+        mockRecipe.steps = [
+          { instruction: "Second", ingredients: [{ food: food("milk"), amount: 1 }], order: 1 },
+          { instruction: "First", ingredients: [{ food: food("flour"), amount: 1 }], order: 0 },
+        ];
+
+        const dto = await parseTandoorRecipeToDTO(mockRecipe, recipeId);
+
+        expect(dto.recipeIngredients!.map((line) => line.ingredientName)).toEqual([
+          "flour",
+          "milk",
+        ]);
+      });
     });
 
     it("filters out empty steps", async () => {
