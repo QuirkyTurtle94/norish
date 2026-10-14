@@ -245,7 +245,7 @@ export async function findExistingRecipe(
 
 export interface RecipeListContext {
   userId: string;
-  householdUserIds: string[] | null;
+  householdUserIds: readonly string[] | null;
   isServerAdmin: boolean;
 }
 

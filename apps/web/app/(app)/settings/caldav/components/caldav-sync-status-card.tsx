@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
+import { ChipButton } from "@/components/shared/chip-button";
 import {
   ArrowPathIcon,
   ChevronLeftIcon,
@@ -94,54 +95,46 @@ export default function CalDavSyncStatusCard() {
       {/* Summary Badges - Clickable Filters */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
-          <Chip<"button">
+          <ChipButton
             aria-pressed={syncStatusFilter === "synced"}
             className="cursor-pointer transition-all"
             color="success"
-            render={(props) => <button {...props} />}
             size="sm"
-            type="button"
             variant={syncStatusFilter === "synced" ? "primary" : "soft"}
             onClick={() => handleFilterClick("synced")}
           >
             {t("statuses.synced")}: {syncStatusSummary.synced}
-          </Chip>
-          <Chip<"button">
+          </ChipButton>
+          <ChipButton
             aria-pressed={syncStatusFilter === "pending"}
             className="cursor-pointer transition-all"
             color="warning"
-            render={(props) => <button {...props} />}
             size="sm"
-            type="button"
             variant={syncStatusFilter === "pending" ? "primary" : "soft"}
             onClick={() => handleFilterClick("pending")}
           >
             {t("statuses.pending")}: {syncStatusSummary.pending}
-          </Chip>
-          <Chip<"button">
+          </ChipButton>
+          <ChipButton
             aria-pressed={syncStatusFilter === "failed"}
             className="cursor-pointer transition-all"
             color="danger"
-            render={(props) => <button {...props} />}
             size="sm"
-            type="button"
             variant={syncStatusFilter === "failed" ? "primary" : "soft"}
             onClick={() => handleFilterClick("failed")}
           >
             {t("statuses.failed")}: {syncStatusSummary.failed}
-          </Chip>
-          <Chip<"button">
+          </ChipButton>
+          <ChipButton
             aria-pressed={syncStatusFilter === "removed"}
             className="cursor-pointer transition-all"
             color="default"
-            render={(props) => <button {...props} />}
             size="sm"
-            type="button"
             variant={syncStatusFilter === "removed" ? "primary" : "soft"}
             onClick={() => handleFilterClick("removed")}
           >
             {t("statuses.removed")}: {syncStatusSummary.removed}
-          </Chip>
+          </ChipButton>
         </div>
 
         {/* Filter Status and Count */}

@@ -10,6 +10,7 @@ import MeasurementSystemSelector from "@/components/recipes/measurement-system-s
 import MediaGalleryInput from "@/components/recipes/media-gallery-input";
 import StepInput from "@/components/recipes/step-input";
 import TimeInputs from "@/components/recipes/time-inputs";
+import { ChipButton } from "@/components/shared/chip-button";
 import SmartInputHelp from "@/components/shared/smart-input-help";
 import SmartTextInput from "@/components/shared/smart-text-input";
 import TagInput from "@/components/shared/tag-input";
@@ -18,7 +19,7 @@ import { useRecipesContext } from "@/context/recipes-context";
 import { useUnitsQuery } from "@/hooks/config";
 import { useRecipeId } from "@/hooks/recipes";
 import { useUnsavedNavigationGuard } from "@/hooks/use-unsaved-navigation-guard";
-import { Button, Chip, FieldError, Input, Label, TextField } from "@heroui/react";
+import { Button, FieldError, Input, Label, TextField } from "@heroui/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import type { FullRecipeDTO, MeasurementSystem, RecipeCategory } from "@norish/shared/contracts";
@@ -601,18 +602,16 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
                 {ALL_CATEGORIES.map((category) => {
                   const active = categories.includes(category);
                   return (
-                    <Chip<"button">
+                    <ChipButton
                       key={category}
                       aria-pressed={active}
                       className="chip--on-ground h-8 cursor-pointer rounded-full px-3 text-sm"
                       color={active ? "accent" : "default"}
-                      render={(props) => <button {...props} />}
-                      type="button"
                       variant={active ? "primary" : "tertiary"}
                       onClick={() => toggleCategory(category)}
                     >
                       {t(`category.${category.toLowerCase()}`)}
-                    </Chip>
+                    </ChipButton>
                   );
                 })}
               </div>

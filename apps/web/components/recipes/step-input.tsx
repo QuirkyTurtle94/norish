@@ -112,12 +112,10 @@ export default function StepInput({
 
   // Initialize from steps prop
   useEffect(() => {
-    if (
-      steps.length > 0 &&
-      items.length === 1 &&
-      items[0]!.text === "" &&
-      items[0]!.images.length === 0
-    ) {
+    const first = items[0];
+
+    if (!first) return;
+    if (steps.length > 0 && items.length === 1 && first.text === "" && first.images.length === 0) {
       setItems([
         ...steps.map((s) =>
           createStepItem(

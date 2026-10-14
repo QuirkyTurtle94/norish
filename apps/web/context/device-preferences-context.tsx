@@ -1,5 +1,6 @@
 "use client";
 
+import type { Mutation } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { createContext, use, useCallback, useMemo, useRef, useState } from "react";
 import { useConnectivity } from "@/app/providers/connectivity-provider";
@@ -93,17 +94,18 @@ export function DevicePreferencesProvider({
   // The changes whose writes have not settled, oldest first.
   const unsettled = useMutationState({
     filters: { mutationKey: trpc.user.setDevicePreferences.mutationKey(), status: "pending" },
-    select: (mutation) =>
-      mutation.state.variables as { kind: DeviceKind; preferences: DevicePreferencesUpdate },
+    select: (mutation: Mutation<unknown, unknown, Parameters<typeof mutate>[0]>) =>
+      mutation.state.variables,
   });
 
   const profileWins = profile !== undefined && (!seed || isOffline || dataUpdatedAt >= mountedAt);
   const stored = profile?.user.preferences?.[kind];
   const values = useMemo(() => {
     if (!profileWins) return { ...(seed?.values ?? DEVICE_PREFERENCE_DEFAULTS), ...changes };
-    const queued = unsettled
-      .filter((write) => write.kind === kind)
-      .reduce<DevicePreferencesUpdate>((all, write) => ({ ...all, ...write.preferences }), {});
+    const queued = unsettled.reduce<DevicePreferencesUpdate>(
+      (all, write) => (write?.kind === kind ? { ...all, ...write.preferences } : all),
+      {}
+    );
 
     return { ...(stored ?? DEVICE_PREFERENCE_DEFAULTS), ...queued };
   }, [profileWins, stored, unsettled, kind, seed?.values, changes]);

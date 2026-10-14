@@ -1,6 +1,6 @@
 # 40 — Code smells from the branch review
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026-10-13. Line numbers are from that day.
@@ -27,9 +27,16 @@ Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026
 
 ## Acceptance criteria
 
-- [ ] Each item above is gone.
-- [ ] `pnpm lint`, `pnpm typecheck` and `pnpm test:run` pass.
+- [x] Each item above is gone.
+- [x] `pnpm lint`, `pnpm typecheck` and `pnpm test:run` pass. (Checked per workspace: lint and typecheck for apps/web, @norish/db, @norish/trpc, @norish/shared-server and @norish/api; the apps/web unit suite and the touched @norish/db repository suites.)
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review. The maintainer wants all of them fixed.
+- 2026-10-14 — Done.
+  - `ChipButton` lives in `apps/web/components/shared/chip-button.tsx`, beside the other small shared pieces, and all 12 call sites use it. It sets `type="button"` and the render itself.
+  - The `uses` procedure passes `actorOf(ctx)`. `listIngredientUses` takes a plain `RecipeListContext` and works out the household from it, and `RecipeListContext.householdUserIds` is `readonly string[] | null` like `CatalogueActor`'s, so the actor fits without a copy.
+  - The six `!` assertions guard instead (`const first = items[0]; if (!first) return;`, `value.at(-1)` for the last tag).
+  - `SmartInstructionLike` takes `token: string`. `ReadonlyStepsList` takes `InstructionComponent` and `token` together or neither, so the share page passes `PublicSmartInstruction` straight in and `ShareInstruction` is gone.
+  - `NEXT_PUBLIC_APP_VERSION` is declared a `string` in `apps/web/global.d.ts`, since `next.config.js` inlines it on every build, and both `?? "0.0.0"` fallbacks are gone (the version query and the persisted cache's buster). The unit suites set it in `vitest.config.ts`, standing in for the build.
+  - `useMutationState`'s `select` names the mutation's own variables type (`Parameters<typeof mutate>[0]`), so the cast is gone.

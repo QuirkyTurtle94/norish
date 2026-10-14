@@ -249,9 +249,12 @@ export default function TagInput({ value, onChange, placeholder, className = "" 
           e.preventDefault();
           handleAddTag(currentWord.trim(), false);
         }
-      } else if (e.key === "Backspace" && !rawInput && value.length > 0) {
+      } else if (e.key === "Backspace" && !rawInput) {
+        const last = value.at(-1);
+
+        if (!last) return;
         e.preventDefault();
-        handleRemoveTag(value[value.length - 1]!);
+        handleRemoveTag(last);
       }
     },
     [exactMatch, handleAddTag, rawInput, value, handleRemoveTag, currentWord]

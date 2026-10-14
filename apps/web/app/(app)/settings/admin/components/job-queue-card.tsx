@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
+import { ChipButton } from "@/components/shared/chip-button";
 import DataTable from "@/components/ui/data-table";
 import {
   useAdminConfigsQuery,
@@ -136,7 +137,7 @@ export default function JobQueueCard() {
     state: Exclude<StateFilter, null>,
     color: "accent" | "warning" | "danger" | "default"
   ) => (
-    <Chip<"button">
+    <ChipButton
       aria-pressed={stateFilter === state}
       className={
         state === "active"
@@ -144,14 +145,12 @@ export default function JobQueueCard() {
           : "cursor-pointer px-1 py-0.5 transition-all"
       }
       color={color}
-      render={(props) => <button {...props} />}
       size="sm"
-      type="button"
       variant={stateFilter === state ? "primary" : "soft"}
       onClick={() => handleStateFilter(state)}
     >
       {t(`status.${state}`)}: {totals[state]}
-    </Chip>
+    </ChipButton>
   );
 
   return (

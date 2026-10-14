@@ -501,7 +501,7 @@ export interface IngredientUses {
  * how many uses are someone else's.
  */
 export async function listIngredientUses(
-  viewer: RecipeListContext & { userIds: readonly string[] },
+  viewer: RecipeListContext,
   ingredientId: string
 ): Promise<IngredientUses> {
   const spellings = db
@@ -510,7 +510,8 @@ export async function listIngredientUses(
     .where(eq(ingredientAliases.ingredientId, ingredientId));
   const ours = (table: typeof groceries | typeof recurringGroceries | typeof pantryIngredients) =>
     or(inArray(table.ingredientAliasId, spellings), eq(table.ingredientId, ingredientId));
-  const household = (userId: AnyPgColumn) => sql<boolean>`${inArray(userId, [...viewer.userIds])}`;
+  const householdUserIds = [viewer.userId, ...(viewer.householdUserIds ?? [])];
+  const household = (userId: AnyPgColumn) => sql<boolean>`${inArray(userId, householdUserIds)}`;
   const openable = (await buildOwnerPolicyCondition(viewer, recipes.userId, "view")) ?? sql`true`;
 
   const [lines, groceryRows, recurringRows, pantryRows] = await Promise.all([

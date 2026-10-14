@@ -38,7 +38,7 @@ export const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
  */
 // NEXT_PUBLIC values are intentionally exposed to the browser by Next.js.
 // eslint-disable-next-line no-restricted-properties
-export const CACHE_BUSTER = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0";
+export const CACHE_BUSTER = process.env.NEXT_PUBLIC_APP_VERSION;
 
 /** Placeholder owner before any user is confirmed; never actually persisted. */
 const ANON_OWNER = "__anon__";

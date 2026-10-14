@@ -65,7 +65,10 @@ export default function IngredientInput({
 
   // Initialize from ingredients prop
   useEffect(() => {
-    if (ingredients.length > 0 && items.length === 1 && items[0]!.text === "") {
+    const first = items[0];
+
+    if (!first) return;
+    if (ingredients.length > 0 && items.length === 1 && first.text === "") {
       const formatted = ingredients.map((ing) => {
         const parts: string[] = [];
         if (ing.amount !== null) parts.push(String(ing.amount));

@@ -22,7 +22,7 @@ type StepLike = {
 type SmartInstructionLike = React.ComponentType<{
   text: string;
   recipeId: string;
-  token?: string;
+  token: string;
   recipeName?: string;
   stepIndex: number;
 }>;
@@ -41,14 +41,15 @@ export type ReadonlyStepsListProps = {
   interactive?: boolean;
   enableTimers?: boolean;
   recipeId?: string;
-  token?: string;
   recipeName?: string;
   ingredients?: IngredientLike[];
-  /** Override the timer-aware instruction renderer (e.g. for public share pages). */
-  InstructionComponent?: SmartInstructionLike;
   /** Public surfaces pass their shared unit config; private ones omit it. */
   units?: UnitsMap;
-};
+} & (
+  | { InstructionComponent?: undefined; token?: undefined }
+  /** A share page overrides the timer-aware instruction renderer, which reads the share by its token. */
+  | { InstructionComponent: SmartInstructionLike; token: string }
+);
 
 export function ReadonlyStepsList({
   steps,
@@ -56,11 +57,10 @@ export function ReadonlyStepsList({
   interactive = false,
   enableTimers = false,
   recipeId,
-  token,
   recipeName,
   ingredients = [],
-  InstructionComponent = SmartInstruction,
   units,
+  ...instruction
 }: ReadonlyStepsListProps) {
   const [done, setDone] = useState<Set<number>>(() => new Set());
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -171,13 +171,22 @@ export function ReadonlyStepsList({
                     }`}
                   >
                     {interactive && !isDone && enableTimers ? (
-                      <InstructionComponent
-                        recipeId={recipeId || ""}
-                        recipeName={recipeName}
-                        stepIndex={currentStepNumber - 1}
-                        text={s.step}
-                        token={token}
-                      />
+                      instruction.InstructionComponent ? (
+                        <instruction.InstructionComponent
+                          recipeId={recipeId || ""}
+                          recipeName={recipeName}
+                          stepIndex={currentStepNumber - 1}
+                          text={s.step}
+                          token={instruction.token}
+                        />
+                      ) : (
+                        <SmartInstruction
+                          recipeId={recipeId || ""}
+                          recipeName={recipeName}
+                          stepIndex={currentStepNumber - 1}
+                          text={s.step}
+                        />
+                      )
                     ) : (
                       <SmartMarkdownRenderer disableLinks={interactive && isDone} text={s.step} />
                     )}

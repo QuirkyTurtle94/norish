@@ -18,6 +18,8 @@ export default defineConfig({
       DATABASE_URL: "postgresql://test:test@localhost:5432/test",
       SKIP_ENV_VALIDATION: "1",
       MASTER_KEY: "QmFzZTY0RW5jb2RlZE1hc3RlcktleU1pbjMyQ2hhcnM=",
+      // next.config.js inlines this at build time; the suites stand in for the build.
+      NEXT_PUBLIC_APP_VERSION: "0.0.0-test",
     },
     setupFiles: ["./__tests__/setup.ts"],
     globalSetup: ["../../packages/db/__tests__/setup/global-setup.ts"],
