@@ -21,8 +21,7 @@ const log = createLogger("redis");
 // evaluated more than once per process. Here the cost of getting it wrong is
 // one connection per instance, of which shutdown closes only the one it can see.
 const globalForRedis = globalThis as unknown as {
-  publisherClient: Redis | null;
-  connectionPromise: Promise<Redis> | null;
+  publisherClient: Redis | null | undefined;
 };
 
 /**
@@ -40,42 +39,22 @@ export function getRedisConnectionOptions(url = SERVER_CONFIG.REDIS_URL): RedisO
 }
 
 /**
- * Get the publisher client (singleton).
- * Used for PUBLISH operations and every non-subscribe command.
+ * The publisher, for PUBLISH and every non-subscribe command. Created once per
+ * process: while Redis is down it reconnects, and callers keep getting it.
  */
 export async function getPublisherClient(): Promise<Redis> {
-  const existing = globalForRedis.publisherClient;
-
-  if (existing && existing.status === "ready") {
-    return existing;
-  }
-
-  // Prevent multiple simultaneous connection attempts
-  const inFlight = globalForRedis.connectionPromise;
-
-  if (inFlight) {
-    return inFlight;
-  }
-
-  const connectionPromise = connectPublisher();
-
-  globalForRedis.connectionPromise = connectionPromise;
-
-  try {
-    const publisherClient = await connectionPromise;
-
-    globalForRedis.publisherClient = publisherClient;
-
-    return publisherClient;
-  } finally {
-    globalForRedis.connectionPromise = null;
-  }
+  return (globalForRedis.publisherClient ??= createPublisher());
 }
 
-async function connectPublisher(): Promise<Redis> {
+function createPublisher(): Redis {
   log.info({ url: redactUrl(SERVER_CONFIG.REDIS_URL) }, "Connecting to Redis");
 
-  const client = new Redis(getRedisConnectionOptions());
+  const client = new Redis({
+    ...getRedisConnectionOptions(),
+    // A command sent during an outage fails after a reconnect attempt instead
+    // of waiting for Redis to come back.
+    maxRetriesPerRequest: 1,
+  });
 
   client.on("error", (err) => {
     log.error({ err }, "Redis client error");
@@ -85,8 +64,9 @@ async function connectPublisher(): Promise<Redis> {
     log.warn("Redis client reconnecting");
   });
 
-  await client.connect();
-  log.info("Redis publisher connected");
+  client.on("ready", () => {
+    log.info("Redis publisher connected");
+  });
 
   return client;
 }
@@ -98,7 +78,8 @@ async function connectPublisher(): Promise<Redis> {
  */
 export async function createSubscriberClient(): Promise<Redis> {
   const publisher = await getPublisherClient();
-  const subscriber = publisher.duplicate();
+  // A SUBSCRIBE waits out an outage rather than failing like a publisher's command.
+  const subscriber = publisher.duplicate({ maxRetriesPerRequest: null });
 
   subscriber.on("error", (err) => {
     log.error({ err }, "Redis subscriber error");

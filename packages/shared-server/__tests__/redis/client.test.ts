@@ -59,7 +59,6 @@ beforeEach(() => {
   const globalForRedis = globalThis as unknown as Record<string, unknown>;
 
   delete globalForRedis.publisherClient;
-  delete globalForRedis.connectionPromise;
 });
 
 describe("publisher connection", () => {
@@ -110,7 +109,7 @@ describe("publisher connection", () => {
     const publisher = await getPublisherClient();
     const subscriber = await createSubscriberClient();
 
-    expect(publisher.duplicate).toHaveBeenCalledOnce();
+    expect(publisher.duplicate).toHaveBeenCalledExactlyOnceWith({ maxRetriesPerRequest: null });
     expect(subscriber).not.toBe(publisher);
     expect(constructed).toHaveLength(1);
   });
@@ -128,7 +127,7 @@ describe("connection options", () => {
       port: 6380,
       password: "secret",
       db: 3,
-      maxRetriesPerRequest: null,
+      maxRetriesPerRequest: 1,
     });
     // RESP3, reconnecting for ever with capped backoff, a 30 s keep-alive.
     for (const option of ["protocol", "retryStrategy", "keepAlive", "connectTimeout"] as const) {

@@ -1,6 +1,6 @@
 # 52 — The Redis publisher is created once
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 34
 Target release: 0.26.0-beta
 
@@ -15,10 +15,12 @@ Spec: `.scratch/dependency-upgrades/spec.md`. From `.scratch/architecture-after-
 
 ## Acceptance criteria
 
-- [ ] While Redis is down, repeated `getPublisherClient()` calls return the same client.
-- [ ] A real-Redis test stops the container, calls the publisher several times, starts it again, and counts one publisher connection in `CLIENT LIST`.
-- [ ] A command sent while Redis is down rejects instead of hanging.
+- [x] While Redis is down, repeated `getPublisherClient()` calls return the same client.
+- [x] A real-Redis test stops the container, calls the publisher several times, starts it again, and counts one publisher connection in `CLIENT LIST`.
+- [x] A command sent while Redis is down rejects instead of hanging.
 
 ## Comments
 
 - Filed 2026-10-14 from the architecture spec's list of fixes meant for this branch; no deps ticket tracked them.
+- 2026-10-14 (implemented) — `getPublisherClient()` creates the publisher once (`globalForRedis.publisherClient ??= createPublisher()`) and never replaces it; ioredis reconnects it. It no longer awaits `connect()`: the shared options are lazy, so the first command connects. The publisher has `maxRetriesPerRequest: 1`; subscribers are duplicated with `maxRetriesPerRequest: null`, so the hub's SUBSCRIBE still waits out an outage as before.
+  - `packages/shared-server/__tests__/redis/publisher-redis.test.ts` runs Redis on a fixed host port, `docker stop`s it, asks for the publisher twice, sends a GET, `docker start`s it and reads `CLIENT LIST`. Before the fix the first call during the outage rejected with "Connection is closed." from a freshly built publisher; after it, both calls return the same client, the GET rejects, and `CLIENT LIST` holds one connection besides the test's own (three runs in a row).
