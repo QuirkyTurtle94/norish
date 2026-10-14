@@ -40,6 +40,11 @@ describe("parseHumanDurationToMinutes", () => {
   ])("reads %j as %j", (text, minutes) => {
     expect(parseHumanDurationToMinutes(text)).toBe(minutes);
   });
+
+  // A field of digits was rescanned from every position, quadratic in its length.
+  it("reads a long run of digits in linear time", () => {
+    expect(parseHumanDurationToMinutes("1".repeat(200_000))).toBeUndefined();
+  });
 });
 
 describe("buildRecipeDTO", () => {

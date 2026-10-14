@@ -26,6 +26,8 @@ export function parseHumanDurationToMinutes(s?: string | null): number | undefin
     return Number.isFinite(total) && total > 0 ? total : undefined;
   }
 
+  // A number starts where a digit run starts (?<!\d): otherwise a long run of
+  // digits is rescanned from every position, quadratic in an archive's field.
   // Match patterns like "1 hr 30 min", "1h30m", "90 minutes", "1 hour", "2 hours"
   // For hours: allow 'h' to be followed by digits (for compact "1h30m" format)
   const hourMatch = lower.match(/(?<!\d)(\d+)\s*(?:hrs?|hours?|h)(?:\s|\d|$)/i);
