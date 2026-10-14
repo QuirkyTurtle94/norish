@@ -575,9 +575,14 @@ async function* generateMelaRecipes(
   const melaRecipes = await parseMelaArchive(zip);
 
   for (let i = 0; i < melaRecipes.length; i++) {
-    const dto = await parseMelaRecipeToDTO(melaRecipes[i]!, createArchiveRecipeId());
+    const melaRecipe = melaRecipes[i]!;
+    const dto = await parseMelaRecipeToDTO(melaRecipe, createArchiveRecipeId());
 
-    yield { dto, fileName: `recipe_${i + 1}.melarecipe` };
+    yield {
+      dto,
+      fileName: `recipe_${i + 1}.melarecipe`,
+      importedFavorite: melaRecipe.favorite === true || undefined,
+    };
   }
 }
 

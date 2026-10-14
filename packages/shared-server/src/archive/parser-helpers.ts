@@ -145,6 +145,28 @@ export type RecipeParseInput = {
 };
 
 /**
+ * The longest step paragraph read as a Heading when it ends in a colon.
+ * ponytail: a naive length cut-off, so a long sentence ending in ":" ("Mix
+ * the following together:") stays a step; a sentence shorter than this does
+ * not, and a source's own heading markup is the upgrade path.
+ */
+const MAX_HEADING_STEP_LENGTH = 40;
+
+/**
+ * The Heading a text line marks itself as, written as one ("# Per la base"),
+ * or null. A line is a Heading when it already is one, or when it ends in a
+ * colon; capitals alone never make one, since real ingredients are written
+ * that way ("SAVOIARDI"). The caller decides that no amount stands in it.
+ */
+function headingOf(line: string): string | null {
+  if (line.startsWith("#")) return line;
+
+  const title = line.endsWith(":") ? line.slice(0, -1).trim() : "";
+
+  return title ? `# ${title}` : null;
+}
+
+/**
  * Build a FullRecipeInsertDTO from common recipe data
  * Handles ingredient parsing, step splitting, tag creation, and schema validation
  */
@@ -157,18 +179,25 @@ export async function buildRecipeDTO(input: RecipeParseInput): Promise<FullRecip
 
   // Parse ingredients - split by newlines first, then parse each line
   const units = await getUnits();
-  const ingredientLines = splitNonEmptyLines(input.ingredientsText);
-  const ingredientArray = parseIngredientWithDefaults(ingredientLines, units);
+  const ingredientArray = splitNonEmptyLines(input.ingredientsText).flatMap((text) =>
+    parseIngredientWithDefaults(text, units).map((line) => ({ ...line, text }))
+  );
   const systemUsed = inferSystemUsedFromParsed(ingredientArray);
   const normalizedIngredients = ingredientArray
-    .map((line) => ({
-      ...line,
-      description: (line.description || "").trim(),
-    }))
+    .map((line) => {
+      // A Heading is kept as written, never parsed into an amount and a food.
+      const heading = line.quantity == null ? headingOf(line.text) : null;
+
+      return heading
+        ? { quantity: null, unitOfMeasureID: null, description: heading }
+        : { ...line, description: (line.description || "").trim() };
+    })
     .filter((line) => line.description.length > 0);
 
   // Parse steps
-  const stepLines = splitNonEmptyLines(input.instructionsText);
+  const stepLines = splitNonEmptyLines(input.instructionsText).map(
+    (step) => (step.length <= MAX_HEADING_STEP_LENGTH && headingOf(step)) || step
+  );
 
   // Parse tags from categories
   const tags = (input.categories || [])
