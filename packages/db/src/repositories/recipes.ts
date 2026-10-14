@@ -24,6 +24,7 @@ import {
 import { db } from "@norish/db/drizzle";
 import { dbLogger } from "@norish/db/logger";
 import { stripHtmlTags } from "@norish/shared/lib/helpers";
+import { viewerAndHouseholdIds } from "@norish/shared/lib/household";
 import { normalizeOriginCountry } from "@norish/shared/lib/recipe-enrichment";
 import { normalizeUnit } from "@norish/shared/lib/unit-localization";
 
@@ -162,15 +163,10 @@ export async function recipeExistsByUrlForPolicy(
 
     case "household":
       // Check if URL exists for any household member
-      if (householdUserIds && householdUserIds.length > 0) {
-        const userIds = householdUserIds.includes(userId)
-          ? householdUserIds
-          : [...householdUserIds, userId];
-
-        whereCondition = and(eq(recipes.url, url), inArray(recipes.userId, userIds));
-      } else {
-        whereCondition = and(eq(recipes.url, url), eq(recipes.userId, userId));
-      }
+      whereCondition = and(
+        eq(recipes.url, url),
+        inArray(recipes.userId, viewerAndHouseholdIds({ userId, householdUserIds }))
+      );
       break;
 
     case "owner":
@@ -283,17 +279,7 @@ export async function buildOwnerPolicyCondition(
 
     case "household":
       // Own rows + household members' rows + orphaned rows (null owner)
-      if (ctx.householdUserIds && ctx.householdUserIds.length > 0) {
-        // Ensure user's own ID is included (should always be, but safety check)
-        const userIds = ctx.householdUserIds.includes(ctx.userId)
-          ? ctx.householdUserIds
-          : [...ctx.householdUserIds, ctx.userId];
-
-        return or(inArray(ownerColumn, userIds), sql`${ownerColumn} IS NULL`);
-      }
-
-      // No household = only own rows + orphaned rows
-      return ownOrOrphaned();
+      return or(inArray(ownerColumn, viewerAndHouseholdIds(ctx)), sql`${ownerColumn} IS NULL`);
 
     case "owner":
       // Only own rows + orphaned rows (null owner)

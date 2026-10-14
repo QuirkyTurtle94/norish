@@ -16,6 +16,7 @@ import {
   recipes,
   recurringGroceries,
 } from "@norish/db/schema";
+import { viewerAndHouseholdIds } from "@norish/shared/lib/household";
 
 import type { RecipeListContext } from "./recipes";
 import { buildOwnerPolicyCondition } from "./recipes";
@@ -510,8 +511,8 @@ export async function listIngredientUses(
     .where(eq(ingredientAliases.ingredientId, ingredientId));
   const ours = (table: typeof groceries | typeof recurringGroceries | typeof pantryIngredients) =>
     or(inArray(table.ingredientAliasId, spellings), eq(table.ingredientId, ingredientId));
-  const householdUserIds = [viewer.userId, ...(viewer.householdUserIds ?? [])];
-  const household = (userId: AnyPgColumn) => sql<boolean>`${inArray(userId, householdUserIds)}`;
+  const household = (userId: AnyPgColumn) =>
+    sql<boolean>`${inArray(userId, viewerAndHouseholdIds(viewer))}`;
   const openable = (await buildOwnerPolicyCondition(viewer, recipes.userId, "view")) ?? sql`true`;
 
   const [lines, groceryRows, recurringRows, pantryRows] = await Promise.all([
