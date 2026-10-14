@@ -1,6 +1,6 @@
 # 42 — The AI transport takes fetch and Agent from one undici
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md` decision 4, ticket 15. Found in the branch review on 2026-10-13.
@@ -29,10 +29,15 @@ Land this before `.scratch/architecture-after-upgrades/` ticket 03, which passes
 
 ## Acceptance criteria
 
-- [ ] `transport.ts` imports `fetch` and `Agent` from undici.
-- [ ] No comment, setting or spec decision ties undici's major to Node's.
+- [x] `transport.ts` imports `fetch` and `Agent` from undici.
+- [x] No comment, setting or spec decision ties undici's major to Node's.
 - [ ] The `ai` E2E project passes.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14 (implemented) — `createFetchWithTimeout` calls undici's own `fetch` with undici's `Agent`. `engineStrict` and its comment are gone from `pnpm-workspace.yaml`, the "move the pin" note from `transport.ts`, and spec decision 4 now says the next undici or Node major moves on its own. `engines`, `.nvmrc` and the image stay on Node 26.
+  - **Found on the way: multipart uploads.** undici's fetch sends only its own `FormData` as multipart, and it recognises it by class, per module instance: even at the same 8.11.2 that Node 26 bundles, Node's global `FormData` is not undici's, and went out as `text/plain` "[object FormData]". The AI SDK builds the global one for transcription. `transport.ts` rebuilds a global `FormData` body as undici's before sending; Blob and File are Node's own classes, shared by both, so the entries carry over. The Azure and generic transcription tests, which go through the real transport to a local server, caught it.
+  - **Types.** undici's types for Request/Response lag the DOM lib's under TypeScript 6 (no `Symbol.dispose` on header iterators, an extra `duplex`), so the response is bridged with `as unknown as Promise<Response>`, with the reason at the line.
+  - **Tests that patched `globalThis.fetch` for AI calls:** more than the review found. `provider-temperature.test.ts` and the openai/groq cases of `transcription.test.ts` stubbed it, and with undici's fetch they reached the real APIs with fake keys. Both now mock `@norish/shared-server/ai/runtime/transport` instead; the transcription test passes through to the real transport unless a case sets a stub. The provider-listing tests stub global fetch but never go through the transport, so they stay.
+  - The `ai` E2E project runs with the branch's E2E pass at the end of this batch; its result is recorded here.

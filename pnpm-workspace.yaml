@@ -58,10 +58,6 @@ catalog:
 
 nodeLinker: hoisted
 
-# The AI transport hands an undici 8 dispatcher to Node's built-in fetch, which
-# only Node 26 understands; on an older Node every AI call fails. Refuse early.
-engineStrict: true
-
 allowBuilds:
   "@heroui/shared-utils": true
   "@parcel/watcher": false

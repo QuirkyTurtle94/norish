@@ -27,7 +27,7 @@ Every dependency moves to its newest **stable** release. A line stays behind onl
 1. **One plan.** This one. `.scratch/dependency-security/` 05–09 are superseded.
 2. **"Latest" means the newest stable release.** No betas, release candidates or canaries. The plan's earlier cautious holds are taken: ioredis 6, undici 8, pnpm 12, Python 3.15.
 3. **TypeScript 6 only.** TypeScript 7 waits for typescript-eslint; no side-by-side alias install, because the CI check and Next's build would then use two compilers that can disagree.
-4. **Node 26** (LTS from 2026-10-28), with undici 8 and `@types/node ^26`. undici 8's `Agent` only works with the fetch that Node 26 bundles, so the two move together.
+4. **Node 26** (LTS from 2026-10-28), with undici 8 and `@types/node ^26`. The AI transport takes its fetch and its `Agent` from the same undici (ticket 42), so the next undici or Node major moves on its own.
 5. **Type checking returns first** (ticket 25): the packages, then apps/web, then a `pnpm typecheck` step in CI, before any major bump.
 6. **apps/mobile leaves the pnpm workspace** (ticket 23), and the server drops `expo()` and `@better-auth/expo` while the app is parked.
 7. **Renovate keeps it current** (ticket 07): weekly lockfile maintenance and grouped PRs. No blocking audit gate in CI, because an advisory published overnight would turn every PR red. No image scan.
