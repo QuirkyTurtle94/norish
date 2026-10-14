@@ -17,12 +17,7 @@ import { isValidLocale } from "@norish/i18n/config";
 export function useLanguageSwitch() {
   const { locale, changeLocale, isChanging } = useLocale();
   const { enabledLocales, isLoading: isLoadingConfig } = useLocaleConfigQuery();
-  const [mounted, setMounted] = useState(false);
   const [currentLocaleIndex, setCurrentLocaleIndex] = useState(0);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Get enabled locale codes as Locale[]
   const enabledLocaleCodes = useMemo(
@@ -84,7 +79,6 @@ export function useLanguageSwitch() {
   const label = localeNames[currentLocale] ?? currentLocale;
 
   return {
-    mounted,
     icon,
     label,
     currentLocale,

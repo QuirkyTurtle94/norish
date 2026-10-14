@@ -89,6 +89,7 @@ export default function RecipePageMobile() {
               shadow — so the content below can start with the recipe rather
               than with navigation (ADR-0020). */}
           <ReadonlyRecipeMedia
+            transitionId={recipe.id}
             aspectRatio="4/3"
             chromeClassName={RECIPE_HERO_CHROME_OFFSET_CLASS}
             className="h-full rounded-none shadow-none"

@@ -49,7 +49,6 @@ vi.mock("@/hooks/user/use-language-switch", () => ({
     icon: null,
     isChanging: false,
     label: "English",
-    mounted: true,
   }),
 }));
 

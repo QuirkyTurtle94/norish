@@ -283,3 +283,23 @@
     --default: oklch(from var(--untinted-default) l calc(var(--dish-c, 0) * 0.5) var(--dish-h, 0));
   }
 }
+
+/* A recipe card's image carries into the recipe's hero (RecipeImageTransition).
+   Nothing else moves: the page itself never cross-fades, and a reader who
+   prefers reduced motion gets no morph either. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(.morph) {
+  animation-duration: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

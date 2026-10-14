@@ -116,6 +116,7 @@ export default function RecipePageDesktop() {
             }}
           >
             <ReadonlyRecipeMedia
+              transitionId={recipe.id}
               className="h-[clamp(360px,42vw,520px)] rounded-2xl"
               mediaClassName="min-h-0"
               recipe={recipe}
