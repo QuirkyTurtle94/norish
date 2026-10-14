@@ -145,4 +145,63 @@ describe("server config normalization", () => {
     });
     expect(JSON.parse(decrypt(persisted!.valueEnc!))).toEqual(result);
   });
+
+  it("moves a stored Sonar model to its Agent API preset once, keeping the key", async () => {
+    const db = getTestDb();
+    const stored = {
+      enabled: true,
+      provider: "perplexity",
+      model: "sonar-pro",
+      visionModel: "sonar",
+      temperature: 0.4,
+      maxTokens: 1024,
+      apiKey: "pplx-secret",
+    };
+
+    await db.insert(serverConfig).values({
+      key: ServerConfigKeys.AI_CONFIG,
+      value: { ...stored, apiKey: "••••••••" },
+      valueEnc: encrypt(JSON.stringify(stored)),
+      isSensitive: true,
+      updatedBy: null,
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    });
+
+    // Two boots: the first rewrites the stored choice, the second finds nothing to do.
+    expect(await normalizeAndBackfillConfig(ServerConfigKeys.AI_CONFIG)).toBe(true);
+    expect(await normalizeAndBackfillConfig(ServerConfigKeys.AI_CONFIG)).toBe(false);
+
+    const result = await getConfig<AIConfig>(ServerConfigKeys.AI_CONFIG, true);
+
+    expect(result).toMatchObject({ model: "low", visionModel: "fast", apiKey: "pplx-secret" });
+    expect(await getConfig<AIConfig>(ServerConfigKeys.AI_CONFIG)).toMatchObject({
+      model: "low",
+      visionModel: "fast",
+    });
+  });
+
+  it("leaves another provider's model of the same name alone", async () => {
+    const db = getTestDb();
+
+    await db.insert(serverConfig).values({
+      key: ServerConfigKeys.AI_CONFIG,
+      value: {
+        enabled: true,
+        provider: "generic-openai",
+        endpoint: "http://localhost:8080/v1",
+        model: "sonar",
+        temperature: 0.4,
+        maxTokens: 1024,
+      },
+      isSensitive: false,
+      updatedBy: null,
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    });
+
+    await normalizeAndBackfillConfig(ServerConfigKeys.AI_CONFIG);
+
+    expect(await getConfig<AIConfig>(ServerConfigKeys.AI_CONFIG)).toMatchObject({ model: "sonar" });
+  });
 });
