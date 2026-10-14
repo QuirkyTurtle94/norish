@@ -38,7 +38,7 @@ describe("proxy share access", () => {
   it("excludes public PWA assets from the Next proxy matcher", () => {
     expect(config.matcher[0]).toContain("manifest\\.webmanifest");
     expect(config.matcher[0]).toContain("sw\\.js");
-    expect(config.matcher[0]).toContain("favicon\\.ico");
+    expect(config.matcher[0]).toContain("brand/");
     expect(config.matcher[0]).toContain("icons");
     // The worker script itself: browsers fetch it without credentials, and a
     // script answered by a redirect is refused, so it can never sit behind
