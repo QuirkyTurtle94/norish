@@ -40,10 +40,10 @@ describe("proxy share access", () => {
     expect(config.matcher[0]).toContain("sw\\.js");
     expect(config.matcher[0]).toContain("favicon\\.ico");
     expect(config.matcher[0]).toContain("icons");
-    // The worker script itself: browsers fetch it without credentials, and a
-    // script answered by a redirect is refused, so it can never sit behind
-    // the auth redirect.
-    expect(config.matcher[0]).toContain("serwist/");
+    // The worker script itself (/serwist/sw.js, below): browsers fetch it
+    // without credentials, and a script answered by a redirect is refused, so
+    // it can never sit behind the auth redirect.
+    expect(config.matcher[0]).toContain("serwist");
   });
 
   it("leaves Ingredient Icons out of the proxy, so a shared recipe shows them signed out", () => {
@@ -52,6 +52,22 @@ describe("proxy share access", () => {
     expect(proxied.test("/ingredient-icons/0123456789abcdef0123456789abcdef.webp")).toBe(false);
     expect(proxied.test("/recipes/123e4567-e89b-12d3-a456-426614174000/cover.jpg")).toBe(true);
   });
+
+  it.each(["/login", "/login/", "/icons/x.png", "/sw.js", "/serwist/sw.js", "/api/auth/session"])(
+    "leaves %s out of the proxy",
+    (path) => {
+      expect(new RegExp(`^${config.matcher[0]}$`).test(path)).toBe(false);
+    }
+  );
+
+  // A prefix ends at a path boundary, so a future page that merely starts with
+  // one is not public by accident.
+  it.each(["/login-history", "/icons-admin", "/sw.json", "/api/v10", "/trpc-console"])(
+    "sends %s through the proxy",
+    (path) => {
+      expect(new RegExp(`^${config.matcher[0]}$`).test(path)).toBe(true);
+    }
+  );
 
   it("redirects anonymous private recipe media requests", async () => {
     getSessionMock.mockResolvedValue(null);
