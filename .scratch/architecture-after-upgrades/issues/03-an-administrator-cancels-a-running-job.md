@@ -26,8 +26,8 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Cancellatio
   - [x] Shutdown cancel puts the job back to waiting with `attemptsMade` unchanged, and a worker started afterwards runs it.
   - [x] Both connect through the production connection options and the shared Redis image constant from the sweep's ticket 34.
 - [x] An AI Runtime unit test proves the signal reaches the transport.
-- [ ] A browser E2E (next to the job monitor coverage in the decision-model spec): an administrator cancels a running AI job and sees it Cancelled.
-- [ ] Release notes, under Features: administrators can cancel a running background job. The admin settings docs page shows it, with a screenshot.
+- [x] A browser E2E (next to the job monitor coverage in the decision-model spec): an administrator cancels a running AI job and sees it Cancelled.
+- [x] Release notes, under Features: administrators can cancel a running background job. The admin settings docs page shows it, with a screenshot.
 
 ## Comments
 
@@ -53,4 +53,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Cancellatio
     - `structured-output.test.ts`: a held request is ended by the job's abort, and the next one is never sent.
     - `model-use-ledger.test.ts`: a nested ledger keeps the signal.
     - The review round test, and the router's `cancel` and `cancelled` mapping tests.
-  - **Still open:** the browser E2E (written in `decision-model.e2e.ts`, run with the batch) and the admin docs screenshot.
+  - The browser E2E passed against a production build on 2026-10-14, in a 20-spec batch with the auth-gate, decision-model, calendar, clipboard-import and realtime specs. The admin docs screenshot (`admin-job-cancelled.png`) was captured from the same harness by `.scratch/architecture-after-upgrades/docs-screenshots.e2e.ts`, and the docs site builds.
