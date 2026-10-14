@@ -159,7 +159,7 @@ describe("the archive import loop", () => {
         onProgress
       );
 
-      expect(onProgress.mock.calls.map((call) => call[4])).toEqual([
+      expect(onProgress.mock.calls.map((call) => call[4]?.inserted)).toEqual([
         undefined,
         { status: "inserted", recipeId: fresh.dto.id },
       ]);
@@ -190,6 +190,21 @@ describe("the archive import loop", () => {
       expect(mockCreateCookbook).toHaveBeenCalledWith({ userId: "user-1", title: "Kerst" });
       expect(mockAddRecipeToCookbook).toHaveBeenCalledWith("cookbook-Kerst", first.dto.id);
       expect(mockAddRecipeToCookbook).toHaveBeenCalledWith("cookbook-Kerst", second.dto.id);
+    });
+
+    it("reports each filing as the recipe lands, naming the cookbook it had to make", async () => {
+      const first = item("Tiramisù", undefined, { cookbooks: ["Kerst"] });
+      const second = item("Panettone", undefined, { cookbooks: ["Kerst"] });
+      const onProgress = vi.fn();
+
+      const { importRecipeItems } = await import("@norish/shared-server/archive/parser");
+
+      await importRecipeItems(itemsOf([first, second]) as never, "user-1", ["user-1"], onProgress);
+
+      expect(onProgress.mock.calls.map((call) => call[4]?.cookbooks)).toEqual([
+        [{ cookbookId: "cookbook-Kerst", created: { id: "cookbook-Kerst" } }],
+        [{ cookbookId: "cookbook-Kerst", created: undefined }],
+      ]);
     });
 
     it("files an overwritten recipe too", async () => {

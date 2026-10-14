@@ -1,4 +1,4 @@
-import type { ImportProgressListener } from "@norish/shared-server/archive/parser";
+import type { CookbookFiling, ImportProgressListener } from "@norish/shared-server/archive/parser";
 import type {
   ArchiveImportError,
   ArchiveImportNote,
@@ -14,6 +14,7 @@ import {
 import { getRecipePermissionPolicy } from "@norish/shared-server/config/server-config-loader";
 import { trpcLogger as log } from "@norish/shared-server/logger";
 import { archive } from "@norish/shared-server/realtime/archive";
+import { cookbooks } from "@norish/shared-server/realtime/cookbooks";
 import { recipes } from "@norish/shared-server/realtime/recipes";
 
 import type { AuthedProcedureContext } from "../../middleware";
@@ -141,15 +142,42 @@ async function runArchiveImportAsync(
   // Batch accumulators
   let batchRecipes: RecipeDashboardDTO[] = [];
   let batchErrors: ArchiveImportError[] = [];
+  let batchFilings: Array<{ recipeId: string; filing: CookbookFiling }> = [];
+
+  // Landed recipes reach the household a batch at a time, and so do the
+  // cookbooks the import filed them into: a cookbook it made appears, and
+  // each filing refreshes what it touched, as for a recipe filed by hand.
+  const publishBatch = () => {
+    if (batchRecipes.length > 0) {
+      void recipes.publish("recipeBatchCreated", { recipes: batchRecipes }, target);
+    }
+
+    for (const { filing } of batchFilings) {
+      if (filing.created) void cookbooks.publish("created", { cookbook: filing.created }, target);
+    }
+
+    for (const { recipeId, filing } of batchFilings) {
+      void cookbooks.publish(
+        "membershipChanged",
+        { cookbookId: filing.cookbookId, recipeId, isMember: true },
+        target
+      );
+    }
+
+    batchRecipes = [];
+    batchFilings = [];
+  };
 
   let current = 0;
 
-  const onProgress: ImportProgressListener = (currentCount, recipe, error, note, inserted) => {
+  const onProgress: ImportProgressListener = (currentCount, recipe, error, note, landed) => {
     current = currentCount;
 
     // An archive recipe enters the same automatic flow as one from any other
     // import path, as soon as it lands; what it overwrote was announced when
     // it was first made. A failed announcement never fails the import.
+    const inserted = landed?.inserted;
+
     if (inserted) {
       announceUsableRecipe(inserted, { userId, householdKey, householdUserIds }).catch((err) =>
         log.warn({ err, recipeId: inserted.recipeId }, "Failed to announce archive recipe")
@@ -159,6 +187,10 @@ async function runArchiveImportAsync(
     if (recipe) {
       batchRecipes.push(recipe);
       allImported.push(recipe);
+
+      for (const filing of landed?.cookbooks ?? []) {
+        batchFilings.push({ recipeId: recipe.id, filing });
+      }
     }
 
     if (error) {
@@ -175,10 +207,10 @@ async function runArchiveImportAsync(
     const shouldEmit = current % batchSize === 0 || current === total;
 
     if (shouldEmit) {
+      const batchLanded = batchRecipes.length;
+
       // Emit recipe batch to household (so all members see new recipes)
-      if (batchRecipes.length > 0) {
-        void recipes.publish("recipeBatchCreated", { recipes: batchRecipes }, target);
-      }
+      publishBatch();
 
       // Always emit progress to importing user
       void archive.publish(
@@ -198,14 +230,13 @@ async function runArchiveImportAsync(
           total,
           imported: allImported.length,
           notes: allNotes.length,
-          batchSize: batchRecipes.length,
+          batchSize: batchLanded,
           errors: batchErrors.length,
         },
         "Archive import progress"
       );
 
       // Reset batch accumulators
-      batchRecipes = [];
       batchErrors = [];
     }
   };
@@ -213,6 +244,10 @@ async function runArchiveImportAsync(
   try {
     // Import archive (auto-detects format)
     const result = await runArchiveImport(userId, userIds, buffer, onProgress);
+
+    // An archive whose entries outnumber or fall short of its count never
+    // reaches the last boundary, so whatever landed since is sent now.
+    publishBatch();
 
     log.info(
       {

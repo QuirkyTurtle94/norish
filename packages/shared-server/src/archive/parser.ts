@@ -20,7 +20,11 @@ import {
 } from "@norish/shared-server/ingredients/recipe-lines";
 import { serverLogger as log } from "@norish/shared-server/logger";
 import { withDishColor, withDishColorForUpdate } from "@norish/shared-server/media/dish-color";
-import { FullRecipeInsertDTO, RecipeDashboardDTO } from "@norish/shared/contracts";
+import {
+  CookbookSummaryDTO,
+  FullRecipeInsertDTO,
+  RecipeDashboardDTO,
+} from "@norish/shared/contracts";
 
 import {
   detectMealieLegacyArchive,
@@ -372,8 +376,10 @@ async function applyImportedMarks(
 function createCookbookFiler(userId: string | undefined) {
   const cookbookIds = new Map<string, string>();
 
-  return async (recipeId: string, titles: string[] | undefined): Promise<void> => {
-    if (!userId || !titles) return;
+  return async (recipeId: string, titles: string[] | undefined): Promise<CookbookFiling[]> => {
+    const filings: CookbookFiling[] = [];
+
+    if (!userId || !titles) return filings;
 
     for (const title of titles) {
       const trimmed = title.trim();
@@ -383,34 +389,58 @@ function createCookbookFiler(userId: string | undefined) {
 
       try {
         let cookbookId = cookbookIds.get(key);
+        let created: CookbookSummaryDTO | undefined;
 
         if (!cookbookId) {
-          cookbookId =
-            (await findOwnCookbookIdByTitle(userId, trimmed)) ??
-            (await createCookbook({ userId, title: trimmed })).id;
+          cookbookId = (await findOwnCookbookIdByTitle(userId, trimmed)) ?? undefined;
+
+          if (!cookbookId) {
+            created = await createCookbook({ userId, title: trimmed });
+            cookbookId = created.id;
+          }
+
           cookbookIds.set(key, cookbookId);
         }
 
         await addRecipeToCookbook(cookbookId, recipeId);
+        filings.push({ cookbookId, created });
       } catch (error) {
         log.warn({ err: error, recipeId, title: trimmed }, "Failed to file imported recipe");
       }
     }
+
+    return filings;
   };
 }
 
+/** A cookbook a landed recipe was filed into. */
+export type CookbookFiling = {
+  cookbookId: string;
+  /** The cookbook as this filing made it, when it had to make one */
+  created?: CookbookSummaryDTO;
+};
+
+/** What a recipe's landing did that the caller announces. */
+export type LandedRecipe = {
+  /**
+   * The creation result of a recipe the run newly inserted, for the
+   * enrichment hand-off; a recipe the run overwrote carries none, since like
+   * every other import path an existing recipe is not announced again.
+   */
+  inserted?: CreateRecipeResult;
+  cookbooks: CookbookFiling[];
+};
+
 /**
- * Told about each entry as the loop finishes it. `inserted` is the creation
- * result of a recipe the run newly inserted, for the enrichment hand-off, the
- * moment it lands; a recipe the run overwrote carries none, since like every
- * other import path an existing recipe is not announced again.
+ * Told about each entry as the loop finishes it, and about what a recipe's
+ * landing did the moment it lands.
  */
 export type ImportProgressListener = (
   current: number,
   recipe?: RecipeDashboardDTO,
   error?: { file: string; error: string },
   note?: { file: string; note: string },
-  inserted?: CreateRecipeResult
+  landed?: LandedRecipe
 ) => void;
 
 /**
@@ -478,14 +508,14 @@ export async function importRecipeItems(
 
         writtenThisRun.add(existingId);
         await applyImportedMarks(userId, existingId, importedRating, importedFavorite);
-        await fileIntoCookbooks(existingId, cookbooks);
+        const filings = await fileIntoCookbooks(existingId, cookbooks);
 
         const updatedRecipe = await dashboardRecipe(existingId);
 
         if (updatedRecipe) {
           imported.push(updatedRecipe);
           recordNote();
-          onProgress?.(current, updatedRecipe, undefined, note);
+          onProgress?.(current, updatedRecipe, undefined, note, { cookbooks: filings });
         }
 
         continue;
@@ -501,10 +531,12 @@ export async function importRecipeItems(
         userId: userId ?? null,
       });
 
+      let filings: CookbookFiling[] = [];
+
       if (created) {
         writtenThisRun.add(created.recipeId);
         await applyImportedMarks(userId, created.recipeId, importedRating, importedFavorite);
-        await fileIntoCookbooks(created.recipeId, cookbooks);
+        filings = await fileIntoCookbooks(created.recipeId, cookbooks);
       }
 
       // Fetch recipe AFTER saving rating so averageRating is included in the DTO
@@ -513,13 +545,10 @@ export async function importRecipeItems(
       if (recipe) {
         imported.push(recipe);
         recordNote();
-        onProgress?.(
-          current,
-          recipe,
-          undefined,
-          note,
-          created?.status === "inserted" ? created : undefined
-        );
+        onProgress?.(current, recipe, undefined, note, {
+          inserted: created?.status === "inserted" ? created : undefined,
+          cookbooks: filings,
+        });
       }
     } catch (e: unknown) {
       const error = { file: fileName, error: String((e as Error)?.message || e) };
