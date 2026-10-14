@@ -259,9 +259,6 @@ function IngredientPanelContent({
     try {
       show();
       await edit();
-      onChanged?.();
-
-      return true;
     } catch (error) {
       void cache.rollback();
       const refusal = refusalOf(error);
@@ -288,6 +285,9 @@ function IngredientPanelContent({
 
       return false;
     }
+    onChanged?.();
+
+    return true;
   };
 
   // The draft's parent is AI's suggestion, not yet saved.

@@ -236,24 +236,21 @@ export default function VideoProcessingForm({ onDirtyChange }: VideoProcessingFo
   const handleSave = async () => {
     if (enabled && !hasValidTranscription) return;
     setSaving(true);
-    try {
-      await updateVideoConfig({
-        enabled,
-        maxLengthSeconds,
-        maxVideoFileSize: maxVideoFileSizeMB * 1024 * 1024,
-        // Convert MB to bytes
-        ytDlpProxy: ytDlpProxy || undefined,
-        transcriptionProvider,
-        transcriptionEndpoint: transcriptionEndpoint || undefined,
-        transcriptionApiKey: transcriptionApiKey || undefined,
-        transcriptionModel,
-      });
+    await updateVideoConfig({
+      enabled,
+      maxLengthSeconds,
+      maxVideoFileSize: maxVideoFileSizeMB * 1024 * 1024,
+      // Convert MB to bytes
+      ytDlpProxy: ytDlpProxy || undefined,
+      transcriptionProvider,
+      transcriptionEndpoint: transcriptionEndpoint || undefined,
+      transcriptionApiKey: transcriptionApiKey || undefined,
+      transcriptionModel,
+    })
       // The stored key is what the field now stands for; leaving the typed one
       // behind is what left this form claiming unsaved changes forever.
-      setTranscriptionApiKey("");
-    } finally {
-      setSaving(false);
-    }
+      .then(() => setTranscriptionApiKey(""))
+      .finally(() => setSaving(false));
   };
   return (
     <div className="flex flex-col gap-4">

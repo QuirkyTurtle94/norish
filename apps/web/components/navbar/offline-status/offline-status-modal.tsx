@@ -105,11 +105,7 @@ function ConfirmInline({
   const confirm = async () => {
     setBusy(true);
 
-    try {
-      await onConfirm();
-    } finally {
-      setBusy(false);
-    }
+    await onConfirm().finally(() => setBusy(false));
   };
 
   return (

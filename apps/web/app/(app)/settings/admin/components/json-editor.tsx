@@ -67,32 +67,28 @@ export default function JsonEditor({
   const handleSave = useCallback(async () => {
     if (error) return;
     setSaving(true);
-    try {
-      const result = await onSave(text);
-      if (result.success) {
-        setIsDirty(false);
-      } else if (result.error) {
-        setError(result.error);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("failedToSave"));
-    } finally {
-      setSaving(false);
-    }
+    await onSave(text)
+      .then((result) => {
+        if (result.success) {
+          setIsDirty(false);
+        } else if (result.error) {
+          setError(result.error);
+        }
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t("failedToSave")))
+      .finally(() => setSaving(false));
   }, [text, error, onSave, t]);
   const handleRestoreDefaults = useCallback(async () => {
     if (!onRestoreDefaults) return;
     setSaving(true);
-    try {
-      const result = await onRestoreDefaults();
-      if (!result.success && result.error) {
-        setError(result.error);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t("failedToRestore"));
-    } finally {
-      setSaving(false);
-    }
+    await onRestoreDefaults()
+      .then((result) => {
+        if (!result.success && result.error) {
+          setError(result.error);
+        }
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : t("failedToRestore")))
+      .finally(() => setSaving(false));
   }, [onRestoreDefaults, t]);
   const handleFormat = useCallback(() => {
     try {

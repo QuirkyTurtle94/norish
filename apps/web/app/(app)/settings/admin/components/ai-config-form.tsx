@@ -332,43 +332,37 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
-    try {
-      const result = await testAIEndpoint({
-        provider,
-        endpoint: endpoint || undefined,
-        apiKey: apiKey || undefined,
-      });
-      setTestResult(result);
-    } finally {
-      setTesting(false);
-    }
+    await testAIEndpoint({
+      provider,
+      endpoint: endpoint || undefined,
+      apiKey: apiKey || undefined,
+    })
+      .then(setTestResult)
+      .finally(() => setTesting(false));
   };
   const handleSave = async () => {
     if (enabled && !hasValidConfig) return;
     setSaving(true);
-    try {
-      await updateAIConfig({
-        enabled,
-        provider: provider as AIConfig["provider"],
-        endpoint: endpoint || undefined,
-        model,
-        visionModel: visionModel || undefined,
-        apiKey: apiKey || undefined,
-        temperature,
-        maxTokens,
-        timeoutMs,
-        alwaysUseAI,
-        tagStrategy,
-        cuisineStrategy,
-        automaticEnrichment,
-        automaticIngredients,
-      });
+    await updateAIConfig({
+      enabled,
+      provider: provider as AIConfig["provider"],
+      endpoint: endpoint || undefined,
+      model,
+      visionModel: visionModel || undefined,
+      apiKey: apiKey || undefined,
+      temperature,
+      maxTokens,
+      timeoutMs,
+      alwaysUseAI,
+      tagStrategy,
+      cuisineStrategy,
+      automaticEnrichment,
+      automaticIngredients,
+    })
       // Saved keys live on the server, not in the form: a key left in state
       // reads as an unsaved change on every later render.
-      setApiKey("");
-    } finally {
-      setSaving(false);
-    }
+      .then(() => setApiKey(""))
+      .finally(() => setSaving(false));
   };
   return (
     <div className="flex flex-col gap-4">

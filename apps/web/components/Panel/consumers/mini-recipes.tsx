@@ -221,16 +221,15 @@ function MiniRecipesContent({
   const handleRandomSelect = useCallback(async () => {
     if (!slot) return;
     setIsRandomLoading(true);
-    try {
-      const result = await getRandomRecipe(SLOT_TO_CATEGORY[slot]);
-      if (result) {
-        planMeal(dateString, slot, result.id);
-        close();
-        onPlanned(result.id);
-      }
-    } finally {
-      setIsRandomLoading(false);
-    }
+    await getRandomRecipe(SLOT_TO_CATEGORY[slot])
+      .then((result) => {
+        if (result) {
+          planMeal(dateString, slot, result.id);
+          close();
+          onPlanned(result.id);
+        }
+      })
+      .finally(() => setIsRandomLoading(false));
   }, [slot, getRandomRecipe, planMeal, dateString, close, onPlanned]);
   const handlePlanNote = useCallback(
     (targetSlot: Slot) => {

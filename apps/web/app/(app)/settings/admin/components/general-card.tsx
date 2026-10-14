@@ -67,27 +67,26 @@ export default function GeneralCard() {
       return;
     }
     setIsSaving(true);
-    try {
-      const result = await updateLocaleConfig({
-        defaultLocale,
-        enabledLocales,
-      });
-      if (result.success) {
-        toast(t("localesSaved"), {
-          variant: "success",
-        });
-      } else {
-        showSafeErrorToast({
-          title: t("localesError"),
-          description: tErrors("technicalDetails"),
-          color: "danger",
-          error: result.error,
-          context: "admin-general:save-locales",
-        });
-      }
-    } finally {
-      setIsSaving(false);
-    }
+    await updateLocaleConfig({
+      defaultLocale,
+      enabledLocales,
+    })
+      .then((result) => {
+        if (result.success) {
+          toast(t("localesSaved"), {
+            variant: "success",
+          });
+        } else {
+          showSafeErrorToast({
+            title: t("localesError"),
+            description: tErrors("technicalDetails"),
+            color: "danger",
+            error: result.error,
+            context: "admin-general:save-locales",
+          });
+        }
+      })
+      .finally(() => setIsSaving(false));
   };
 
   // Check if locale config has changed from server state

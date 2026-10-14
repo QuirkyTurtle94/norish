@@ -34,11 +34,7 @@ export default function SystemCard() {
   }
   const handleSaveScheduler = async () => {
     setSaving(true);
-    try {
-      await updateSchedulerMonths(months);
-    } finally {
-      setSaving(false);
-    }
+    await updateSchedulerMonths(months).finally(() => setSaving(false));
   };
   const handleRestart = async () => {
     await restartServer();

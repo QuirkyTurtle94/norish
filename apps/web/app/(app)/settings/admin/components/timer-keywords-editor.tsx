@@ -117,36 +117,34 @@ export default function TimerKeywordsEditor({
       return;
     }
     setSaving(true);
-    try {
-      const result = await onUpdate({
-        enabled: isEnabled,
-        hours: parsedHours,
-        minutes: parsedMinutes,
-        seconds: parsedSeconds,
-      });
-      if (result.success) {
-        setIsDirty(false);
-      } else if (result.error) {
-        setError(result.error);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save");
-    } finally {
-      setSaving(false);
-    }
+    await onUpdate({
+      enabled: isEnabled,
+      hours: parsedHours,
+      minutes: parsedMinutes,
+      seconds: parsedSeconds,
+    })
+      .then((result) => {
+        if (result.success) {
+          setIsDirty(false);
+        } else if (result.error) {
+          setError(result.error);
+        }
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to save"))
+      .finally(() => setSaving(false));
   }, [hoursText, minutesText, secondsText, isEnabled, error, onUpdate]);
   const handleRestoreDefaults = useCallback(async () => {
     setSaving(true);
-    try {
-      const result = await onRestoreDefaults();
-      if (!result.success && result.error) {
-        setError(result.error);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to restore defaults");
-    } finally {
-      setSaving(false);
-    }
+    await onRestoreDefaults()
+      .then((result) => {
+        if (!result.success && result.error) {
+          setError(result.error);
+        }
+      })
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : "Failed to restore defaults")
+      )
+      .finally(() => setSaving(false));
   }, [onRestoreDefaults]);
   return (
     <div className="flex flex-col gap-4">

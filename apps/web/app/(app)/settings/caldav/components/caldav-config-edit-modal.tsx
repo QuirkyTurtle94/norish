@@ -96,24 +96,23 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
       setTesting(true);
       setTestResult(null);
       setCalendars([]);
-      try {
-        const result = await testConnection(url, user, pass);
-        setTestResult(result);
+      const result = await testConnection(url, user, pass);
 
-        // Store returned calendars for selection
-        if (result.success && result.calendars && result.calendars.length > 0) {
-          setCalendars(result.calendars);
-          // Auto-select first calendar if none selected, or keep existing selection if valid
-          if (!currentCalendarUrl || !result.calendars.some((c) => c.url === currentCalendarUrl)) {
-            const firstCalendar = result.calendars[0];
-            if (firstCalendar) {
-              setCalendarUrl(firstCalendar.url);
-            }
+      setTestResult(result);
+
+      // Store returned calendars for selection
+      if (result.success && result.calendars && result.calendars.length > 0) {
+        setCalendars(result.calendars);
+        // Auto-select first calendar if none selected, or keep existing selection if valid
+        if (!currentCalendarUrl || !result.calendars.some((c) => c.url === currentCalendarUrl)) {
+          const firstCalendar = result.calendars[0];
+
+          if (firstCalendar) {
+            setCalendarUrl(firstCalendar.url);
           }
         }
-      } finally {
-        setTesting(false);
       }
+      setTesting(false);
     },
     [testConnection]
   );
@@ -171,23 +170,20 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
     }
     setSaving(true);
     setTestResult(null);
-    try {
-      await saveConfig({
-        serverUrl,
-        calendarUrl,
-        username,
-        password,
-        // Empty string if not changed
-        enabled,
-        breakfastTime,
-        lunchTime,
-        dinnerTime,
-        snackTime,
-      });
-      onClose();
-    } finally {
-      setSaving(false);
-    }
+    await saveConfig({
+      serverUrl,
+      calendarUrl,
+      username,
+      password,
+      // Empty string if not changed
+      enabled,
+      breakfastTime,
+      lunchTime,
+      dinnerTime,
+      snackTime,
+    })
+      .then(() => onClose())
+      .finally(() => setSaving(false));
   };
   const canSave = serverUrl && username && (password || config) && calendarUrl;
   return (

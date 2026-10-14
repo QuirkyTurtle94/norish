@@ -320,110 +320,101 @@ export default function RecipeForm({ mode, initialData }: RecipeFormProps) {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [name, ingredients, steps, servings, tValidation]);
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     if (!validate()) return;
     setIsSubmitting(true);
     setErrors({});
-    try {
-      // Extract images from unified media state, preserving their order
-      const images = media
-        .filter((m) => m.type === "image")
-        .map((img) => ({
-          id: img.id,
-          image: img.src,
-          order: img.order,
-          version: img.version,
-        }));
+    // Extract images from unified media state, preserving their order
+    const images = media
+      .filter((m) => m.type === "image")
+      .map((img) => ({
+        id: img.id,
+        image: img.src,
+        order: img.order,
+        version: img.version,
+      }));
 
-      // Extract videos from unified media state, preserving their order
-      const videos = media
-        .filter((m) => m.type === "video")
-        .map((vid) => ({
-          id: vid.id,
-          video: vid.src,
-          thumbnail: vid.thumbnail ?? null,
-          duration: vid.duration ?? null,
-          order: vid.order,
-          version: vid.version,
-        }));
-      const recipeData = {
-        name: name.trim(),
-        description: description.trim() || null,
-        notes: notes.trim() || null,
-        url: url.trim() || null,
-        servings,
-        prepMinutes: prepMinutes ?? undefined,
-        cookMinutes: cookMinutes ?? undefined,
-        totalMinutes: totalMinutes ?? undefined,
-        calories,
-        fat: fat != null ? fat.toString() : null,
-        carbs: carbs != null ? carbs.toString() : null,
-        protein: protein != null ? protein.toString() : null,
-        originCountry: provenance.originCountry,
-        originCountryName: provenance.originCountryName,
-        originRegion: provenance.originRegion.trim() || null,
-        provenanceNote: provenance.provenanceNote.trim() || null,
-        cuisines: provenance.cuisineIds,
-        systemUsed,
-        tags: tags.map((t) => ({
-          name: t,
-        })),
-        categories,
-        recipeIngredients: ingredients.map((ing, idx) => ({
-          id: ing.id,
-          version: ing.version,
-          ingredientName: ing.ingredientName,
-          ingredientId: null,
-          amount: ing.amount,
-          unit: ing.unit,
-          order: idx,
-          systemUsed: ing.systemUsed,
-        })),
-        steps: steps.map((s, idx) => ({
-          step: s.step,
-          order: idx,
-          systemUsed: s.systemUsed,
-          version: s.version,
-          images: s.images || [],
-          stepIngredients: s.stepIngredients || [],
-        })),
-        // Images array field
-        images,
-        // Videos array field
-        videos,
-      };
+    // Extract videos from unified media state, preserving their order
+    const videos = media
+      .filter((m) => m.type === "video")
+      .map((vid) => ({
+        id: vid.id,
+        video: vid.src,
+        thumbnail: vid.thumbnail ?? null,
+        duration: vid.duration ?? null,
+        order: vid.order,
+        version: vid.version,
+      }));
+    const recipeData = {
+      name: name.trim(),
+      description: description.trim() || null,
+      notes: notes.trim() || null,
+      url: url.trim() || null,
+      servings,
+      prepMinutes: prepMinutes ?? undefined,
+      cookMinutes: cookMinutes ?? undefined,
+      totalMinutes: totalMinutes ?? undefined,
+      calories,
+      fat: fat != null ? fat.toString() : null,
+      carbs: carbs != null ? carbs.toString() : null,
+      protein: protein != null ? protein.toString() : null,
+      originCountry: provenance.originCountry,
+      originCountryName: provenance.originCountryName,
+      originRegion: provenance.originRegion.trim() || null,
+      provenanceNote: provenance.provenanceNote.trim() || null,
+      cuisines: provenance.cuisineIds,
+      systemUsed,
+      tags: tags.map((t) => ({
+        name: t,
+      })),
+      categories,
+      recipeIngredients: ingredients.map((ing, idx) => ({
+        id: ing.id,
+        version: ing.version,
+        ingredientName: ing.ingredientName,
+        ingredientId: null,
+        amount: ing.amount,
+        unit: ing.unit,
+        order: idx,
+        systemUsed: ing.systemUsed,
+      })),
+      steps: steps.map((s, idx) => ({
+        step: s.step,
+        order: idx,
+        systemUsed: s.systemUsed,
+        version: s.version,
+        images: s.images || [],
+        stepIngredients: s.stepIngredients || [],
+      })),
+      // Images array field
+      images,
+      // Videos array field
+      videos,
+    };
+    const editing = mode === "edit" ? initialData : undefined;
+
+    try {
       if (mode === "create") {
-        try {
-          allowNavigation();
-          await createRecipe({
-            ...recipeData,
-            id: recipeId!,
-          });
-        } catch (err) {
-          disallowNavigation();
-          log.error(
-            {
-              err,
-            },
-            "Failed to create recipe"
-          );
-          throw err;
-        }
-      } else if (mode === "edit" && initialData) {
         allowNavigation();
-        await updateRecipe(initialData.id, {
+        createRecipe({
           ...recipeData,
-          version: initialData.version,
+          id: recipeId!,
+        });
+      } else if (editing) {
+        allowNavigation();
+        updateRecipe(editing.id, {
+          ...recipeData,
+          version: editing.version,
         });
       }
     } catch (err) {
+      log.error({ err }, "Failed to save recipe");
       disallowNavigation();
       setErrors({
         submit: (err as Error).message,
       });
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   }, [
     validate,
     name,

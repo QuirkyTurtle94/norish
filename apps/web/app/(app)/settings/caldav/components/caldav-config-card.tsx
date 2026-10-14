@@ -58,24 +58,23 @@ export default function CalDavConfigCard() {
     setTesting(true);
     setTestResult(null);
     setCalendars([]);
-    try {
-      const result = await testConnection(serverUrl, username, password);
-      setTestResult(result);
+    const result = await testConnection(serverUrl, username, password);
 
-      // Store returned calendars for selection
-      if (result.success && result.calendars && result.calendars.length > 0) {
-        setCalendars(result.calendars);
-        // Auto-select first calendar
-        if (!calendarUrl) {
-          const firstCalendar = result.calendars[0];
-          if (firstCalendar) {
-            setCalendarUrl(firstCalendar.url);
-          }
+    setTestResult(result);
+
+    // Store returned calendars for selection
+    if (result.success && result.calendars && result.calendars.length > 0) {
+      setCalendars(result.calendars);
+      // Auto-select first calendar
+      if (!calendarUrl) {
+        const firstCalendar = result.calendars[0];
+
+        if (firstCalendar) {
+          setCalendarUrl(firstCalendar.url);
         }
       }
-    } finally {
-      setTesting(false);
     }
+    setTesting(false);
   };
 
   // Auto-test connection when all credentials are filled
@@ -89,24 +88,23 @@ export default function CalDavConfigCard() {
         setTesting(true);
         setTestResult(null);
         setCalendars([]);
-        try {
-          const result = await testConnection(serverUrl, username, password);
-          setTestResult(result);
+        const result = await testConnection(serverUrl, username, password);
 
-          // Store returned calendars for selection
-          if (result.success && result.calendars && result.calendars.length > 0) {
-            setCalendars(result.calendars);
-            // Auto-select first calendar
-            if (!calendarUrl) {
-              const firstCalendar = result.calendars[0];
-              if (firstCalendar) {
-                setCalendarUrl(firstCalendar.url);
-              }
+        setTestResult(result);
+
+        // Store returned calendars for selection
+        if (result.success && result.calendars && result.calendars.length > 0) {
+          setCalendars(result.calendars);
+          // Auto-select first calendar
+          if (!calendarUrl) {
+            const firstCalendar = result.calendars[0];
+
+            if (firstCalendar) {
+              setCalendarUrl(firstCalendar.url);
             }
           }
-        } finally {
-          setTesting(false);
         }
+        setTesting(false);
       };
       runAutoTest();
     }
@@ -118,22 +116,19 @@ export default function CalDavConfigCard() {
   const handleInitialSetup = async () => {
     setSaving(true);
     setTestResult(null);
-    try {
-      await saveConfig({
-        serverUrl,
-        calendarUrl,
-        username,
-        password,
-        enabled: true,
-        breakfastTime,
-        lunchTime,
-        dinnerTime,
-        snackTime,
-      });
-      setPassword(""); // Clear password after save
-    } finally {
-      setSaving(false);
-    }
+    await saveConfig({
+      serverUrl,
+      calendarUrl,
+      username,
+      password,
+      enabled: true,
+      breakfastTime,
+      lunchTime,
+      dinnerTime,
+      snackTime,
+    })
+      .then(() => setPassword("")) // Clear password after save
+      .finally(() => setSaving(false));
   };
 
   // If config exists, show summary

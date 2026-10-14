@@ -110,37 +110,30 @@ export default function DecisionModelForm({ onDirtyChange }: DecisionModelFormPr
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
-    try {
-      const result = await testDecisionEndpoint({
-        provider,
-        apiKey: apiKey || undefined,
-        model: model || undefined,
-        endpoint: endpoint.trim() || undefined,
-      });
-
-      setTestResult(result);
-    } finally {
-      setTesting(false);
-    }
+    await testDecisionEndpoint({
+      provider,
+      apiKey: apiKey || undefined,
+      model: model || undefined,
+      endpoint: endpoint.trim() || undefined,
+    })
+      .then(setTestResult)
+      .finally(() => setTesting(false));
   };
 
   const handleSave = async () => {
     setSaving(true);
-    try {
-      await updateDecisionConfig({
-        provider,
-        model: model || undefined,
-        endpoint: endpoint.trim() || undefined,
-        // An empty key preserves the stored one on the server.
-        apiKey: apiKey || undefined,
-        // Every use selected is stored as no list, so the block keeps meaning
-        // "every use" and a use added later is on for it (ADR-0035).
-        uses: selectedDecisionUses(uses),
-      });
-      setApiKey("");
-    } finally {
-      setSaving(false);
-    }
+    await updateDecisionConfig({
+      provider,
+      model: model || undefined,
+      endpoint: endpoint.trim() || undefined,
+      // An empty key preserves the stored one on the server.
+      apiKey: apiKey || undefined,
+      // Every use selected is stored as no list, so the block keeps meaning
+      // "every use" and a use added later is on for it (ADR-0035).
+      uses: selectedDecisionUses(uses),
+    })
+      .then(() => setApiKey(""))
+      .finally(() => setSaving(false));
   };
 
   return (

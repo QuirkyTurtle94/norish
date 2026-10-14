@@ -152,18 +152,15 @@ export default function ImageGenerationForm({ onDirtyChange }: ImageGenerationFo
 
   const handleSave = async () => {
     setSaving(true);
-    try {
-      await updateImageGenerationConfig({
-        provider,
-        model: model || undefined,
-        endpoint: endpoint || undefined,
-        // An empty key preserves the stored one on the server.
-        apiKey: apiKey || undefined,
-      });
-      setApiKey("");
-    } finally {
-      setSaving(false);
-    }
+    await updateImageGenerationConfig({
+      provider,
+      model: model || undefined,
+      endpoint: endpoint || undefined,
+      // An empty key preserves the stored one on the server.
+      apiKey: apiKey || undefined,
+    })
+      .then(() => setApiKey(""))
+      .finally(() => setSaving(false));
   };
 
   return (

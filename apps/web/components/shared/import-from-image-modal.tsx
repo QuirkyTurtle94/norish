@@ -177,9 +177,8 @@ export default function ImportFromImageModal({ isOpen, onOpenChange }: ImportFro
         error,
         context: "import-from-image-modal:import",
       });
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   }, [files, importRecipeFromImages, onOpenChange, router, t, tErrors]);
   const handleOpenChange = useCallback(
     (open: boolean) => {

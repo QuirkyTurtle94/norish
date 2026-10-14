@@ -87,18 +87,15 @@ export function AuthProviderForm({
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
-    try {
-      const testValues = Object.fromEntries(fields.map((f) => [f.key, values[f.key] || undefined]));
+    const testValues = Object.fromEntries(fields.map((f) => [f.key, values[f.key] || undefined]));
 
-      setTestResult(await testAuthProvider(providerKey, testValues));
-    } finally {
-      setTesting(false);
-    }
+    await testAuthProvider(providerKey, testValues)
+      .then(setTestResult)
+      .finally(() => setTesting(false));
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
+    const save = async () => {
       const saveValues = Object.fromEntries(fields.map((f) => [f.key, values[f.key] || undefined]));
 
       // Route to correct update function (OIDC uses OIDCProviderForm, not this generic form)
@@ -122,9 +119,10 @@ export function AuthProviderForm({
 
         return cleared;
       });
-    } finally {
-      setSaving(false);
-    }
+    };
+
+    setSaving(true);
+    await save().finally(() => setSaving(false));
   };
 
   const handleDelete = async () => {

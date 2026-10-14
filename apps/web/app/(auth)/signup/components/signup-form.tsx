@@ -38,24 +38,22 @@ export function SignupForm({ callbackUrl = "/" }: SignupFormProps) {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    try {
-      const result = await signUp.email({
+    await signUp
+      .email({
         name,
         email,
         password,
         callbackURL: callbackUrl,
-      });
-
-      if (result.error) {
-        setError(result.error.message || t("errors.createFailed"));
-      } else {
-        router.push(callbackUrl);
-      }
-    } catch {
-      setError(t("errors.generic"));
-    } finally {
-      setIsLoading(false);
-    }
+      })
+      .then((result) => {
+        if (result.error) {
+          setError(result.error.message || t("errors.createFailed"));
+        } else {
+          router.push(callbackUrl);
+        }
+      })
+      .catch(() => setError(t("errors.generic")))
+      .finally(() => setIsLoading(false));
   };
 
   return (

@@ -30,6 +30,7 @@ const { default: DecisionModelForm } =
 describe("DecisionModelForm endpoint", () => {
   beforeEach(() => {
     testDecisionEndpoint.mockResolvedValue({ success: true });
+    updateDecisionConfig.mockResolvedValue(undefined);
     context.decisionConfig = { provider: "typesafe", apiKey: "••••", model: "von-1.3.0" };
   });
 

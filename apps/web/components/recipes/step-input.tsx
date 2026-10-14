@@ -314,28 +314,26 @@ export default function StepInput({
     async (index: number, file: File) => {
       if (!recipeId) return;
       setUploadingIndex(index);
-      try {
-        const result = await uploadStepImage(file, recipeId);
+      await uploadStepImage(file, recipeId)
+        .then((result) => {
+          const current = items[index];
 
-        const current = items[index];
+          if (result.success && result.url && current) {
+            const updated = [...items];
+            const newImage: StepImage = {
+              image: result.url,
+              order: current.images.length,
+            };
 
-        if (result.success && result.url && current) {
-          const updated = [...items];
-          const newImage: StepImage = {
-            image: result.url,
-            order: current.images.length,
-          };
-
-          updated[index] = {
-            ...current,
-            images: [...current.images, newImage],
-          };
-          setItems(updated);
-          emitChanges(updated);
-        }
-      } finally {
-        setUploadingIndex(null);
-      }
+            updated[index] = {
+              ...current,
+              images: [...current.images, newImage],
+            };
+            setItems(updated);
+            emitChanges(updated);
+          }
+        })
+        .finally(() => setUploadingIndex(null));
     },
     [recipeId, items, emitChanges, uploadStepImage]
   );

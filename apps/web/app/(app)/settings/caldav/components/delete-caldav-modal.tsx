@@ -17,13 +17,12 @@ export default function DeleteCalDavModal({ isOpen, onClose, onConfirm }: Delete
   const [deleting, setDeleting] = useState(false);
   const handleConfirm = async () => {
     setDeleting(true);
-    try {
-      await onConfirm(deleteEvents);
-      setDeleteEvents(false);
-      onClose();
-    } finally {
-      setDeleting(false);
-    }
+    await onConfirm(deleteEvents)
+      .then(() => {
+        setDeleteEvents(false);
+        onClose();
+      })
+      .finally(() => setDeleting(false));
   };
   return (
     <Modal.Backdrop className="z-[1099]" isOpen={isOpen} onOpenChange={onClose}>

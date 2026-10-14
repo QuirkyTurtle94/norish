@@ -31,11 +31,7 @@ export default function CalDavSyncStatusCard() {
   const [syncing, setSyncing] = useState(false);
   const handleManualSync = async () => {
     setSyncing(true);
-    try {
-      await triggerManualSync();
-    } finally {
-      setSyncing(false);
-    }
+    await triggerManualSync().finally(() => setSyncing(false));
   };
   const handleFilterClick = (status: "pending" | "synced" | "failed" | "removed") => {
     if (syncStatusFilter === status) {

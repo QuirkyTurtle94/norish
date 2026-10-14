@@ -28,23 +28,21 @@ export function EmailPasswordForm({
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    try {
-      const result = await signIn.email({
+    await signIn
+      .email({
         email,
         password,
         callbackURL: callbackUrl,
-      });
-
-      if (result.error) {
-        setError(result.error.message || t("errors.invalidCredentials"));
-      } else {
-        router.push(callbackUrl);
-      }
-    } catch {
-      setError(t("errors.generic"));
-    } finally {
-      setIsLoading(false);
-    }
+      })
+      .then((result) => {
+        if (result.error) {
+          setError(result.error.message || t("errors.invalidCredentials"));
+        } else {
+          router.push(callbackUrl);
+        }
+      })
+      .catch(() => setError(t("errors.generic")))
+      .finally(() => setIsLoading(false));
   };
 
   return (

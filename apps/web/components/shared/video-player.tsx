@@ -123,7 +123,7 @@ export default function VideoPlayer({
     const container = containerRef.current;
 
     if (!container) return;
-    try {
+    const request = async () => {
       if (hasDocumentFullscreenApi(document)) {
         if (container.requestFullscreen) {
           await container.requestFullscreen();
@@ -149,9 +149,10 @@ export default function VideoPlayer({
       if (hasNativeVideoFullscreen(videoRef.current)) {
         video?.webkitEnterFullscreen?.();
       }
-    } catch (_err) {
-      // Fullscreen request failed, ignore
-    }
+    };
+
+    // A refused fullscreen request is ignored.
+    await request().catch(() => {});
   }, []);
   const exitFullscreen = useCallback(async () => {
     try {

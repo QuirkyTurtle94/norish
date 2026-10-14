@@ -283,9 +283,8 @@ export default function MediaGalleryInput({
       setIsUploading(true);
       setUploadError(null);
 
-      try {
-        const nextOrder = media.length;
-
+      const nextOrder = media.length;
+      const upload = async () => {
         if (isVideo) {
           // Get duration from video file
           const duration = await getVideoDuration(file);
@@ -326,13 +325,15 @@ export default function MediaGalleryInput({
             setTimeout(() => setUploadError(null), 3000);
           }
         }
-      } catch (err) {
-        log.error({ err }, "Failed to upload media");
-        setUploadError(t("uploadFailed"));
-        setTimeout(() => setUploadError(null), 3000);
-      } finally {
-        setIsUploading(false);
-      }
+      };
+
+      await upload()
+        .catch((err: unknown) => {
+          log.error({ err }, "Failed to upload media");
+          setUploadError(t("uploadFailed"));
+          setTimeout(() => setUploadError(null), 3000);
+        })
+        .finally(() => setIsUploading(false));
     },
     [
       media,
@@ -355,17 +356,12 @@ export default function MediaGalleryInput({
 
       onChange(reordered);
 
-      try {
-        if (id) {
-          if (type === "video") {
-            await deleteGalleryVideo(id, version ?? 1);
-          } else {
-            await deleteGalleryImage(id, version ?? 1);
-          }
-        }
-      } catch (err) {
-        log.error({ err }, "Failed to delete media");
-      }
+      if (!id) return;
+      const remove = type === "video" ? deleteGalleryVideo : deleteGalleryImage;
+
+      await remove(id, version ?? 1).catch((err: unknown) =>
+        log.error({ err }, "Failed to delete media")
+      );
     },
     [media, onChange, deleteGalleryImage, deleteGalleryVideo]
   );

@@ -177,29 +177,29 @@ export default function ImageGalleryInput({
     setIsUploading(true);
     setUploadError(null);
 
-    try {
-      const nextOrder = images.length;
-      const result = await uploadGalleryImage(file, recipeId, nextOrder);
+    const nextOrder = images.length;
 
-      if (result.success && result.url) {
-        const newImage: RecipeGalleryImage = {
-          id: result.id,
-          image: result.url,
-          order: result.order ?? nextOrder,
-          version: result.version,
-        };
+    await uploadGalleryImage(file, recipeId, nextOrder)
+      .then((result) => {
+        if (result.success && result.url) {
+          const newImage: RecipeGalleryImage = {
+            id: result.id,
+            image: result.url,
+            order: result.order ?? nextOrder,
+            version: result.version,
+          };
 
-        onChange([...images, newImage]);
-      } else if (result.error) {
-        setUploadError(result.error);
-        setTimeout(() => setUploadError(null), 3000);
-      }
-    } catch (err) {
-      log.error({ err }, "Failed to upload gallery image");
-      setUploadError(t("uploadFailed"));
-    } finally {
-      setIsUploading(false);
-    }
+          onChange([...images, newImage]);
+        } else if (result.error) {
+          setUploadError(result.error);
+          setTimeout(() => setUploadError(null), 3000);
+        }
+      })
+      .catch((err: unknown) => {
+        log.error({ err }, "Failed to upload gallery image");
+        setUploadError(t("uploadFailed"));
+      })
+      .finally(() => setIsUploading(false));
   };
 
   const handleDelete = async (id: string | undefined, imageUrl: string, version?: number) => {
@@ -208,12 +208,10 @@ export default function ImageGalleryInput({
 
     onChange(reordered);
 
-    try {
-      if (id) {
-        await deleteGalleryImage(id, version ?? 1);
-      }
-    } catch (err) {
-      log.error({ err }, "Failed to delete gallery image");
+    if (id) {
+      await deleteGalleryImage(id, version ?? 1).catch((err: unknown) =>
+        log.error({ err }, "Failed to delete gallery image")
+      );
     }
   };
 

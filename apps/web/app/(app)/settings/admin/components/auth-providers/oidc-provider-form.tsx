@@ -118,49 +118,44 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
-    try {
-      const testValues = {
-        name: name || undefined,
-        issuer: issuer || undefined,
-        clientId: clientId || undefined,
-        clientSecret: clientSecret || undefined,
-        wellknown: wellknown || undefined,
-      };
+    const testValues = {
+      name: name || undefined,
+      issuer: issuer || undefined,
+      clientId: clientId || undefined,
+      clientSecret: clientSecret || undefined,
+      wellknown: wellknown || undefined,
+    };
 
-      setTestResult(await testAuthProvider("oidc", testValues));
-    } finally {
-      setTesting(false);
-    }
+    await testAuthProvider("oidc", testValues)
+      .then(setTestResult)
+      .finally(() => setTesting(false));
   };
 
   const handleSave = async () => {
     setSaving(true);
-    try {
-      // Parse scopes from comma-separated string
-      const scopesArray = claimMapping.scopes
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+    // Parse scopes from comma-separated string
+    const scopesArray = claimMapping.scopes
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
 
-      await updateAuthProviderOIDC({
-        name,
-        issuer,
-        clientId,
-        clientSecret: clientSecret || undefined,
-        wellknown: wellknown || undefined,
-        claimConfig: {
-          enabled: claimMapping.enabled,
-          scopes: scopesArray,
-          groupsClaim: claimMapping.groupsClaim,
-          adminGroup: claimMapping.adminGroup,
-          householdPrefix: claimMapping.householdPrefix,
-        },
-      });
+    await updateAuthProviderOIDC({
+      name,
+      issuer,
+      clientId,
+      clientSecret: clientSecret || undefined,
+      wellknown: wellknown || undefined,
+      claimConfig: {
+        enabled: claimMapping.enabled,
+        scopes: scopesArray,
+        groupsClaim: claimMapping.groupsClaim,
+        adminGroup: claimMapping.adminGroup,
+        householdPrefix: claimMapping.householdPrefix,
+      },
+    })
       // Saved secrets live on the server, not in the form.
-      setClientSecret("");
-    } finally {
-      setSaving(false);
-    }
+      .then(() => setClientSecret(""))
+      .finally(() => setSaving(false));
   };
 
   const handleDelete = async () => {

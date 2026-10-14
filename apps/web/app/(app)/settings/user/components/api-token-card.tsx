@@ -29,14 +29,13 @@ export default function ApiKeyCard() {
   const [newKeyName, setNewKeyName] = useState("");
   const handleGenerateKey = async () => {
     setGeneratingKey(true);
-    try {
-      const { key } = await generateApiKey(newKeyName || undefined);
-      setGeneratedKey(key);
-      setShowTokenModal(true);
-      setNewKeyName("");
-    } finally {
-      setGeneratingKey(false);
-    }
+    await generateApiKey(newKeyName || undefined)
+      .then(({ key }) => {
+        setGeneratedKey(key);
+        setShowTokenModal(true);
+        setNewKeyName("");
+      })
+      .finally(() => setGeneratingKey(false));
   };
   const handleCopyKey = () => {
     if (generatedKey) {

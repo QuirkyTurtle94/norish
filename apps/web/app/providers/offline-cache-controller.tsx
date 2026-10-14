@@ -50,16 +50,12 @@ export function OfflineCacheController({ children }: { children: ReactNode }) {
         owner: cacheManager.owner,
         submit: (entry) => replayOutboxEntry(trpcClient, entry),
         verifySession: async (ownerId) => {
-          try {
-            const session = await getSession();
-            const liveUserId = session?.data?.user?.id ?? null;
+          const session = await getSession().catch(() => null);
+          const liveUserId = session?.data?.user?.id ?? null;
 
-            if (liveUserId === null) return "unverifiable";
+          if (liveUserId === null) return "unverifiable";
 
-            return liveUserId === ownerId ? "match" : "mismatch";
-          } catch {
-            return "unverifiable";
-          }
+          return liveUserId === ownerId ? "match" : "mismatch";
         },
         refetchActiveQueries: () => queryClient.refetchQueries({ type: "active" }),
         topUp: warmSet.topUp,

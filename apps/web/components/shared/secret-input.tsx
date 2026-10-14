@@ -94,11 +94,9 @@ export default function SecretInput({
 
     if (!hasTypedValue && isConfigured && storedSecret === null) {
       setIsLoading(true);
-      try {
-        setStoredSecret(await onReveal());
-      } finally {
-        setIsLoading(false);
-      }
+      await onReveal()
+        .then(setStoredSecret)
+        .finally(() => setIsLoading(false));
     }
     setIsVisible(true);
   }, [hasTypedValue, isConfigured, isVisible, onReveal, storedSecret]);

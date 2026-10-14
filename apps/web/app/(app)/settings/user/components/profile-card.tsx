@@ -34,8 +34,7 @@ export default function ProfileCard() {
     if (!hasNameChanges && !hasImageChanges) {
       return;
     }
-    setSaving(true);
-    try {
+    const save = async () => {
       if (hasNameChanges) {
         await updateName(name);
       }
@@ -44,9 +43,10 @@ export default function ProfileCard() {
         setImagePreview(null);
         setPendingImageFile(null);
       }
-    } finally {
-      setSaving(false);
-    }
+    };
+
+    setSaving(true);
+    await save().finally(() => setSaving(false));
   };
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
