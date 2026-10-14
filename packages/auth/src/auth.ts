@@ -256,6 +256,9 @@ function createBetterAuth() {
         : []),
     ],
     secondaryStorage: redisSecondaryStorage,
+    advanced: {
+      ipAddress: { trustedProxies: SERVER_CONFIG.TRUSTED_PROXIES },
+    },
     // Rate limiting configuration. Values come from the environment so a test
     // harness can lift the ceiling; the defaults are the production ones.
     rateLimit: {

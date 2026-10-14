@@ -20,6 +20,7 @@ services:
       # OBSCURA_NAVIGATION_TIMEOUT_MS: 45000 # How long a URL import waits for the page to load
       # NEXT_PUBLIC_LOG_LEVEL: info       # trace, debug, info, warn, error, fatal (default: info in prod, debug in dev)
       # TRUSTED_ORIGINS:http://192.168.1.100:3000,https://norish.example.com  # Additional trusted origins, comma separated. Useful when behind a proxy or using multiple domains.
+      # TRUSTED_PROXIES: 173.245.48.0/20,10.0.0.2 # Reverse proxy IPs or CIDR ranges, comma separated. Needed behind more than one proxy.
 
       # ─────────────────────────────────────────────────────────────────────────
       # FIRST USER SETUP

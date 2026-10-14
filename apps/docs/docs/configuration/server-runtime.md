@@ -32,14 +32,21 @@ openssl rand -base64 32
 
 ## Networking & origins
 
-| Variable          | Description                                | Default |
-| ----------------- | ------------------------------------------ | ------- |
-| `TRUSTED_ORIGINS` | Comma-separated additional trusted origins | (empty) |
+| Variable          | Description                                                | Default |
+| ----------------- | ---------------------------------------------------------- | ------- |
+| `TRUSTED_ORIGINS` | Comma-separated additional trusted origins                 | (empty) |
+| `TRUSTED_PROXIES` | Comma-separated IPs or CIDR ranges of your reverse proxies | (empty) |
 
 `TRUSTED_ORIGINS` is useful when the instance is reached from more than one origin, for
 example `http://192.168.1.100:3000,https://norish.example.com`. The WebSocket
 refuses an upgrade from a browser origin it does not trust.
 [WebSocket & realtime](./websocket.md#origin-check).
+
+Set `TRUSTED_PROXIES` when Norish sits behind more than one reverse proxy, for example
+Cloudflare in front of Nginx Proxy Manager. List the address or range of every proxy; for
+Cloudflare that is its [published ranges](https://www.cloudflare.com/ips/). Without it, Norish
+cannot tell visitors apart and everyone shares one rate limit for signing in and session checks.
+Behind a single proxy it is not needed.
 
 ## Auth rate limiting
 

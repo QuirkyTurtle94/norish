@@ -209,13 +209,13 @@ function cookiesFrom(response: Response, previous = ""): string {
   return [...jar].map(([name, value]) => `${name}=${value}`).join("; ");
 }
 
-function post(path: string, body: unknown, cookie = ""): Request {
+function post(path: string, body: unknown, cookie = "", forwardedFor = "203.0.113.7"): Request {
   return new Request(`${AUTH_URL}/api/auth${path}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       origin: AUTH_URL,
-      "x-forwarded-for": "203.0.113.7",
+      "x-forwarded-for": forwardedFor,
       ...(cookie ? { cookie } : {}),
     },
     body: JSON.stringify(body),
@@ -271,6 +271,7 @@ beforeAll(async () => {
   vi.stubEnv("NODE_ENV", "production");
   vi.stubEnv("AUTH_URL", AUTH_URL);
   vi.stubEnv("AUTH_RATE_LIMIT_ENABLED", "true");
+  vi.stubEnv("TRUSTED_PROXIES", "10.0.0.0/24");
   container = await new RedisContainer("redis:8.6.2-alpine").start();
   redis = new Redis({ host: container.getHost(), port: container.getPort(), protocol: 2 });
   client.redis = redis;
@@ -417,6 +418,24 @@ describe("rate limiting", () => {
 
     expect(statuses.slice(0, 3)).not.toContain(429);
     expect(statuses[3]).toBe(429);
+  });
+
+  it("limits each visitor on their own behind two trusted proxies", async () => {
+    // A second proxy appends the first one's address, so the header holds two hops.
+    const attempt = (visitor: string) =>
+      authModule.auth.handler(
+        post(
+          "/sign-in/email",
+          { email: ADA.email, password: "wrong-pass" },
+          "",
+          `${visitor}, 10.0.0.2`
+        )
+      );
+
+    for (let i = 0; i < 3; i++) await attempt("198.51.100.1");
+
+    expect((await attempt("198.51.100.1")).status).toBe(429);
+    expect((await attempt("198.51.100.2")).status).not.toBe(429);
   });
 });
 

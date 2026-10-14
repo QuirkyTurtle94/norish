@@ -104,6 +104,9 @@ const ServerConfigSchema = z.object({
   AUTH_URL: z.url().default("http://localhost:3000"),
   // Additional trusted origins (comma-separated URLs) for multi-domain access
   TRUSTED_ORIGINS: commaSeparatedList,
+  // Reverse proxies (IPs or CIDR ranges, comma-separated) whose hops are
+  // skipped in X-Forwarded-For, so the client behind several proxies is found
+  TRUSTED_PROXIES: commaSeparatedList,
   UPLOADS_DIR: z.string().default(defaultUploadsDir),
 
   // Auth endpoint rate limiting. Defaults are the production values; they are
