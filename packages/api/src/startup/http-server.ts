@@ -18,6 +18,8 @@ export async function createServer() {
   // Production reads the config `next build` resolved, as Next's own
   // standalone server does: next.config.js and what it imports at build time
   // (next-intl's plugin, Serwist) neither ship in the image nor run at boot.
+  // Every config load in Next reads this variable; the custom server's `conf`
+  // option reaches only some of them. A test fails if Next stops reading it.
   if (!dev) {
     process.env.__NEXT_PRIVATE_STANDALONE_CONFIG ??= JSON.stringify(
       JSON.parse(readFileSync(join(WEB_APP_DIR, ".next", "required-server-files.json"), "utf8"))
