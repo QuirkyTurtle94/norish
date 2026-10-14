@@ -12,7 +12,6 @@ const mockCreateMutationOptions = vi.fn((options?: unknown) => options);
 const mockImportFromUrlMutationOptions = vi.fn((options?: unknown) => options);
 const mockImportFromPasteMutationOptions = vi.fn((options?: unknown) => options);
 const mockUpdateMutationOptions = vi.fn((options?: unknown) => options);
-const promoteCreatedRecipe = vi.hoisted(() => vi.fn());
 
 vi.mock("@tanstack/react-query", async () => {
   const actual = await vi.importActual("@tanstack/react-query");
@@ -94,14 +93,6 @@ vi.mock("@/app/providers/trpc-provider", () => ({
       delete: { mutationOptions: vi.fn() },
       convertMeasurements: { mutationOptions: vi.fn() },
     },
-  }),
-}));
-
-vi.mock("@/hooks/use-warm-set", () => ({
-  useWarmSet: () => ({
-    topUp: vi.fn(),
-    inspect: vi.fn(),
-    promoteCreatedRecipe,
   }),
 }));
 
@@ -397,7 +388,6 @@ describe("useRecipesMutations", () => {
           systemUsed: "metric",
         })
       );
-      expect(promoteCreatedRecipe).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111");
 
       const cachedList =
         queryClient.getQueryData<ReturnType<typeof createMockInfiniteData>>(listQueryKey);

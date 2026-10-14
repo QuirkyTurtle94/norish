@@ -103,7 +103,7 @@ vi.mock("@/lib/query-cache", () => ({
   },
 }));
 vi.mock("@/hooks/use-warm-set", () => ({
-  useWarmSet: () => ({ topUp: warmSetTopUp, inspect: vi.fn(), promoteCreatedRecipe: vi.fn() }),
+  useWarmSet: () => ({ topUp: warmSetTopUp, inspect: vi.fn() }),
 }));
 vi.mock("@/lib/outbox", () => ({
   outboxStore: outbox.store,

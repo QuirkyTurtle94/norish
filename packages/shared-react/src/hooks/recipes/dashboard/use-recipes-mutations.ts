@@ -307,7 +307,6 @@ export type RecipesMutationsResult = {
 };
 
 export type RecipesMutationErrorHandler = (error: unknown, operation: string) => void;
-export type RecipeCreatedAdapter = (recipeId: string) => void;
 /**
  * Told when an import found a recipe the household already holds. Not an
  * error — the id is the one the caller was reaching for, so an app can offer
@@ -330,7 +329,6 @@ export function createUseRecipesMutations(
 ) {
   return function useRecipesMutations(
     onError?: RecipesMutationErrorHandler,
-    onRecipeCreated?: RecipeCreatedAdapter,
     onRecipeAlreadyExists?: RecipeAlreadyExistsAdapter
   ): RecipesMutationsResult {
     const trpc = useTRPC();
@@ -470,7 +468,6 @@ export function createUseRecipesMutations(
           });
 
           queryClient.setQueryData<FullRecipeDTO | null>(detailQueryKey, optimisticRecipe);
-          onRecipeCreated?.(optimisticRecipe.id);
           setAllRecipesData((previousData) =>
             addRecipeToLists(previousData, createOptimisticDashboardRecipe(optimisticRecipe))
           );

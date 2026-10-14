@@ -44,7 +44,6 @@ vi.mock("@/hooks/use-warm-set", () => ({
   useWarmSet: () => ({
     topUp: h.warmSetTopUp,
     inspect: h.warmSetInspect,
-    promoteCreatedRecipe: vi.fn(),
   }),
 }));
 

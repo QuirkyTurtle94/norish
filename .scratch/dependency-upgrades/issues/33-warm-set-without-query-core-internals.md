@@ -1,6 +1,6 @@
 # 33 — Warm set without query-core internals
 
-Status: ready-for-agent
+Status: resolved
 Target release: 0.26.0-beta
 
 Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026-10-13.
@@ -21,9 +21,11 @@ Spec: `.scratch/dependency-upgrades/spec.md`. Found in the branch review on 2026
 
 ## Acceptance criteria
 
-- [ ] `warm-set.ts` has no bracket access to query-core and no `as never`.
-- [ ] A test shows that a recipe and a cookbook the reader opened stay cached past the default `gcTime`.
+- [x] `warm-set.ts` has no bracket access to query-core and no `as never`.
+- [x] A test shows that a recipe and a cookbook the reader opened stay cached past the default `gcTime`.
 
 ## Comments
 
 - Filed 2026-10-13 from the branch review.
+- 2026-10-14: Done. `createQueryClient` in `persisted-query-client.ts` registers `setQueryDefaults([["recipes", "get"]])` and `[["cookbooks", "get"]]` with `gcTime: CACHE_MAX_AGE_MS`, before any read or restore, so the page's own query and a create's seed are built with the warm lifetime. `promote()`, `promoteCreatedRecipe`/`promoteCreatedCookbook` and their call sites are gone, along with the shared-react seams that only carried them (`onRecipeCreated` on `useRecipesMutations`, `usePromoteCreatedCookbook` on the cookbook hooks). `createWarmSet` takes the real `TRPCOptionsProxy<AppRouter>`, so the hand-written `WarmSetTRPC` interface, the `as never` casts and the result casts are gone; its test runs the real options proxy over a link that answers from fixtures, and checks everything warmed is held at the warm lifetime. The acceptance test is in `persisted-query-client.test.ts`: real tRPC keys, a page opens and leaves, the clock passes the 10-minute default, the recipe and cookbook remain and a groceries read is collected. ADR-0008's consequences now name the defaults.
+  - Decision: the defaults cover only `recipes.get` and `cookbooks.get`, not every procedure the Warm Set reads. Procedure-wide defaults on `library.list`, `cookbooks.list` and `calendar.listItems` would hold every search, filter and scrolled range for seven days; the Warm Set's own reads keep their lifetime through `withWarmGcTime`, which is public API and now typed without casts.

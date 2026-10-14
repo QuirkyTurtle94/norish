@@ -73,8 +73,17 @@ function writeBootOwner(ownerId: string): void {
 const shouldDehydrateQuery = (query: { state: { data: unknown } }) =>
   query.state.data !== undefined;
 
+/**
+ * The reads a reader opens or makes that must outlive a trip Offline: a recipe
+ * and a cookbook (ADR-0008). Paths of tRPC query keys, so each matches every id.
+ */
+const HELD_PROCEDURES = [
+  ["recipes", "get"],
+  ["cookbooks", "get"],
+];
+
 function createQueryClient(): QueryClient {
-  return new QueryClient({
+  const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 1000 * 60 * 5,
@@ -93,6 +102,16 @@ function createQueryClient(): QueryClient {
       },
     },
   });
+
+  // Defaults are read when a query is built, so registering them here, before
+  // any read or restore, gives every such entry the offline cache's lifetime
+  // however it got in: the Warm Set, the page the reader opened, or the seed a
+  // create writes Live or Offline.
+  for (const path of HELD_PROCEDURES) {
+    queryClient.setQueryDefaults([path], { gcTime: CACHE_MAX_AGE_MS });
+  }
+
+  return queryClient;
 }
 
 export interface CacheManager {

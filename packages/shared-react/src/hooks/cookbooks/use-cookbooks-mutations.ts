@@ -18,13 +18,11 @@ type Dependencies = CreateCookbookHooksOptions & {
 export function createUseCookbooksMutations({
   useTRPC,
   shouldPreserveOptimisticUpdate: preserve,
-  usePromoteCreatedCookbook,
   useCurrentUserId,
   useCookbooksCacheHelpers,
 }: Dependencies) {
   return function useCookbooksMutations(): CookbooksMutationsResult {
     const trpc = useTRPC();
-    const promoteCreatedCookbook = usePromoteCreatedCookbook?.();
     const {
       setAllCookbooksData,
       invalidate,
@@ -71,18 +69,6 @@ export function createUseCookbooksMutations({
           minServings: null,
         };
 
-        /**
-         * Seed the cookbook's own read and hold it at the offline cache's
-         * lifetime, so it is in the guaranteed floor from the moment it exists
-         * and its page opens straight away — Offline included (ADR-0008).
-         * Promotion alone cannot do this: there is nothing to promote until
-         * something has written the entry.
-         */
-        const adopt = (cookbook: CookbookSummaryDTO) => {
-          seedCookbook(cookbook);
-          promoteCreatedCookbook?.(cookbook.id);
-        };
-
         return new Promise<string>((resolve, reject) => {
           createMutation.mutate(
             { id, title, recipeId },
@@ -90,7 +76,11 @@ export function createUseCookbooksMutations({
               onSuccess: (cookbook) => {
                 invalidate();
                 if (recipeId) invalidateMembership(recipeId);
-                adopt(cookbook ?? tentative);
+                // Seeding the cookbook's own read opens its page straight away,
+                // Offline included; the web client holds that read at the
+                // offline cache's lifetime, so it is in the floor from the
+                // moment it exists (ADR-0008).
+                seedCookbook(cookbook ?? tentative);
                 resolve(id);
               },
               onError: (error) => {
@@ -117,7 +107,7 @@ export function createUseCookbooksMutations({
                       ],
                     };
                   });
-                  adopt(tentative);
+                  seedCookbook(tentative);
                   resolve(id);
 
                   return;
@@ -137,7 +127,6 @@ export function createUseCookbooksMutations({
         invalidateMembership,
         setAllCookbooksData,
         seedCookbook,
-        promoteCreatedCookbook,
         preserve,
       ]
     );
