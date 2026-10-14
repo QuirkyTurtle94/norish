@@ -931,36 +931,7 @@ export type UserServerRole = z.infer<typeof UserServerRoleSchema>;
 // Validation helpers
 // ============================================================================
 
-/**
- * The Sonar models Perplexity retired on 2026-09-27, and the Agent API preset
- * each starts from now (the provider's own suggestion).
- */
-const RETIRED_SONAR_MODELS: Record<string, string> = {
-  sonar: "fast",
-  "sonar-pro": "low",
-  "sonar-reasoning": "medium",
-  "sonar-reasoning-pro": "medium",
-  "sonar-deep-research": "high",
-};
-
-function sonarPreset(model: unknown): unknown {
-  return typeof model === "string" ? (RETIRED_SONAR_MODELS[model] ?? model) : model;
-}
-
 const SERVER_CONFIG_MIGRATIONS: Partial<Record<ServerConfigKey, (value: unknown) => unknown>> = {
-  // A Perplexity configuration saved before 0.26 names a Sonar model. Boot
-  // normalisation stores its preset in its place, once.
-  [ServerConfigKeys.AI_CONFIG]: (value) => {
-    const config = value as { provider?: unknown; model?: unknown; visionModel?: unknown } | null;
-
-    if (config?.provider !== "perplexity") return value;
-
-    return {
-      ...config,
-      model: sonarPreset(config.model),
-      ...(config.visionModel === undefined ? {} : { visionModel: sonarPreset(config.visionModel) }),
-    };
-  },
   [ServerConfigKeys.UNITS]: (value) => {
     const legacyWrapped =
       typeof value === "object" && value !== null && "units" in value && "isOverwritten" in value

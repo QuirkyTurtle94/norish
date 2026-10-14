@@ -6,9 +6,7 @@ import {
   DEFAULT_AUTOMATIC_ENRICHMENT,
   ImageGenerationConfigSchema,
   isImageGenerationConfigValid,
-  normalizeConfigValue,
   resolveImageGenerationSettings,
-  ServerConfigKeys,
 } from "@norish/config/zod/server-config";
 
 const base = {
@@ -155,32 +153,6 @@ describe("AIConfigSchema legacy migration", () => {
     const twice = AIConfigSchema.parse(once);
 
     expect(twice).toEqual(once);
-  });
-});
-
-describe("a stored Perplexity model", () => {
-  // Perplexity retired its Sonar API on 2026-09-27; each Sonar model moves to
-  // the Agent API preset Perplexity suggests as its starting point.
-  it.each([
-    ["sonar", "fast"],
-    ["sonar-pro", "low"],
-    ["sonar-reasoning", "medium"],
-    ["sonar-reasoning-pro", "medium"],
-    ["sonar-deep-research", "high"],
-    ["xhigh", "xhigh"],
-    ["perplexity/sonar", "perplexity/sonar"],
-  ])("normalises %s to %s", (stored, preset) => {
-    const normalized = normalizeConfigValue(ServerConfigKeys.AI_CONFIG, {
-      ...base,
-      provider: "perplexity",
-      model: stored,
-      visionModel: stored,
-    });
-
-    expect(normalized).toMatchObject({
-      success: true,
-      data: { model: preset, visionModel: preset },
-    });
   });
 });
 
