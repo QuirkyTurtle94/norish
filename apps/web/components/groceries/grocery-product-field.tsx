@@ -1,7 +1,7 @@
 "use client";
 
 import type { PackSizeWords } from "@/lib/format-price";
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { FIELD_CLASS, FIELD_STYLE } from "@/components/groceries/grocery-field";
 import { GroceryPurchaseAmount } from "@/components/groceries/grocery-purchase-amount";
 import { ProductDetailsPanel } from "@/components/groceries/product-details-panel";
@@ -423,14 +423,11 @@ export function GroceryProductField({
   );
 
   /** A row the shopper tapped is theirs, the one the field took for them included. */
-  const takeTapped = useCallback(
-    (row: ProductRow) => {
-      setAutoPicked(null);
-      take(row);
-      onChoice(row.choice);
-    },
-    [onChoice, take]
-  );
+  const takeTapped = (row: ProductRow) => {
+    setAutoPicked(null);
+    take(row);
+    onChoice(row.choice);
+  };
 
   // A tap on the row already picked changes no value, so the ComboBox's
   // onChange stays silent; that row answers its own tap.
@@ -577,13 +574,10 @@ export function GroceryProductField({
   // The pack the fields hold: an amount and a unit, prefilled from the product
   // they describe or typed, and by weight where that product was.
   const typedByWeight = selectedPack?.byWeight ?? false;
-  const typedPack = useMemo<PackSize | null>(
-    () =>
-      quantityTyped && unitTyped && !packInvalid && isUnitId(manualPackUnit)
-        ? { quantity: typedQuantity, unit: manualPackUnit, byWeight: typedByWeight }
-        : null,
-    [quantityTyped, unitTyped, packInvalid, manualPackUnit, typedQuantity, typedByWeight]
-  );
+  const typedPack: PackSize | null =
+    quantityTyped && unitTyped && !packInvalid && isUnitId(manualPackUnit)
+      ? { quantity: typedQuantity, unit: manualPackUnit, byWeight: typedByWeight }
+      : null;
 
   // A price typed over a by-hand product corrects that product — the one the
   // shopper made earlier for this name, or one they picked from what the Store
@@ -605,21 +599,10 @@ export function GroceryProductField({
   // size words, pack, regular price and deal words: the row after Save is the
   // same Sale under a corrected name or price. Whether it is still a Sale is
   // decided by the price typed against the regular one, as everywhere else.
-  useEffect(() => {
-    // Fields the shop's numbers were shown in again start over: whatever is
-    // typed over them next is handed to the panel, even if it was before.
-    if (!byHand) {
-      heldByHandRef.current = "";
-
-      return;
-    }
-    const packWords = JSON.stringify(typedPack);
-    const held = hasTypedPrice
-      ? `${manualTarget}|${manualName}|${typedPrice}|${currency}|${selectedSize ?? ""}|${packWords}|${pageUrl ?? ""}|${selectedRegularPrice ?? ""}|${selectedDealWords ?? ""}`
-      : `picked|${picked ?? ""}`;
-
-    if (heldByHandRef.current === held) return;
-    heldByHandRef.current = held;
+  const heldByHand = hasTypedPrice
+    ? `${manualTarget}|${manualName}|${typedPrice}|${currency}|${selectedSize ?? ""}|${JSON.stringify(typedPack)}|${pageUrl ?? ""}|${selectedRegularPrice ?? ""}|${selectedDealWords ?? ""}`
+    : `picked|${picked ?? ""}`;
+  const handOverByHand = useEffectEvent(() =>
     onChoice(
       hasTypedPrice
         ? {
@@ -635,25 +618,21 @@ export function GroceryProductField({
             dealWords: selectedDealWords,
           }
         : (pickedChoice ?? (unlinked ? { kind: "none" } : null))
-    );
-  }, [
-    byHand,
-    hasTypedPrice,
-    manualName,
-    typedPrice,
-    currency,
-    groceryName,
-    manualTarget,
-    onChoice,
-    pageUrl,
-    picked,
-    pickedChoice,
-    selectedSize,
-    typedPack,
-    selectedRegularPrice,
-    selectedDealWords,
-    unlinked,
-  ]);
+    )
+  );
+
+  useEffect(() => {
+    // Fields the shop's numbers were shown in again start over: whatever is
+    // typed over them next is handed to the panel, even if it was before.
+    if (!byHand) {
+      heldByHandRef.current = "";
+
+      return;
+    }
+    if (heldByHandRef.current === heldByHand) return;
+    heldByHandRef.current = heldByHand;
+    handOverByHand();
+  }, [byHand, heldByHand]);
 
   // The pack in words: the shop's own where it has them and nothing was typed
   // over them, else Norish's for the pack the fields hold.

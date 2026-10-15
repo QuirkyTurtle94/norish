@@ -278,15 +278,6 @@ export function createRecipeDetailContext(adapters: RecipeDetailAdapters) {
 
     // Check if error is a 404
     const isNotFound = adapters.isNotFoundError(error);
-    const shareError = useMemo(
-      () =>
-        shareQueryError instanceof Error
-          ? shareQueryError
-          : shareQueryError
-            ? new Error(String(shareQueryError))
-            : null,
-      [shareQueryError]
-    );
 
     const reset = useCallback(() => {
       setConversion(null);
@@ -329,7 +320,12 @@ export function createRecipeDetailContext(adapters: RecipeDetailAdapters) {
         isNotFound,
         shares,
         isLoadingShares,
-        shareError,
+        shareError:
+          shareQueryError instanceof Error
+            ? shareQueryError
+            : shareQueryError
+              ? new Error(String(shareQueryError))
+              : null,
         refreshShares,
         createShare,
         updateShare,
@@ -363,7 +359,7 @@ export function createRecipeDetailContext(adapters: RecipeDetailAdapters) {
         isNotFound,
         shares,
         isLoadingShares,
-        shareError,
+        shareQueryError,
         refreshShares,
         createShare,
         updateShare,
