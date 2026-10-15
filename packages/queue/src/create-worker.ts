@@ -42,8 +42,11 @@ const SHUTDOWN = "Norish is shutting down";
 
 interface StartedWorker {
   worker: Worker;
-  /** The jobs this worker is running right now, settled or not. */
-  running: Set<Promise<unknown>>;
+  /**
+   * The jobs this worker is running, by id, each resolved once BullMQ has
+   * recorded what became of the job, which it does after the processor returns.
+   */
+  running: Map<string | undefined, { recorded: Promise<void>; resolve: () => void }>;
 }
 
 // Read on every access, never copied into a module-local — see the note on
@@ -72,7 +75,11 @@ export function createWorker<T>(
     throw new Error(`A worker for ${queueName} has already started`);
   }
 
-  const running = new Set<Promise<unknown>>();
+  const running: StartedWorker["running"] = new Map();
+  const recorded = (jobId: string | undefined) => {
+    running.get(jobId)?.resolve();
+    running.delete(jobId);
+  };
   const instrumented = createContextAwareProcessor(createModelLedgerProcessor(processor));
   const settle = async (job: Job<T>, token?: string, signal?: AbortSignal) => {
     const cancelled = () => signal?.aborted === true && signal.reason !== SHUTDOWN;
@@ -92,6 +99,7 @@ export function createWorker<T>(
             "Could not put a job back to waiting"
           );
         });
+        recorded(job.id);
         throw new WaitingError();
       }
     }
@@ -103,15 +111,12 @@ export function createWorker<T>(
     queueName,
     // Three parameters, or BullMQ creates no abort signal.
     async (job, token, signal) => {
-      const run = settle(job, token, signal);
+      let resolve = () => {};
+      const outcome = new Promise<void>((settled) => (resolve = settled));
 
-      running.add(run);
+      running.set(job.id, { recorded: outcome, resolve });
 
-      try {
-        return await run;
-      } finally {
-        running.delete(run);
-      }
+      return settle(job, token, signal);
     },
     {
       connection: getBullClient(),
@@ -125,7 +130,10 @@ export function createWorker<T>(
     log.error({ err, queueName }, "Worker error");
   });
 
+  worker.on("completed", (job) => recorded(job.id));
+
   worker.on("failed", (job, err) => {
+    recorded(job?.id);
     log.error({ err, queueName, jobId: job?.id }, "Job failed");
     if (!options.onFailed) return;
     Promise.resolve()
@@ -164,9 +172,9 @@ export function cancelRunningJob(queueName: QueueName, jobId: string): boolean {
 /**
  * Close every worker. Each stops taking jobs at once, and its running jobs
  * are aborted: one stopped mid-request goes back to waiting, and one that does
- * not check the signal gets until the budget runs out to finish. Then the
- * workers are closed by force, and a job still running stays active for the
- * next boot's stalled-job check.
+ * not check the signal gets until the budget runs out to finish and have
+ * BullMQ record that it did. Then the workers are closed by force, and a job
+ * still running stays active for the next boot's stalled-job check.
  * Always by force in the end: BullMQ's graceful close also waits for whatever
  * command its run loop has in flight, which after a Redis restart can sit on a
  * half-open socket until the socket timeout.
@@ -180,7 +188,9 @@ export async function closeWorkers(budgetMs: number): Promise<void> {
 
   let timer: NodeJS.Timeout | undefined;
   const budget = new Promise<void>((resolve) => (timer = setTimeout(resolve, budgetMs)));
-  const finished = Promise.allSettled(started.flatMap(({ running }) => [...running]));
+  const finished = Promise.all(
+    started.flatMap(({ running }) => [...running.values()].map(({ recorded }) => recorded))
+  );
 
   await Promise.race([finished, budget]);
   clearTimeout(timer);

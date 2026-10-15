@@ -140,8 +140,11 @@ it("lets a running job finish within the budget before closing its worker", asyn
   const held = new Promise<void>((resolve) => (release = resolve));
   let started = () => {};
   const running = new Promise<void>((resolve) => (started = resolve));
+  let askedToStop = () => {};
+  const stopping = new Promise<void>((resolve) => (askedToStop = resolve));
 
-  createWorker(QUEUE, async () => {
+  createWorker(QUEUE, async (_job, _token, signal) => {
+    signal?.addEventListener("abort", askedToStop, { once: true });
     started();
     await held;
 
@@ -152,12 +155,11 @@ it("lets a running job finish within the budget before closing its worker", asyn
 
   await running;
 
-  let closed = false;
-  const closing = closeWorkers(10_000).then(() => (closed = true));
+  const closing = closeWorkers(10_000);
 
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  expect(closed).toBe(false);
-
+  // Shutdown has stopped the worker taking jobs and asked this one to stop;
+  // it is now waiting on the job, which finishes only when released.
+  await stopping;
   release();
   await closing;
   expect((await queue.getJob(job.id!))?.returnvalue).toBe("done");
@@ -175,12 +177,9 @@ it("closes by force once the budget runs out, leaving the job active", async () 
   const job = await queue.add("stuck", {});
 
   await running;
-
-  const startedAt = Date.now();
-
+  // A job that never finishes: closing returns at all only because it closed by force.
   await closeWorkers(500);
 
-  expect(Date.now() - startedAt).toBeLessThan(2_000);
   expect(await queue.getJobState(job.id!)).toBe("active");
 }, 30_000);
 

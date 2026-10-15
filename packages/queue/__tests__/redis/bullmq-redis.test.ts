@@ -38,6 +38,7 @@ afterAll(async () => {
   await container?.stop();
 });
 
+// Given half of BULL_SOCKET_TIMEOUT_MS: a close that waited on the dead sockets would sit it out.
 it("closes every BullMQ connection at once when the sockets have gone half-open", async () => {
   const queue = new Queue(QUEUE_NAMES.RECIPE_IMPORT, { connection: getBullClient() });
   const worker = createWorker(QUEUE_NAMES.RECIPE_IMPORT, async () => {});
@@ -47,11 +48,7 @@ it("closes every BullMQ connection at once when the sockets have gone half-open"
   // The worker's run loop has a command in flight when the socket goes dead.
   proxy.freeze();
 
-  const startedAt = Date.now();
-
   await closeWorkers(10_000);
   await queue.close();
   await closeBullConnection();
-
-  expect(Date.now() - startedAt).toBeLessThan(1_000);
-}, 30_000);
+}, 7_500);
