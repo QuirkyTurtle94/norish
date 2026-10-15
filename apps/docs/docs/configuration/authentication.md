@@ -1,27 +1,22 @@
 ---
 sidebar_position: 1
 title: Authentication
-description: Authentication providers
+description: Sign in with a password, OIDC, GitHub or Google.
 ---
 
 # Authentication
 
-Norish supports password auth, OIDC, GitHub and Google OAuth providers.
-You configure **one** provider using ENV variables to bootstrap the first sign-in. Everything else
-can be managed using the **Settings => Admin**.
+Norish supports email and password, OIDC, GitHub and Google sign-in. Set up one
+provider with environment variables for the first sign-in, then manage the rest
+under **Settings => Admin**.
 
-## First user
-
-The first user to sign in becomes the **server owner** and **server admin**.
-After that first sign-in:
-
-- User registration is disabled automatically.
-- Ongoing auth providers and policies are managed in **Settings => Admin**.
+The first user to sign in becomes the server owner and admin, and registration
+turns off.
 
 ## Callback URLs
 
-When registering an OAuth/OIDC application, use these callback URLs (replace the
-host with your `AUTH_URL`):
+When you register an OAuth or OIDC application, use these callback URLs with
+your `AUTH_URL` as the host:
 
 | Provider | Callback URL                                                 |
 | -------- | ------------------------------------------------------------ |
@@ -34,17 +29,17 @@ host with your `AUTH_URL`):
 Norish never links accounts on its own. Signing in with a provider whose email already belongs to
 another account is refused with "This email is already in use."
 
-## Password auth
+## Password
 
-Email & password sign-in is the default login method when no other provider is configured.
+Email and password sign-in is on when no other provider is set up.
 
-| Variable                | Description                | Default |
-| ----------------------- | -------------------------- | ------- |
-| `PASSWORD_AUTH_ENABLED` | Enable email/password auth | Auto    |
+| Variable                | Description                     | Default |
+| ----------------------- | ------------------------------- | ------- |
+| `PASSWORD_AUTH_ENABLED` | Enable email and password login | Auto    |
 
 ## OIDC
 
-Connect any OpenID Connect compatible provider (Authentik, PocketId, KeyCloack, …).
+Works with any OpenID Connect provider, like Authentik, Pocket ID or Keycloak.
 Norish checks ID tokens against the provider's published signing keys, so the provider must sign
 them with an RS or ES key; HS256 is not supported.
 
@@ -66,8 +61,8 @@ OIDC_WELLKNOWN: https://auth.example.com/.well-known/openid-configuration
 
 ### OIDC claim mapping
 
-Optionally map OIDC group claims to the server admin role and to enable household
-auto-join.
+Map OIDC groups to the server admin role, and to households that members join
+automatically.
 
 | Variable                      | Description                                      | Default             |
 | ----------------------------- | ------------------------------------------------ | ------------------- |
@@ -80,7 +75,8 @@ auto-join.
 ## GitHub
 
 [Register a new OAuth app on GitHub](https://github.com/settings/applications/new)
-(**Settings => Developer settings => OAuth Apps**) and use the GitHub callback URL above.
+under **Settings => Developer settings => OAuth Apps**, with the GitHub callback
+URL above.
 
 | Variable               | Description                | Default |
 | ---------------------- | -------------------------- | ------- |
@@ -89,9 +85,10 @@ auto-join.
 
 ## Google
 
-Create an OAuth client under [Credentials in the Google Cloud console](https://console.cloud.google.com/apis/credentials)
-(**Create credentials => OAuth client ID**, type **Web application**) and use the Google callback
-URL above.
+In the Google Cloud console, open
+[Credentials](https://console.cloud.google.com/apis/credentials), choose
+**Create credentials => OAuth client ID** of type **Web application**, and use
+the Google callback URL above.
 
 | Variable               | Description                | Default |
 | ---------------------- | -------------------------- | ------- |
@@ -99,6 +96,6 @@ URL above.
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | (empty) |
 
 :::info Public URL
-OAuth callbacks need Norish to know its public URL. Make sure `AUTH_URL` is set
-correctly see [Server & runtime](./server-runtime.md).
+OAuth callbacks need `AUTH_URL` set to your public URL, see
+[Server & runtime](./server-runtime.md).
 :::

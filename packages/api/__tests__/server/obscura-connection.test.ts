@@ -13,9 +13,14 @@ vi.mock("playwright-core", () => ({
   chromium: { connectOverCDP: mockConnectOverCDP },
 }));
 
-vi.mock("@norish/config/env-config-server", () => ({
-  SERVER_CONFIG: { OBSCURA_ENDPOINT: "ws://obscura.test:9222" },
+const { SERVER_CONFIG } = vi.hoisted(() => ({
+  SERVER_CONFIG: {
+    OBSCURA_ENDPOINT: "ws://obscura.test:9222",
+    OBSCURA_CDP_TOKEN: undefined as string | undefined,
+  },
 }));
+
+vi.mock("@norish/config/env-config-server", () => ({ SERVER_CONFIG }));
 
 vi.mock("@norish/shared-server/logger", () => ({
   serverLogger: { debug: vi.fn(), warn: vi.fn(), info: vi.fn(), error: vi.fn() },
@@ -36,6 +41,10 @@ function connectedBrowser() {
 }
 
 describe("getBrowser – the Obscura connection", () => {
+  beforeEach(() => {
+    SERVER_CONFIG.OBSCURA_CDP_TOKEN = undefined;
+  });
+
   it("connects to the configured Obscura endpoint", async () => {
     const browser = connectedBrowser();
 
@@ -44,7 +53,21 @@ describe("getBrowser – the Obscura connection", () => {
     const { getBrowser } = await loadModule();
 
     await expect(getBrowser()).resolves.toBe(browser);
-    expect(mockConnectOverCDP).toHaveBeenCalledExactlyOnceWith("ws://obscura.test:9222");
+    expect(mockConnectOverCDP).toHaveBeenCalledExactlyOnceWith("ws://obscura.test:9222", {
+      headers: {},
+    });
+  });
+
+  it("sends the configured token as a bearer header", async () => {
+    SERVER_CONFIG.OBSCURA_CDP_TOKEN = "a".repeat(64);
+    mockConnectOverCDP.mockResolvedValue(connectedBrowser());
+
+    const { getBrowser } = await loadModule();
+
+    await getBrowser();
+    expect(mockConnectOverCDP).toHaveBeenCalledExactlyOnceWith("ws://obscura.test:9222", {
+      headers: { Authorization: `Bearer ${"a".repeat(64)}` },
+    });
   });
 
   it("reuses one healthy connection across imports", async () => {
