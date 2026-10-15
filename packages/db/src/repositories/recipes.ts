@@ -2245,45 +2245,7 @@ export async function listAllRecipeMediaReferences(): Promise<{
   };
 }
 
-/**
- * Dish Colour helpers (ADR-0023). The listing feeds the startup backfill:
- * rows stored before the colour existed, with whatever media could supply
- * one. Rows whose extraction fails stay null and are simply offered again
- * next startup — null is the defined "no colour" outcome, not an error state.
- */
-export async function listRecipesMissingDishColor(): Promise<
-  { id: string; galleryImages: { image: string; order: number | null }[] }[]
-> {
-  const [missing, galleryImages] = await Promise.all([
-    db.select({ id: recipes.id }).from(recipes).where(isNull(recipes.dishColor)),
-    db
-      .select({
-        recipeId: recipeImages.recipeId,
-        image: recipeImages.image,
-        order: recipeImages.order,
-      })
-      .from(recipeImages),
-  ]);
-
-  const galleryByRecipe = new Map<string, { image: string; order: number | null }[]>();
-
-  for (const galleryImage of galleryImages) {
-    const list = galleryByRecipe.get(galleryImage.recipeId) ?? [];
-
-    // `order` is a numeric column, so the driver hands it back as a string.
-    list.push({
-      image: galleryImage.image,
-      order: galleryImage.order === null ? null : Number(galleryImage.order),
-    });
-    galleryByRecipe.set(galleryImage.recipeId, list);
-  }
-
-  return missing.map((recipe) => ({
-    ...recipe,
-    galleryImages: galleryByRecipe.get(recipe.id) ?? [],
-  }));
-}
-
+/** The Dish Colour (ADR-0023) a recipe leads with; null for none. */
 export async function updateRecipeDishColor(
   recipeId: string,
   dishColor: string | null

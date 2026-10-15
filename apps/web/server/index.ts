@@ -1,7 +1,6 @@
 import { initCaldavSync } from "@norish/api/caldav/event-listener";
 import { initRecipeEnrichmentListener } from "@norish/api/recipes/enrichment-listener";
 import { applyNutritionSourcesOnBoot } from "@norish/api/startup/apply-nutrition-sources";
-import { backfillDishColors } from "@norish/api/startup/backfill-dish-color";
 import { backfillIngredientAliases } from "@norish/api/startup/backfill-ingredient-aliases";
 import { createServer } from "@norish/api/startup/http-server";
 import { runStartupMaintenanceCleanup } from "@norish/api/startup/maintenance-cleanup";
@@ -36,9 +35,6 @@ async function main() {
   log.info("-".repeat(50));
 
   await seedServerConfig();
-  log.info("-".repeat(50));
-
-  await backfillDishColors();
   log.info("-".repeat(50));
 
   // A first boot seeds the catalogue before traffic; later boots leave it to
