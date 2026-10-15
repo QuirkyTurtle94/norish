@@ -182,7 +182,7 @@ function RecipeCardComponent({
   const description = recipe.description?.trim() || "";
 
   // The resolved primary image: the list projection serves the first gallery
-  // image, with the deprecated legacy scalar only as a fallback.
+  // image.
   const thumbnailImage = recipe.image;
   const showImage = thumbnailImage && failedImage !== thumbnailImage;
 

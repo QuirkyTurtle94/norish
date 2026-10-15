@@ -33,7 +33,6 @@ interface RecipeMedia {
     image: string;
     order?: number;
   }>;
-  image?: string | null;
 }
 
 /**
@@ -67,15 +66,6 @@ export function buildMediaItems(recipe: RecipeMedia): MediaItem[] {
         id: img.id,
       });
     }
-  }
-
-  // Fallback to legacy recipe.image if no images array
-  if ((!recipe.images || recipe.images.length === 0) && recipe.image) {
-    items.push({
-      type: "image" as const,
-      src: recipe.image,
-      order: 999,
-    });
   }
 
   return items;

@@ -35,26 +35,22 @@ vi.mock("@norish/shared-server/logger", () => ({
 describe("backfillDishColors", () => {
   it("writes a colour for rows with media and skips rows without", async () => {
     listRecipesMissingDishColor.mockResolvedValue([
-      { id: "with-gallery", image: null, galleryImages: [{ image: "/recipes/a/1.jpg", order: 0 }] },
-      { id: "with-legacy", image: "/recipes/b/2.jpg", galleryImages: [] },
-      { id: "bare", image: null, galleryImages: [] },
+      { id: "with-gallery", galleryImages: [{ image: "/recipes/a/1.jpg", order: 0 }] },
+      { id: "bare", galleryImages: [] },
     ]);
     dishColorForImageUrl.mockResolvedValue("#663311");
 
     await backfillDishColors();
 
     expect(dishColorForImageUrl).toHaveBeenCalledWith("/recipes/a/1.jpg");
-    expect(dishColorForImageUrl).toHaveBeenCalledWith("/recipes/b/2.jpg");
     expect(updateRecipeDishColor).toHaveBeenCalledWith("with-gallery", "#663311");
-    expect(updateRecipeDishColor).toHaveBeenCalledWith("with-legacy", "#663311");
     expect(updateRecipeDishColor).not.toHaveBeenCalledWith("bare", expect.anything());
   });
 
-  it("prefers the first gallery image by order over the legacy column", async () => {
+  it("takes the first gallery image by order", async () => {
     listRecipesMissingDishColor.mockResolvedValue([
       {
         id: "r1",
-        image: "/recipes/r1/legacy.jpg",
         galleryImages: [
           { image: "/recipes/r1/second.jpg", order: 2 },
           { image: "/recipes/r1/hero.jpg", order: 1 },
@@ -70,7 +66,7 @@ describe("backfillDishColors", () => {
 
   it("leaves a row for the next startup when extraction yields nothing", async () => {
     listRecipesMissingDishColor.mockResolvedValue([
-      { id: "unreadable", image: "/recipes/c/3.jpg", galleryImages: [] },
+      { id: "unreadable", galleryImages: [{ image: "/recipes/c/3.jpg", order: 0 }] },
     ]);
     dishColorForImageUrl.mockResolvedValue(null);
 
@@ -81,8 +77,8 @@ describe("backfillDishColors", () => {
 
   it("continues past a row whose write fails and never throws", async () => {
     listRecipesMissingDishColor.mockResolvedValue([
-      { id: "broken", image: "/recipes/d/4.jpg", galleryImages: [] },
-      { id: "fine", image: "/recipes/e/5.jpg", galleryImages: [] },
+      { id: "broken", galleryImages: [{ image: "/recipes/d/4.jpg", order: 0 }] },
+      { id: "fine", galleryImages: [{ image: "/recipes/e/5.jpg", order: 0 }] },
     ]);
     dishColorForImageUrl.mockResolvedValue("#445566");
     updateRecipeDishColor.mockRejectedValueOnce(new Error("db down"));

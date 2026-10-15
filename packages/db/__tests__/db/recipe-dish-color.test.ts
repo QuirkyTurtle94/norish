@@ -82,14 +82,12 @@ describe("Dish Colour round-trip", () => {
 
     await createRecipeWithRefs(recipeId, userId, {
       ...BASE_RECIPE,
-      image: `/recipes/${recipeId}/hero.jpg`,
+      images: [{ image: `/recipes/${recipeId}/hero.jpg`, order: 0 }],
     });
 
     const missing = await listRecipesMissingDishColor();
     const row = missing.find((candidate) => candidate.id === recipeId);
 
-    // The create translated the payload's legacy scalar into the gallery;
-    // the backfill resolves gallery-first, exactly like every other reader.
     expect(row?.galleryImages).toEqual([
       expect.objectContaining({ image: `/recipes/${recipeId}/hero.jpg` }),
     ]);

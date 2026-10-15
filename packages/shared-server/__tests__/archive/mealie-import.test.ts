@@ -265,7 +265,10 @@ describe("Mealie import", () => {
 
       const { dtos } = await importFiles(files);
 
-      expect(dtos[0]).toMatchObject({ name: "Tiramisù", image: `/recipes/${dtos[0].id}/x.webp` });
+      expect(dtos[0]).toMatchObject({
+        name: "Tiramisù",
+        images: [{ image: `/recipes/${dtos[0].id}/x.webp`, order: 0 }],
+      });
     });
   });
 });

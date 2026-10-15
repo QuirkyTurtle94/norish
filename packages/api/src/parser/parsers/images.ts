@@ -16,7 +16,6 @@ export interface ParsedImage {
 
 export interface ImageParseResult {
   images: ParsedImage[];
-  primaryImage: string | undefined;
 }
 
 const IMAGE_ATTRIBUTES = [
@@ -197,7 +196,6 @@ export async function parseImages(
 ): Promise<ImageParseResult> {
   const defaultResult: ImageParseResult = {
     images: [],
-    primaryImage: undefined,
   };
 
   if (!imageField) return defaultResult;
@@ -235,8 +233,5 @@ export async function parseImages(
     order: index,
   }));
 
-  // First image becomes the legacy `image` field for backwards compatibility
-  const primaryImage = downloadedImages.length > 0 ? downloadedImages[0] : undefined;
-
-  return { images, primaryImage };
+  return { images };
 }

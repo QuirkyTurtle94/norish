@@ -343,7 +343,7 @@ export async function parseTandoorRecipeToDTO(
     id: recipeId,
     name: name,
     url: validated.source_url || undefined,
-    image: image || undefined,
+    images: image ? [{ image, order: 0 }] : [],
     description: validated.description || undefined,
     servings: validated.servings || undefined,
     systemUsed: systemUsed,
@@ -353,7 +353,7 @@ export async function parseTandoorRecipeToDTO(
     steps: steps,
     tags: tags,
     categories: categories,
-  } as FullRecipeInsertDTO;
+  };
 
   // Validate against our schema
   const parsed = FullRecipeInsertSchema.safeParse(dto);

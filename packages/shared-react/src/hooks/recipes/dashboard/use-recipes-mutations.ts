@@ -170,8 +170,6 @@ function createOptimisticFullRecipe(input: FullRecipeInsertDTO): FullRecipeDTO |
     description: input.description ?? null,
     notes: input.notes ?? null,
     url: input.url ?? null,
-    // eslint-disable-next-line sonarjs/deprecation -- a payload's legacy scalar, carried as it came; readers resolve it through primaryRecipeImage
-    image: input.image ?? null,
     servings: input.servings ?? 1,
     prepMinutes: input.prepMinutes ?? null,
     cookMinutes: input.cookMinutes ?? null,

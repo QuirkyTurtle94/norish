@@ -5,9 +5,7 @@ import { SERVER_CONFIG } from "@norish/config/env-config-server";
 import {
   listGalleryImagesWithLegacyUrls,
   listRecipeIdsAndImages,
-  listRecipesWithLegacyImageUrls,
   updateGalleryImageUrl,
-  updateRecipeImageUrl,
 } from "@norish/db/repositories/recipes";
 import { dbLogger as log } from "@norish/shared-server/logger";
 
@@ -177,8 +175,6 @@ async function migrateThumbnails(stats: MigrationStats): Promise<void> {
   const filenameToRecipeId = new Map<string, string>();
 
   for (const r of allRecipes) {
-    if (!r.image) continue;
-
     // Check old pattern: /recipes/images/{filename}
     const oldMatch = r.image.match(OLD_THUMBNAIL_URL_PATTERN);
 
@@ -316,40 +312,7 @@ async function migrateGalleryFiles(stats: MigrationStats): Promise<void> {
  * Gallery: /recipes/{recipeId}/gallery/{hash} -> /recipes/{recipeId}/{hash}
  */
 async function updateDatabaseUrls(stats: MigrationStats): Promise<void> {
-  // Update recipes.image (thumbnails)
-  const recipesWithOldUrls = await listRecipesWithLegacyImageUrls("/recipes/images/");
-
-  for (const record of recipesWithOldUrls) {
-    if (!record.image) continue;
-
-    const match = record.image.match(OLD_THUMBNAIL_URL_PATTERN);
-
-    const filename = match?.[1];
-
-    if (filename) {
-      const newUrl = `/recipes/${record.id}/${filename}`;
-
-      if (!(await canRewriteThumbnailUrl(record.id, filename))) {
-        stats.dbRecordsSkippedMissingFiles++;
-        log.warn(
-          { recipeId: record.id, oldUrl: record.image, expectedFilename: filename },
-          "Skipping thumbnail URL migration because the image file was not found on disk"
-        );
-        continue;
-      }
-
-      try {
-        await updateRecipeImageUrl(record.id, newUrl);
-        stats.dbRecordsUpdated++;
-        log.debug({ recipeId: record.id, oldUrl: record.image, newUrl }, "Updated thumbnail URL");
-      } catch (err) {
-        stats.errors.push(`Failed to update recipe ${record.id}: ${err}`);
-        log.warn({ err, recipeId: record.id }, "Failed to update thumbnail URL in database");
-      }
-    }
-  }
-
-  // Update recipe_images.image (gallery) - check both old patterns
+  // Update recipe_images.image - check both old patterns
   const galleryImages = await listGalleryImagesWithLegacyUrls();
 
   for (const record of galleryImages) {

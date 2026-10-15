@@ -43,7 +43,6 @@ const baseRecipe: FullRecipeDTO = {
   userId: "user-1",
   name: "Chocolate Cake",
   description: "Rich and simple",
-  image: "/recipes/cake-primary.jpg",
   url: "https://example.com/cake",
   servings: 8,
   prepMinutes: 20,

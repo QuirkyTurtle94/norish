@@ -176,8 +176,6 @@ async function rehomeArchiveMediaToRecipe(
   return {
     ...dto,
     id: targetRecipeId,
-    // eslint-disable-next-line sonarjs/deprecation -- the payload's legacy scalar moves with the rest of its media; the repository folds it into the gallery
-    image: rewriteRecipeMediaUrl(dto.image, sourceRecipeId, targetRecipeId),
     images: dto.images?.map((image) => ({
       ...image,
       image: rewriteRecipeMediaUrl(image.image, sourceRecipeId, targetRecipeId) ?? image.image,

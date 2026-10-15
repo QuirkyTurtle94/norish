@@ -735,7 +735,7 @@ describe("Mealie Parser", () => {
       );
 
       expect(dto).not.toBeNull();
-      expect(dto!.image).toBe("mocked-image-guid");
+      expect(dto!.images).toEqual([{ image: "mocked-image-guid", order: 0 }]);
     });
 
     it("falls back to note when original_text is missing", async () => {

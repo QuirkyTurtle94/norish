@@ -182,9 +182,9 @@ export async function withDishColor<T extends PrimaryImageCarrier>(
 
 /**
  * An update payload with its Dish Colour recomputed — but only when the
- * update actually touches the media. An edit that names neither `image` nor
- * `images` says nothing about the photo, so it must say nothing about the
- * colour either. Whatever colour the payload itself claimed is dropped
+ * update actually touches the media. An edit that does not name `images`
+ * says nothing about the photo, so it must say nothing about the colour
+ * either. Whatever colour the payload itself claimed is dropped
  * first, for the same reason `withDishColor` overwrites it: the colour is
  * derived from the image, never supplied with the recipe.
  */
@@ -193,8 +193,7 @@ export async function withDishColorForUpdate<T extends PrimaryImageCarrier>(
 ): Promise<Omit<T, "dishColor"> & { dishColor?: string | null }> {
   const { dishColor: _supplied, ...rest } = data as T & { dishColor?: unknown };
 
-  // eslint-disable-next-line sonarjs/deprecation -- only asks whether the update touches media, the legacy scalar included
-  if (rest.image === undefined && rest.images === undefined) return rest;
+  if (rest.images === undefined) return rest;
 
   return withDishColor(rest);
 }
@@ -220,10 +219,7 @@ export async function refreshDishColorForRecipe(recipeId: string): Promise<void>
 
     if (!media) return;
 
-    const primaryImage = primaryImageForDishColor({
-      image: media.image,
-      images: media.galleryImages,
-    });
+    const primaryImage = primaryImageForDishColor({ images: media.galleryImages });
 
     await updateRecipeDishColor(recipeId, await dishColorForImageUrl(primaryImage));
   } catch (err) {

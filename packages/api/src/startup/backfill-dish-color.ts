@@ -30,10 +30,7 @@ export async function backfillDishColors(): Promise<void> {
     const missing = await listRecipesMissingDishColor();
 
     for (const recipe of missing) {
-      const primaryImage = primaryImageForDishColor({
-        image: recipe.image,
-        images: recipe.galleryImages,
-      });
+      const primaryImage = primaryImageForDishColor({ images: recipe.galleryImages });
 
       if (!primaryImage) {
         skippedNoImage++;

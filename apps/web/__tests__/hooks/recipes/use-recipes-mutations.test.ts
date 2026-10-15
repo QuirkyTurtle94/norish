@@ -614,7 +614,6 @@ describe("useRecipesMutations", () => {
         description: null,
         notes: null,
         url: null,
-        image: null,
         originCountry: null,
         originCountryName: null,
         originRegion: null,

@@ -154,7 +154,6 @@ export const PublicRecipeViewSchema = z.object({
   description: z.string().nullable(),
   notes: z.string().nullable(),
   url: z.string().nullable(),
-  image: z.string().nullable(),
   dishColor: z.string().nullable().default(null),
   servings: z.number().int().positive(),
   prepMinutes: z.number().int().nullable(),

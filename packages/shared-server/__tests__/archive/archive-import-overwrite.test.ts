@@ -126,7 +126,6 @@ describe("archive importer overwrite behavior", () => {
       name: "Updated Soup",
       description: "new description",
       url: "https://example.com/soup",
-      image: `/recipes/${recipeId}/cover.jpg`,
       servings: 2,
       systemUsed: "metric",
       prepMinutes: null,
@@ -150,7 +149,6 @@ describe("archive importer overwrite behavior", () => {
       name: "Paprika Soup",
       description: "paprika description",
       url: "https://example.com/paprika-soup",
-      image: null,
       servings: 2,
       systemUsed: "metric",
       prepMinutes: null,
@@ -186,7 +184,6 @@ describe("archive importer overwrite behavior", () => {
       expect.objectContaining({
         id: "existing-recipe-id",
         name: "Updated Soup",
-        image: "/recipes/existing-recipe-id/cover.jpg",
         images: [{ image: "/recipes/existing-recipe-id/gallery.jpg", order: 0 }],
       })
     );

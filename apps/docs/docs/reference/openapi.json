@@ -366,12 +366,6 @@
                         "null"
                       ]
                     },
-                    "image": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
                     "url": {
                       "type": [
                         "string",
@@ -888,7 +882,6 @@
                     "userId",
                     "name",
                     "description",
-                    "image",
                     "url",
                     "servings",
                     "prepMinutes",
@@ -1096,12 +1089,6 @@
                               "null"
                             ]
                           },
-                          "image": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
                           "url": {
                             "type": [
                               "string",
@@ -1197,6 +1184,12 @@
                             "minimum": -2147483648,
                             "maximum": 2147483647
                           },
+                          "image": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "tags": {
                             "default": [],
                             "type": "array",
@@ -1262,7 +1255,6 @@
                           "userId",
                           "name",
                           "description",
-                          "image",
                           "url",
                           "servings",
                           "prepMinutes",
@@ -1275,6 +1267,7 @@
                           "updatedAt",
                           "categories",
                           "version",
+                          "image",
                           "tags"
                         ],
                         "additionalProperties": false
@@ -1349,12 +1342,6 @@
                     "type": "string"
                   },
                   "description": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "image": {
                     "type": [
                       "string",
                       "null"
@@ -1876,12 +1863,6 @@
                                 "null"
                               ]
                             },
-                            "image": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
                             "url": {
                               "type": [
                                 "string",
@@ -1977,6 +1958,12 @@
                               "minimum": -2147483648,
                               "maximum": 2147483647
                             },
+                            "image": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
                             "tags": {
                               "default": [],
                               "type": "array",
@@ -2042,7 +2029,6 @@
                             "userId",
                             "name",
                             "description",
-                            "image",
                             "url",
                             "servings",
                             "prepMinutes",
@@ -2055,6 +2041,7 @@
                             "updatedAt",
                             "categories",
                             "version",
+                            "image",
                             "tags"
                           ],
                           "additionalProperties": false

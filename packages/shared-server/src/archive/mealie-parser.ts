@@ -661,7 +661,7 @@ export async function parseMealieRecipeToDTO(
     id: recipeId,
     name: title,
     url: recipe.org_url || undefined,
-    image: image || undefined,
+    images: image ? [{ image, order: 0 }] : [],
     description: recipe.description || undefined,
     notes: notes || undefined,
     servings: servings,
@@ -693,7 +693,7 @@ export async function parseMealieRecipeToDTO(
     })),
     tags: uniqueTags,
     systemUsed,
-  } as FullRecipeInsertDTO;
+  };
 
   const parsed = FullRecipeInsertSchema.safeParse(dto);
 

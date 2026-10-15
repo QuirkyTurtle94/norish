@@ -301,10 +301,6 @@ export async function parseNorishRecipeToDTO(
 
   const { cuisineIds, droppedCuisines } = matchCuisineNames(cuisineNames, cuisineIdsByName);
 
-  const image = await rehomeMediaReference(recipeFolder, wireImage, (bytes) =>
-    saveImageBytes(bytes, recipeId)
-  );
-
   const images: Array<{ image: string; order: number; generated?: boolean }> = [];
 
   for (const galleryImage of wireImages) {
@@ -322,6 +318,16 @@ export async function parseNorishRecipeToDTO(
         ...(galleryImage.generated === true ? { generated: true } : {}),
       });
     }
+  }
+
+  // The hero is the gallery's primary, so it only stands alone in an archive
+  // written before recipes had a gallery.
+  if (images.length === 0) {
+    const hero = await rehomeMediaReference(recipeFolder, wireImage, (bytes) =>
+      saveImageBytes(bytes, recipeId)
+    );
+
+    if (hero) images.push({ image: hero, order: 0 });
   }
 
   const rehomedSteps: FullRecipeInsertDTO["steps"] = [];
@@ -372,7 +378,6 @@ export async function parseNorishRecipeToDTO(
     ...rest,
     id: recipeId,
     cuisines: cuisineIds,
-    image,
     images,
     videos,
     steps: rehomedSteps,

@@ -234,7 +234,7 @@ describe("norish archive round-trip", () => {
     );
 
     // and the recreated recipe points at the new instance's own paths
-    expect(parsed.dto.image).toBe(`/recipes/${MINTED_ID}/saved-image.jpg`);
+    expect(parsed.dto.images?.[0]?.image).toBe(`/recipes/${MINTED_ID}/saved-image.jpg`);
     // The Generated Image marking survives the round-trip; the supplied
     // photograph arrives unmarked, exactly as it left.
     expect(parsed.dto.images).toHaveLength(2);
@@ -252,9 +252,8 @@ describe("norish archive round-trip", () => {
   });
 
   it("round-trips a recipe with no media at all", async () => {
-    const { parsed } = await roundTrip(buildFullRecipe({ image: null, images: [], videos: [] }));
+    const { parsed } = await roundTrip(buildFullRecipe({ images: [], videos: [] }));
 
-    expect(parsed.dto.image).toBeNull();
     expect(parsed.dto.images).toEqual([]);
     expect(parsed.dto.videos).toEqual([]);
     expect(mockSaveImageBytes).not.toHaveBeenCalled();

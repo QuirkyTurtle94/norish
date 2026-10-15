@@ -258,7 +258,7 @@ export async function buildRecipeDTO(input: RecipeParseInput): Promise<FullRecip
   const dto: FullRecipeInsertDTO = {
     name: name.trim(),
     url: url || undefined,
-    image: image || undefined,
+    images: image ? [{ image, order: 0 }] : [],
     description: description || undefined,
     servings: servings,
     systemUsed: systemUsed,
@@ -279,7 +279,7 @@ export async function buildRecipeDTO(input: RecipeParseInput): Promise<FullRecip
       systemUsed: systemUsed,
     })),
     tags: tags,
-  } as FullRecipeInsertDTO;
+  };
 
   // Validate against schema
   const parsed = FullRecipeInsertSchema.safeParse(dto);

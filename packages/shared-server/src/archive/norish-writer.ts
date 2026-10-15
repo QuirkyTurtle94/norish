@@ -108,9 +108,8 @@ export function collectRecipeMediaRefs(recipe: FullRecipeDTO): NorishArchiveMedi
     refs.push({ webPath, archivePath });
   };
 
-  // The hero is the resolved primary, not the deprecated scalar: new rows
-  // no longer carry the scalar at all, and a receiving instance on an older
-  // release reads the hero for its dashboard thumbnail.
+  // The hero is the resolved primary. It travels beside the gallery so a
+  // receiving instance on an older release reads it for its thumbnail.
   const hero = primaryRecipeImage(recipe);
   const heroBasename = localMediaBasename(hero, recipe.id);
 

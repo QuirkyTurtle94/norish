@@ -13,7 +13,6 @@ const baseRecipe: FullRecipeDTO = {
   userId: "user-1",
   name: "Test Recipe",
   description: null,
-  image: null,
   url: null,
   servings: 2,
   prepMinutes: null,

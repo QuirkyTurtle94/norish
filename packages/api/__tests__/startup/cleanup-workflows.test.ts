@@ -14,7 +14,6 @@ import {
   groceries,
   plannedItems,
   recipeImages,
-  recipes,
   recipeVideos,
   recurringGroceries,
   stepImages,
@@ -112,16 +111,10 @@ describe("cleanup workflows", () => {
     await createTestFile(path.join(stepsDir, orphanedStepImage));
     await createTestFile(path.join(missingRecipeDir, "obsolete.jpg"));
 
-    await db
-      .update(recipes)
-      .set({ image: `/recipes/${recipeId}/${referencedThumb}` })
-      .where(eq(recipes.id, recipeId));
-
-    await db.insert(recipeImages).values({
-      recipeId,
-      image: `/recipes/${recipeId}/${referencedGalleryImage}`,
-      order: "0",
-    });
+    await db.insert(recipeImages).values([
+      { recipeId, image: `/recipes/${recipeId}/${referencedThumb}`, order: "0" },
+      { recipeId, image: `/recipes/${recipeId}/${referencedGalleryImage}`, order: "1" },
+    ]);
 
     await db.insert(recipeVideos).values({
       recipeId,

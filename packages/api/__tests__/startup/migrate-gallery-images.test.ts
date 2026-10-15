@@ -19,11 +19,10 @@ const mocks = vi.hoisted(() => ({
   error: vi.fn(),
   select: vi.fn(),
   update: vi.fn(),
-  recipesTable: { table: "recipes" },
   recipeImagesTable: { table: "recipe_images" },
 }));
 
-const { warn: mockWarn, recipesTable, recipeImagesTable } = mocks;
+const { warn: mockWarn, recipeImagesTable } = mocks;
 
 vi.mock("@norish/shared-server/logger", () => ({
   dbLogger: {
@@ -35,7 +34,6 @@ vi.mock("@norish/shared-server/logger", () => ({
 }));
 
 vi.mock("@norish/db/schema", () => ({
-  recipes: mocks.recipesTable,
   recipeImages: mocks.recipeImagesTable,
 }));
 
@@ -91,14 +89,13 @@ describe("migrateGalleryImages", () => {
     await fs.rm(uploadsDir, { recursive: true, force: true });
   });
 
-  it("skips recipe and gallery URL rewrites when referenced files are missing", async () => {
-    selectResultsByTable.set(recipesTable, [
+  it("skips thumbnail and gallery URL rewrites when referenced files are missing", async () => {
+    selectResultsByTable.set(recipeImagesTable, [
       {
-        id: "11111111-1111-1111-1111-111111111111",
+        id: "image-0",
+        recipeId: "11111111-1111-1111-1111-111111111111",
         image: "/recipes/images/missing-cover.jpg",
       },
-    ]);
-    selectResultsByTable.set(recipeImagesTable, [
       {
         id: "image-1",
         recipeId: "11111111-1111-1111-1111-111111111111",
@@ -111,11 +108,12 @@ describe("migrateGalleryImages", () => {
     expect(updates).toEqual([]);
     expect(mockWarn).toHaveBeenCalledWith(
       expect.objectContaining({
+        imageId: "image-0",
         recipeId: "11111111-1111-1111-1111-111111111111",
         oldUrl: "/recipes/images/missing-cover.jpg",
         expectedFilename: "missing-cover.jpg",
       }),
-      "Skipping thumbnail URL migration because the image file was not found on disk"
+      "Skipping recipe image URL migration because the image file was not found on disk"
     );
     expect(mockWarn).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -139,13 +137,12 @@ describe("migrateGalleryImages", () => {
     await fs.writeFile(path.join(recipesDir, recipeId, "cover.jpg"), "cover");
     await fs.writeFile(path.join(recipesDir, recipeId, "gallery", "gallery.jpg"), "gallery");
 
-    selectResultsByTable.set(recipesTable, [
+    selectResultsByTable.set(recipeImagesTable, [
       {
-        id: recipeId,
+        id: "image-1",
+        recipeId,
         image: "/recipes/images/cover.jpg",
       },
-    ]);
-    selectResultsByTable.set(recipeImagesTable, [
       {
         id: "image-2",
         recipeId,
@@ -157,7 +154,7 @@ describe("migrateGalleryImages", () => {
 
     expect(updates).toEqual([
       {
-        table: recipesTable,
+        table: recipeImagesTable,
         values: { image: `/recipes/${recipeId}/cover.jpg` },
       },
       {

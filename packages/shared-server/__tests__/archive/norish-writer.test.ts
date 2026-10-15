@@ -269,8 +269,14 @@ describe("norish archive writer", () => {
 
   it("keeps an external primary URL unchanged", async () => {
     const recipe = buildFullRecipe({
-      image: "https://example.com/external-hero.jpg",
-      images: [],
+      images: [
+        {
+          id: "88888888-8888-4888-8888-888888888888",
+          image: "https://example.com/external-hero.jpg",
+          order: 0,
+          version: 1,
+        },
+      ],
     });
 
     const zip = await writeArchive({ records: [{ recipe }], exporter, exportedAt });
@@ -282,10 +288,6 @@ describe("norish archive writer", () => {
 
   it("drops references whose files did not make the archive, hero included", async () => {
     const recipe = buildFullRecipe({
-      // Shadowed by the gallery: the resolved primary is the local file, and
-      // when that file is missing the hero is dropped rather than falling
-      // back to an image the source recipe never displays.
-      image: "https://example.com/external-hero.jpg",
       images: [
         {
           id: "88888888-8888-4888-8888-888888888888",
@@ -306,7 +308,7 @@ describe("norish archive writer", () => {
   });
 
   it("exports a recipe with no media cleanly", async () => {
-    const recipe = buildFullRecipe({ image: null, images: [], videos: [] });
+    const recipe = buildFullRecipe({ images: [], videos: [] });
 
     const zip = await writeArchive({ records: [{ recipe }], exporter, exportedAt });
 

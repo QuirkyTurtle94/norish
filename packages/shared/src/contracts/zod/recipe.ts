@@ -54,8 +54,7 @@ export const RecipeDashboardSchema = RecipeSelectBaseSchema.omit({
   // tints, so the dashboard has no use for it.
   dishColor: true,
 }).extend({
-  // The resolved primary image (gallery first), not the deprecated column it
-  // shares a name with.
+  // The resolved primary image: the first gallery image.
   image: z.string().nullable(),
   tags: z.array(TagSummarySchema).default([]),
   categories: z.array(recipeCategorySchema).default([]),
@@ -81,9 +80,8 @@ export const RECIPE_DASHBOARD_KEYS = Object.keys(RecipeDashboardSchema.shape) as
  * dashboard-only aggregates (averageRating, ratingCount), and overwriting
  * them with undefined would wipe live values off the cards.
  *
- * The dashboard's `image` is the resolved primary (gallery first, legacy
- * scalar as fallback), so it is derived rather than copied — a raw scalar
- * copy would blank a gallery-only recipe's thumbnail on every echo.
+ * The dashboard's `image` is the resolved primary, the first gallery image,
+ * so it is derived from the echo's gallery rather than copied.
  */
 export function patchDashboardRecipeFromFull(
   dashboardRecipe: z.output<typeof RecipeDashboardSchema>,
@@ -98,7 +96,7 @@ export function patchDashboardRecipeFromFull(
     }
   }
 
-  if ("image" in echo || "images" in echo) {
+  if ("images" in echo) {
     patched.image = primaryRecipeImage(fullRecipe);
   }
 
