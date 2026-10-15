@@ -81,8 +81,6 @@ export const JOB_PIPELINES: Record<QueueName, string[]> = {
 
 /**
  * Parse a progress value into step progress, if it has the expected shape.
- * Normalizes the legacy flat `{ step, attempt, timeline }` shape into the
- * per-attempt `attempts` array so old in-flight jobs still render.
  */
 export function readStepProgress(progress: unknown): JobStepProgress | null {
   if (
@@ -94,26 +92,12 @@ export function readStepProgress(progress: unknown): JobStepProgress | null {
     return null;
   }
 
-  const parsed = progress as Partial<JobStepProgress> & {
-    attempt?: number;
-    timeline?: JobStepEvent[];
-  };
-
-  let attempts: JobAttemptTimeline[];
-
-  if (Array.isArray(parsed.attempts)) {
-    attempts = parsed.attempts;
-  } else if (Array.isArray(parsed.timeline)) {
-    // Legacy flat shape → single attempt.
-    attempts = [{ attempt: (parsed.attempt ?? 0) + 1, timeline: parsed.timeline }];
-  } else {
-    attempts = [];
-  }
+  const parsed = progress as Partial<JobStepProgress>;
 
   return {
     step: parsed.step as string,
     updatedAt: parsed.updatedAt ?? 0,
-    attempts,
+    attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [],
   };
 }
 

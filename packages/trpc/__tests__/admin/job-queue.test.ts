@@ -465,34 +465,6 @@ describe("admin job queue procedures", () => {
       ]);
     });
 
-    it("normalizes the legacy flat timeline into a single attempt", async () => {
-      const job = createMockJob({
-        getState: vi.fn().mockResolvedValue("active"),
-        finishedOn: null,
-        processedOn: Date.now() - 1_000,
-        // legacy flat progress shape (pre per-attempt tracking)
-        progress: {
-          step: "ai-request",
-          updatedAt: Date.now(),
-          attempt: 0,
-          timeline: [{ id: "ai-request", startedAt: Date.now() - 1_000 }],
-        },
-      });
-
-      registryMock.queues.set(QUEUE_NAMES.AUTO_TAGGING, createMockQueue([job]));
-
-      const detail = await createCaller().detail({
-        queue: QUEUE_NAMES.AUTO_TAGGING,
-        jobId: "job-1",
-      });
-
-      expect(detail.attempts).toHaveLength(1);
-      expect(detail.attempts[0]?.steps.map((step) => [step.id, step.status])).toEqual([
-        ["ai-request", "running"],
-        ["saving", "pending"],
-      ]);
-    });
-
     it("throws NOT_FOUND for a missing job", async () => {
       registryMock.queues.set(QUEUE_NAMES.RECIPE_IMPORT, createMockQueue([]));
 
