@@ -37,7 +37,6 @@ vi.mock("@norish/db/repositories/recipes", () => ({
 const {
   dishColorForImageUrl,
   extractDishColor,
-  primaryImageForDishColor,
   refreshDishColorForRecipe,
   withDishColor,
   withDishColorForUpdate,
@@ -140,24 +139,6 @@ describe("dishColorForImageUrl", () => {
     await expect(dishColorForImageUrl("/recipes/images/legacy.jpg")).resolves.toBeNull();
     await expect(dishColorForImageUrl(null)).resolves.toBeNull();
     await expect(dishColorForImageUrl(undefined)).resolves.toBeNull();
-  });
-});
-
-describe("primaryImageForDishColor", () => {
-  it("prefers the first gallery image by order, matching the hero the page renders", () => {
-    expect(
-      primaryImageForDishColor({
-        images: [
-          { image: "/recipes/x/second.jpg", order: 2 },
-          { image: "/recipes/x/first.jpg", order: 1 },
-        ],
-      })
-    ).toBe("/recipes/x/first.jpg");
-  });
-
-  it("resolves to nothing when the recipe carries no media", () => {
-    expect(primaryImageForDishColor({})).toBeNull();
-    expect(primaryImageForDishColor({ images: [] })).toBeNull();
   });
 });
 

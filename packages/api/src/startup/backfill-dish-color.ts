@@ -3,10 +3,8 @@ import {
   updateRecipeDishColor,
 } from "@norish/db/repositories/recipes";
 import { dbLogger as log } from "@norish/shared-server/logger";
-import {
-  dishColorForImageUrl,
-  primaryImageForDishColor,
-} from "@norish/shared-server/media/dish-color";
+import { dishColorForImageUrl } from "@norish/shared-server/media/dish-color";
+import { primaryRecipeImage } from "@norish/shared/lib/recipe-media";
 
 /**
  * Backfill the Dish Colour (ADR-0023) for recipes stored before the column
@@ -30,7 +28,7 @@ export async function backfillDishColors(): Promise<void> {
     const missing = await listRecipesMissingDishColor();
 
     for (const recipe of missing) {
-      const primaryImage = primaryImageForDishColor({ images: recipe.galleryImages });
+      const primaryImage = primaryRecipeImage({ images: recipe.galleryImages });
 
       if (!primaryImage) {
         skippedNoImage++;

@@ -160,24 +160,15 @@ export async function dishColorForImageUrl(
 type PrimaryImageCarrier = Parameters<typeof primaryRecipeImage>[0];
 
 /**
- * The image a recipe page actually leads with: `primaryRecipeImage`, the one
- * shared definition — the same resolution the media carousel, the dashboard
- * projections, and the realtime echo patch use, so the tint and the hero can
- * never come from two different photos.
- */
-export function primaryImageForDishColor(carrier: PrimaryImageCarrier): string | null {
-  return primaryRecipeImage(carrier);
-}
-
-/**
  * A create payload with its Dish Colour computed from the primary image it
- * carries. Always overwrites whatever the payload claimed: the colour is
+ * carries, by `primaryRecipeImage`: the image the page leads with, so the
+ * tint and the hero never come from two different photos. Always overwrites whatever the payload claimed: the colour is
  * derived from the image, never supplied with the recipe.
  */
 export async function withDishColor<T extends PrimaryImageCarrier>(
   dto: T
 ): Promise<T & { dishColor: string | null }> {
-  return { ...dto, dishColor: await dishColorForImageUrl(primaryImageForDishColor(dto)) };
+  return { ...dto, dishColor: await dishColorForImageUrl(primaryRecipeImage(dto)) };
 }
 
 /**
@@ -219,7 +210,7 @@ export async function refreshDishColorForRecipe(recipeId: string): Promise<void>
 
     if (!media) return;
 
-    const primaryImage = primaryImageForDishColor({ images: media.galleryImages });
+    const primaryImage = primaryRecipeImage({ images: media.galleryImages });
 
     await updateRecipeDishColor(recipeId, await dishColorForImageUrl(primaryImage));
   } catch (err) {
