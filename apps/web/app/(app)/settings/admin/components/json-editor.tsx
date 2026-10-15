@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { usePending } from "@/hooks/use-pending";
 import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
 import { Button, TextArea } from "@heroui/react";
 import { useTranslations } from "next-intl";
@@ -35,7 +36,7 @@ export default function JsonEditor({
   const tActions = useTranslations("common.actions");
   const [text, setText] = useState(() => toText(value));
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
   const [isDirty, setIsDirty] = useState(false);
   const [prevValue, setPrevValue] = useState(value);
 
@@ -66,30 +67,30 @@ export default function JsonEditor({
   );
   const handleSave = useCallback(async () => {
     if (error) return;
-    setSaving(true);
-    await onSave(text)
-      .then((result) => {
-        if (result.success) {
-          setIsDirty(false);
-        } else if (result.error) {
-          setError(result.error);
-        }
-      })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : t("failedToSave")))
-      .finally(() => setSaving(false));
-  }, [text, error, onSave, t]);
+    await whileSaving(() =>
+      onSave(text)
+        .then((result) => {
+          if (result.success) {
+            setIsDirty(false);
+          } else if (result.error) {
+            setError(result.error);
+          }
+        })
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : t("failedToSave")))
+    );
+  }, [text, error, onSave, t, whileSaving]);
   const handleRestoreDefaults = useCallback(async () => {
     if (!onRestoreDefaults) return;
-    setSaving(true);
-    await onRestoreDefaults()
-      .then((result) => {
-        if (!result.success && result.error) {
-          setError(result.error);
-        }
-      })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : t("failedToRestore")))
-      .finally(() => setSaving(false));
-  }, [onRestoreDefaults, t]);
+    await whileSaving(() =>
+      onRestoreDefaults()
+        .then((result) => {
+          if (!result.success && result.error) {
+            setError(result.error);
+          }
+        })
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : t("failedToRestore")))
+    );
+  }, [onRestoreDefaults, t, whileSaving]);
   const handleFormat = useCallback(() => {
     try {
       const parsed = JSON.parse(text);

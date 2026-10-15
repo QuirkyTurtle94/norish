@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SecretInput from "@/components/shared/secret-input";
+import { usePending } from "@/hooks/use-pending";
 import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
 import { Input, Label, TextField, useOverlayState } from "@heroui/react";
 import { useTranslations } from "next-intl";
@@ -56,9 +57,9 @@ export function AuthProviderForm({
       {} as Record<string, string>
     )
   );
-  const [testing, setTesting] = useState(false);
+  const [testing, whileTesting] = usePending();
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
   const deleteModal = useOverlayState();
 
   const hasChanges = useMemo(
@@ -85,13 +86,10 @@ export function AuthProviderForm({
   );
 
   const handleTest = async () => {
-    setTesting(true);
     setTestResult(null);
     const testValues = Object.fromEntries(fields.map((f) => [f.key, values[f.key] || undefined]));
 
-    await testAuthProvider(providerKey, testValues)
-      .then(setTestResult)
-      .finally(() => setTesting(false));
+    await whileTesting(() => testAuthProvider(providerKey, testValues).then(setTestResult));
   };
 
   const handleSave = async () => {
@@ -121,8 +119,7 @@ export function AuthProviderForm({
       });
     };
 
-    setSaving(true);
-    await save().finally(() => setSaving(false));
+    await whileSaving(() => save());
   };
 
   const handleDelete = async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { usePending } from "@/hooks/use-pending";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/16/solid";
 import { Description, InputGroup, Label, TextField } from "@heroui/react";
 import { useTranslations } from "next-intl";
@@ -55,7 +56,7 @@ export default function SecretInput({
   const t = useTranslations("common.secret");
   const [storedSecret, setStoredSecret] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, whileLoading] = usePending();
   const [wasConfigured, setWasConfigured] = useState(isConfigured);
 
   // A secret that was deleted, or a provider that changed under the form, is no
@@ -93,13 +94,10 @@ export default function SecretInput({
     }
 
     if (!hasTypedValue && isConfigured && storedSecret === null) {
-      setIsLoading(true);
-      await onReveal()
-        .then(setStoredSecret)
-        .finally(() => setIsLoading(false));
+      await whileLoading(() => onReveal().then(setStoredSecret));
     }
     setIsVisible(true);
-  }, [hasTypedValue, isConfigured, isVisible, onReveal, storedSecret]);
+  }, [hasTypedValue, isConfigured, isVisible, onReveal, storedSecret, whileLoading]);
 
   // Two sentences that have to read as two: a caller's description written
   // without a full stop otherwise runs straight into the hint after it.

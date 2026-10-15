@@ -5,6 +5,7 @@ import ArchiveExportButton from "@/app/(app)/settings/components/archive-export-
 import { SettingRow, SwitchRow } from "@/app/(app)/settings/components/setting-row";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
 import SettingsSwitch from "@/app/(app)/settings/components/settings-switch";
+import { usePending } from "@/hooks/use-pending";
 import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { Button, ListBox, Select, Separator, toast } from "@heroui/react";
@@ -22,7 +23,7 @@ export default function GeneralCard() {
   // Local state for locale config form
   const [enabledLocales, setEnabledLocales] = useState<string[]>([]);
   const [defaultLocale, setDefaultLocale] = useState<string>("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, whileSaving] = usePending();
 
   // Initialize local state from config; starts unset so a config present on
   // the first render seeds it too.
@@ -66,12 +67,11 @@ export default function GeneralCard() {
       });
       return;
     }
-    setIsSaving(true);
-    await updateLocaleConfig({
-      defaultLocale,
-      enabledLocales,
-    })
-      .then((result) => {
+    await whileSaving(() =>
+      updateLocaleConfig({
+        defaultLocale,
+        enabledLocales,
+      }).then((result) => {
         if (result.success) {
           toast(t("localesSaved"), {
             variant: "success",
@@ -86,7 +86,7 @@ export default function GeneralCard() {
           });
         }
       })
-      .finally(() => setIsSaving(false));
+    );
   };
 
   // Check if locale config has changed from server state

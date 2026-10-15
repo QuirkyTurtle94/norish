@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SecretInput from "@/components/shared/secret-input";
+import { usePending } from "@/hooks/use-pending";
 import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
 import { Input, Label, TextField, useOverlayState } from "@heroui/react";
 import { useTranslations } from "next-intl";
@@ -55,9 +56,9 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
     householdPrefix: existingClaimConfig?.householdPrefix ?? "norish_household_",
   });
 
-  const [testing, setTesting] = useState(false);
+  const [testing, whileTesting] = usePending();
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
   const deleteModal = useOverlayState();
 
   const configClaim = config?.claimConfig as
@@ -116,7 +117,6 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
   );
 
   const handleTest = async () => {
-    setTesting(true);
     setTestResult(null);
     const testValues = {
       name: name || undefined,
@@ -126,36 +126,34 @@ export function OIDCProviderForm({ config, onDirtyChange }: OIDCProviderFormProp
       wellknown: wellknown || undefined,
     };
 
-    await testAuthProvider("oidc", testValues)
-      .then(setTestResult)
-      .finally(() => setTesting(false));
+    await whileTesting(() => testAuthProvider("oidc", testValues).then(setTestResult));
   };
 
   const handleSave = async () => {
-    setSaving(true);
     // Parse scopes from comma-separated string
     const scopesArray = claimMapping.scopes
       .split(",")
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
 
-    await updateAuthProviderOIDC({
-      name,
-      issuer,
-      clientId,
-      clientSecret: clientSecret || undefined,
-      wellknown: wellknown || undefined,
-      claimConfig: {
-        enabled: claimMapping.enabled,
-        scopes: scopesArray,
-        groupsClaim: claimMapping.groupsClaim,
-        adminGroup: claimMapping.adminGroup,
-        householdPrefix: claimMapping.householdPrefix,
-      },
-    })
-      // Saved secrets live on the server, not in the form.
-      .then(() => setClientSecret(""))
-      .finally(() => setSaving(false));
+    await whileSaving(() =>
+      updateAuthProviderOIDC({
+        name,
+        issuer,
+        clientId,
+        clientSecret: clientSecret || undefined,
+        wellknown: wellknown || undefined,
+        claimConfig: {
+          enabled: claimMapping.enabled,
+          scopes: scopesArray,
+          groupsClaim: claimMapping.groupsClaim,
+          adminGroup: claimMapping.adminGroup,
+          householdPrefix: claimMapping.householdPrefix,
+        },
+      })
+        // Saved secrets live on the server, not in the form.
+        .then(() => setClientSecret(""))
+    );
   };
 
   const handleDelete = async () => {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { SwitchRow } from "@/app/(app)/settings/components/setting-row";
 import SettingsSwitch from "@/app/(app)/settings/components/settings-switch";
+import { usePending } from "@/hooks/use-pending";
 import { ArrowPathIcon, ExclamationTriangleIcon } from "@heroicons/react/16/solid";
 import { Button, Description, Label, TextArea, TextField } from "@heroui/react";
 import { useTranslations } from "next-intl";
@@ -43,7 +44,7 @@ export default function TimerKeywordsEditor({
   const [minutesText, setMinutesText] = useState(() => minutes.join(", "));
   const [secondsText, setSecondsText] = useState(() => seconds.join(", "));
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
   const [isDirty, setIsDirty] = useState(false);
   const [prevKeywords, setPrevKeywords] = useState({ enabled, hours, minutes, seconds });
 
@@ -116,36 +117,36 @@ export default function TimerKeywordsEditor({
       setError("At least one keyword required in hours, minutes, or seconds");
       return;
     }
-    setSaving(true);
-    await onUpdate({
-      enabled: isEnabled,
-      hours: parsedHours,
-      minutes: parsedMinutes,
-      seconds: parsedSeconds,
-    })
-      .then((result) => {
-        if (result.success) {
-          setIsDirty(false);
-        } else if (result.error) {
-          setError(result.error);
-        }
+    await whileSaving(() =>
+      onUpdate({
+        enabled: isEnabled,
+        hours: parsedHours,
+        minutes: parsedMinutes,
+        seconds: parsedSeconds,
       })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to save"))
-      .finally(() => setSaving(false));
-  }, [hoursText, minutesText, secondsText, isEnabled, error, onUpdate]);
+        .then((result) => {
+          if (result.success) {
+            setIsDirty(false);
+          } else if (result.error) {
+            setError(result.error);
+          }
+        })
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to save"))
+    );
+  }, [hoursText, minutesText, secondsText, isEnabled, error, onUpdate, whileSaving]);
   const handleRestoreDefaults = useCallback(async () => {
-    setSaving(true);
-    await onRestoreDefaults()
-      .then((result) => {
-        if (!result.success && result.error) {
-          setError(result.error);
-        }
-      })
-      .catch((e: unknown) =>
-        setError(e instanceof Error ? e.message : "Failed to restore defaults")
-      )
-      .finally(() => setSaving(false));
-  }, [onRestoreDefaults]);
+    await whileSaving(() =>
+      onRestoreDefaults()
+        .then((result) => {
+          if (!result.success && result.error) {
+            setError(result.error);
+          }
+        })
+        .catch((e: unknown) =>
+          setError(e instanceof Error ? e.message : "Failed to restore defaults")
+        )
+    );
+  }, [onRestoreDefaults, whileSaving]);
   return (
     <div className="flex flex-col gap-4">
       <SwitchRow description={t("description")} title={t("enableToggle")}>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import SecretInput from "@/components/shared/secret-input";
 import { useAvailableModelsQuery } from "@/hooks/admin";
+import { usePending } from "@/hooks/use-pending";
 import {
   Button,
   ComboBox,
@@ -54,7 +55,7 @@ export default function ImageGenerationForm({ onDirtyChange }: ImageGenerationFo
   const [model, setModel] = useState(imageGenerationConfig?.model ?? "");
   const [endpoint, setEndpoint] = useState(imageGenerationConfig?.endpoint ?? "");
   const [apiKey, setApiKey] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
 
   const [prevImageGenerationConfig, setPrevImageGenerationConfig] = useState(imageGenerationConfig);
 
@@ -151,16 +152,15 @@ export default function ImageGenerationForm({ onDirtyChange }: ImageGenerationFo
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    await updateImageGenerationConfig({
-      provider,
-      model: model || undefined,
-      endpoint: endpoint || undefined,
-      // An empty key preserves the stored one on the server.
-      apiKey: apiKey || undefined,
-    })
-      .then(() => setApiKey(""))
-      .finally(() => setSaving(false));
+    await whileSaving(() =>
+      updateImageGenerationConfig({
+        provider,
+        model: model || undefined,
+        endpoint: endpoint || undefined,
+        // An empty key preserves the stored one on the server.
+        apiKey: apiKey || undefined,
+      }).then(() => setApiKey(""))
+    );
   };
 
   return (

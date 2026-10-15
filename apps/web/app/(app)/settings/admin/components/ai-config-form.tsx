@@ -6,6 +6,7 @@ import SettingsSwitch from "@/app/(app)/settings/components/settings-switch";
 import { Note } from "@/components/shared/note";
 import SecretInput from "@/components/shared/secret-input";
 import { useAvailableModelsQuery } from "@/hooks/admin";
+import { usePending } from "@/hooks/use-pending";
 import { BeakerIcon, CheckIcon, XMarkIcon } from "@heroicons/react/16/solid";
 import {
   Button,
@@ -110,12 +111,12 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
   const [automaticIngredients, setAutomaticIngredients] = useState<AutomaticIngredientsConfig>(
     aiConfig?.automaticIngredients ?? DEFAULT_AUTOMATIC_INGREDIENTS
   );
-  const [testing, setTesting] = useState(false);
+  const [testing, whileTesting] = usePending();
   const [testResult, setTestResult] = useState<{
     success: boolean;
     error?: string;
   } | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
 
   // Fetch available models from the provider
   // Cloud providers that don't require an endpoint (use official APIs)
@@ -327,39 +328,38 @@ export default function AIConfigForm({ onDirtyChange }: AIConfigFormProps) {
     }
   };
   const handleTest = async () => {
-    setTesting(true);
     setTestResult(null);
-    await testAIEndpoint({
-      provider,
-      endpoint: endpoint || undefined,
-      apiKey: apiKey || undefined,
-    })
-      .then(setTestResult)
-      .finally(() => setTesting(false));
+    await whileTesting(() =>
+      testAIEndpoint({
+        provider,
+        endpoint: endpoint || undefined,
+        apiKey: apiKey || undefined,
+      }).then(setTestResult)
+    );
   };
   const handleSave = async () => {
     if (enabled && !hasValidConfig) return;
-    setSaving(true);
-    await updateAIConfig({
-      enabled,
-      provider: provider as AIConfig["provider"],
-      endpoint: endpoint || undefined,
-      model,
-      visionModel: visionModel || undefined,
-      apiKey: apiKey || undefined,
-      temperature,
-      maxTokens,
-      timeoutMs,
-      alwaysUseAI,
-      tagStrategy,
-      cuisineStrategy,
-      automaticEnrichment,
-      automaticIngredients,
-    })
-      // Saved keys live on the server, not in the form: a key left in state
-      // reads as an unsaved change on every later render.
-      .then(() => setApiKey(""))
-      .finally(() => setSaving(false));
+    await whileSaving(() =>
+      updateAIConfig({
+        enabled,
+        provider: provider as AIConfig["provider"],
+        endpoint: endpoint || undefined,
+        model,
+        visionModel: visionModel || undefined,
+        apiKey: apiKey || undefined,
+        temperature,
+        maxTokens,
+        timeoutMs,
+        alwaysUseAI,
+        tagStrategy,
+        cuisineStrategy,
+        automaticEnrichment,
+        automaticIngredients,
+      })
+        // Saved keys live on the server, not in the form: a key left in state
+        // reads as an unsaved change on every later render.
+        .then(() => setApiKey(""))
+    );
   };
   return (
     <div className="flex flex-col gap-4">

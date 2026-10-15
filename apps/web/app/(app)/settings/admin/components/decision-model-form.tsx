@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SettingRow } from "@/app/(app)/settings/components/setting-row";
 import SecretInput from "@/components/shared/secret-input";
+import { usePending } from "@/hooks/use-pending";
 import { BeakerIcon, CheckIcon, XMarkIcon } from "@heroicons/react/16/solid";
 import { Button, Description, Input, Label, ListBox, Select, TextField } from "@heroui/react";
 import { useTranslations } from "next-intl";
@@ -52,9 +53,9 @@ export default function DecisionModelForm({ onDirtyChange }: DecisionModelFormPr
   // fresh block starts with: enabling the Decision Model enables everything
   // it can do, and an administrator deselects what they do not want.
   const [uses, setUses] = useState<DecisionUse[]>(decisionConfig?.uses ?? [...DECISION_USES]);
-  const [testing, setTesting] = useState(false);
+  const [testing, whileTesting] = usePending();
   const [testResult, setTestResult] = useState<{ success: boolean; error?: string } | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
 
   const [prevDecisionConfig, setPrevDecisionConfig] = useState(decisionConfig);
 
@@ -108,32 +109,30 @@ export default function DecisionModelForm({ onDirtyChange }: DecisionModelFormPr
   };
 
   const handleTest = async () => {
-    setTesting(true);
     setTestResult(null);
-    await testDecisionEndpoint({
-      provider,
-      apiKey: apiKey || undefined,
-      model: model || undefined,
-      endpoint: endpoint.trim() || undefined,
-    })
-      .then(setTestResult)
-      .finally(() => setTesting(false));
+    await whileTesting(() =>
+      testDecisionEndpoint({
+        provider,
+        apiKey: apiKey || undefined,
+        model: model || undefined,
+        endpoint: endpoint.trim() || undefined,
+      }).then(setTestResult)
+    );
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    await updateDecisionConfig({
-      provider,
-      model: model || undefined,
-      endpoint: endpoint.trim() || undefined,
-      // An empty key preserves the stored one on the server.
-      apiKey: apiKey || undefined,
-      // Every use selected is stored as no list, so the block keeps meaning
-      // "every use" and a use added later is on for it (ADR-0035).
-      uses: selectedDecisionUses(uses),
-    })
-      .then(() => setApiKey(""))
-      .finally(() => setSaving(false));
+    await whileSaving(() =>
+      updateDecisionConfig({
+        provider,
+        model: model || undefined,
+        endpoint: endpoint.trim() || undefined,
+        // An empty key preserves the stored one on the server.
+        apiKey: apiKey || undefined,
+        // Every use selected is stored as no list, so the block keeps meaning
+        // "every use" and a use added later is on for it (ADR-0035).
+        uses: selectedDecisionUses(uses),
+      }).then(() => setApiKey(""))
+    );
   };
 
   return (

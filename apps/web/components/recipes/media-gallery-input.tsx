@@ -5,6 +5,7 @@ import React, { useCallback, useRef, useState } from "react";
 import NextImage from "next/image";
 import { useRecipeImages, useRecipeVideos } from "@/hooks/recipes";
 import { useClipboardImagePaste } from "@/hooks/use-clipboard-image-paste";
+import { usePending } from "@/hooks/use-pending";
 import {
   closestCenter,
   DndContext,
@@ -189,7 +190,7 @@ export default function MediaGalleryInput({
   const { uploadGalleryVideo, deleteGalleryVideo } = useRecipeVideos();
 
   const [dragActive, setDragActive] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploading, whileUploading] = usePending();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -280,7 +281,6 @@ export default function MediaGalleryInput({
         return;
       }
 
-      setIsUploading(true);
       setUploadError(null);
 
       const nextOrder = media.length;
@@ -327,13 +327,13 @@ export default function MediaGalleryInput({
         }
       };
 
-      await upload()
-        .catch((err: unknown) => {
+      await whileUploading(() =>
+        upload().catch((err: unknown) => {
           log.error({ err }, "Failed to upload media");
           setUploadError(t("uploadFailed"));
           setTimeout(() => setUploadError(null), 3000);
         })
-        .finally(() => setIsUploading(false));
+      );
     },
     [
       media,
@@ -346,6 +346,7 @@ export default function MediaGalleryInput({
       recipeId,
       onChange,
       t,
+      whileUploading,
     ]
   );
 

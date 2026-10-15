@@ -8,6 +8,7 @@ import { ActionButton } from "@/components/shared/action-button";
 import { SlotDropdown } from "@/components/shared/slot-dropdown";
 import MiniRecipeSkeleton from "@/components/skeleton/mini-recipe-skeleton";
 import { useRandomRecipe, useRecipesQuery } from "@/hooks/recipes";
+import { usePending } from "@/hooks/use-pending";
 import { Input } from "@heroui/react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { AnimatePresence, motion } from "motion/react";
@@ -189,7 +190,7 @@ function MiniRecipesContent({
   const [rawInput, setRawInput] = useState("");
   const [search, setSearch] = useState("");
   const [, startTransition] = useTransition();
-  const [isRandomLoading, setIsRandomLoading] = useState(false);
+  const [isRandomLoading, whileRandomLoading] = usePending();
   const { planMeal, planNote } = useCalendarContext();
   const { getRandomRecipe } = useRandomRecipe();
   const {
@@ -220,17 +221,16 @@ function MiniRecipesContent({
   );
   const handleRandomSelect = useCallback(async () => {
     if (!slot) return;
-    setIsRandomLoading(true);
-    await getRandomRecipe(SLOT_TO_CATEGORY[slot])
-      .then((result) => {
+    await whileRandomLoading(() =>
+      getRandomRecipe(SLOT_TO_CATEGORY[slot]).then((result) => {
         if (result) {
           planMeal(dateString, slot, result.id);
           close();
           onPlanned(result.id);
         }
       })
-      .finally(() => setIsRandomLoading(false));
-  }, [slot, getRandomRecipe, planMeal, dateString, close, onPlanned]);
+    );
+  }, [slot, getRandomRecipe, planMeal, dateString, close, onPlanned, whileRandomLoading]);
   const handlePlanNote = useCallback(
     (targetSlot: Slot) => {
       if (rawInput.trim()) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
+import { usePending } from "@/hooks/use-pending";
 import {
   ArrowTopRightOnSquareIcon,
   ClipboardDocumentIcon,
@@ -23,19 +24,18 @@ export default function ApiKeyCard() {
   const { apiKeys, generateApiKey, deleteApiKey, toggleApiKey } = useUserSettingsContext();
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
-  const [generatingKey, setGeneratingKey] = useState(false);
+  const [generatingKey, whileGeneratingKey] = usePending();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
   const handleGenerateKey = async () => {
-    setGeneratingKey(true);
-    await generateApiKey(newKeyName || undefined)
-      .then(({ key }) => {
+    await whileGeneratingKey(() =>
+      generateApiKey(newKeyName || undefined).then(({ key }) => {
         setGeneratedKey(key);
         setShowTokenModal(true);
         setNewKeyName("");
       })
-      .finally(() => setGeneratingKey(false));
+    );
   };
   const handleCopyKey = () => {
     if (generatedKey) {

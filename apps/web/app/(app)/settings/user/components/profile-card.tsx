@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
 import UserAvatar from "@/components/shared/user-avatar";
+import { usePending } from "@/hooks/use-pending";
 import { TrashIcon } from "@heroicons/react/16/solid";
 import { PencilIcon } from "@heroicons/react/20/solid";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
@@ -16,7 +17,7 @@ export default function ProfileCard() {
   const { user, updateName, updateImage, deleteImage, isDeletingAvatar } = useUserSettingsContext();
   const [name, setName] = useState(user?.name || "");
   const [syncedName, setSyncedName] = useState(user?.name);
-  const [saving, setSaving] = useState(false);
+  const [saving, whileSaving] = usePending();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,8 +46,7 @@ export default function ProfileCard() {
       }
     };
 
-    setSaving(true);
-    await save().finally(() => setSaving(false));
+    await whileSaving(() => save());
   };
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
