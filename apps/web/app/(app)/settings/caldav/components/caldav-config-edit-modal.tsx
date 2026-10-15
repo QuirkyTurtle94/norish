@@ -19,9 +19,8 @@ import {
 } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
-import type { CalDavCalendarInfo } from "@norish/shared/contracts";
-
 import { useCalDavSettingsContext } from "../context";
+import { useConnectionTest } from "../use-connection-test";
 
 interface CalDavConfigEditModalProps {
   isOpen: boolean;
@@ -30,10 +29,16 @@ interface CalDavConfigEditModalProps {
 export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigEditModalProps) {
   const t = useTranslations("settings.caldav.setup");
   const tConfig = useTranslations("settings.caldav.config");
-  const { config, saveConfig, testConnection, getCaldavPassword } = useCalDavSettingsContext();
+  const {
+    config,
+    saveConfig,
+    getCaldavPassword,
+    isSavingConfig: saving,
+  } = useCalDavSettingsContext();
   const [serverUrl, setServerUrl] = useState("");
   const [calendarUrl, setCalendarUrl] = useState<string | null>(null);
-  const [calendars, setCalendars] = useState<CalDavCalendarInfo[]>([]);
+  const { calendars, setCalendars, testResult, setTestResult, testing, runTest } =
+    useConnectionTest(setCalendarUrl);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [enabled, setEnabled] = useState(true);
@@ -41,12 +46,6 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
   const [lunchTime, setLunchTime] = useState("12:00-13:00");
   const [dinnerTime, setDinnerTime] = useState("18:00-19:00");
   const [snackTime, setSnackTime] = useState("15:00-16:00");
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
   const [timeErrors, setTimeErrors] = useState<{
     breakfast?: string;
     lunch?: string;
@@ -91,31 +90,6 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
       hasAutoTestedRef.current = false;
     }
   }, [config, isOpen]);
-  const performTestConnection = useCallback(
-    async (url: string, user: string, pass: string, currentCalendarUrl: string | null = null) => {
-      setTesting(true);
-      setTestResult(null);
-      setCalendars([]);
-      const result = await testConnection(url, user, pass);
-
-      setTestResult(result);
-
-      // Store returned calendars for selection
-      if (result.success && result.calendars && result.calendars.length > 0) {
-        setCalendars(result.calendars);
-        // Auto-select first calendar if none selected, or keep existing selection if valid
-        if (!currentCalendarUrl || !result.calendars.some((c) => c.url === currentCalendarUrl)) {
-          const firstCalendar = result.calendars[0];
-
-          if (firstCalendar) {
-            setCalendarUrl(firstCalendar.url);
-          }
-        }
-      }
-      setTesting(false);
-    },
-    [testConnection]
-  );
   const handleRevealPassword = useCallback(async () => {
     const revealedPassword = await getCaldavPassword();
 
@@ -124,11 +98,11 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
       hasAutoTestedRef.current = true;
       // Small delay to allow state to update
       setTimeout(() => {
-        performTestConnection(serverUrl, username, revealedPassword, calendarUrl);
+        runTest(serverUrl, username, revealedPassword, calendarUrl);
       }, 100);
     }
     return revealedPassword;
-  }, [getCaldavPassword, serverUrl, username, testing, calendarUrl, performTestConnection]);
+  }, [getCaldavPassword, serverUrl, username, testing, calendarUrl, runTest]);
   const validateTimeFormat = (time: string, field: string) => {
     if (!timeRegex.test(time)) {
       setTimeErrors((prev) => ({
@@ -149,16 +123,16 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
   const handleTestConnection = async () => {
     // Use form values for test
     const passwordToUse = password || (config ? await getCaldavPassword() : null) || "";
-    await performTestConnection(serverUrl, username, passwordToUse, calendarUrl);
+    await runTest(serverUrl, username, passwordToUse, calendarUrl);
   };
 
   // Auto-test connection when password is entered (for new password)
   useEffect(() => {
     if (serverUrl && username && password && !testing && !hasAutoTestedRef.current && isOpen) {
       hasAutoTestedRef.current = true;
-      performTestConnection(serverUrl, username, password, calendarUrl);
+      runTest(serverUrl, username, password, calendarUrl);
     }
-  }, [password, serverUrl, username, testing, isOpen, performTestConnection, calendarUrl]);
+  }, [password, serverUrl, username, testing, isOpen, runTest, calendarUrl]);
   const handleSave = async () => {
     // Validate time formats
     const breakfastValid = validateTimeFormat(breakfastTime, "breakfast");
@@ -168,7 +142,6 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
     if (!breakfastValid || !lunchValid || !dinnerValid || !snackValid) {
       return;
     }
-    setSaving(true);
     setTestResult(null);
     await saveConfig({
       serverUrl,
@@ -181,9 +154,7 @@ export default function CalDavConfigEditModal({ isOpen, onClose }: CalDavConfigE
       lunchTime,
       dinnerTime,
       snackTime,
-    })
-      .then(() => onClose())
-      .finally(() => setSaving(false));
+    }).then(() => onClose());
   };
   const canSave = serverUrl && username && (password || config) && calendarUrl;
   return (

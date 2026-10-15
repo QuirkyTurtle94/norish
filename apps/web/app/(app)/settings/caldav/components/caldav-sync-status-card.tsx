@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
 import { ChipButton } from "@/components/shared/chip-button";
 import {
@@ -27,12 +26,8 @@ export default function CalDavSyncStatusCard() {
     syncStatusFilter,
     setSyncStatusFilter,
     triggerManualSync,
+    isTriggeringSync: syncing,
   } = useCalDavSettingsContext();
-  const [syncing, setSyncing] = useState(false);
-  const handleManualSync = async () => {
-    setSyncing(true);
-    await triggerManualSync().finally(() => setSyncing(false));
-  };
   const handleFilterClick = (status: "pending" | "synced" | "failed" | "removed") => {
     if (syncStatusFilter === status) {
       // Click same badge again to clear filter
@@ -79,7 +74,7 @@ export default function CalDavSyncStatusCard() {
           isPending={syncing}
           size="sm"
           variant="primary"
-          onPress={handleManualSync}
+          onPress={triggerManualSync}
         >
           {<ArrowPathIcon className="h-4 w-4" />}
           {t("syncNow")}
