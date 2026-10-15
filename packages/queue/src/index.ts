@@ -55,4 +55,4 @@ export type {
 } from "@norish/queue/contracts/job-types";
 
 // Types from scheduled-tasks
-export type { ScheduledTaskJobData, ScheduledTaskType } from "./scheduled-tasks/queue";
+export type { ScheduledTaskJobData, ScheduledTaskType } from "./scheduled-tasks/tasks";

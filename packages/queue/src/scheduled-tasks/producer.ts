@@ -9,8 +9,8 @@ import type { Queue } from "bullmq";
 
 import { createLogger } from "@norish/shared-server/logger";
 
-import type { ScheduledTaskJobData } from "./queue";
-import { SCHEDULED_TASKS } from "./queue";
+import type { ScheduledTaskJobData } from "./tasks";
+import { SCHEDULED_TASKS } from "./tasks";
 
 const log = createLogger("queue:scheduled-tasks");
 

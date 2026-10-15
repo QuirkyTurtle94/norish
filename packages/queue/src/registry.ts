@@ -28,7 +28,7 @@ import { getConfig } from "@norish/db/repositories/server-config";
 import { createLogger } from "@norish/shared-server/logger";
 
 import type { QueueName } from "./config";
-import type { ScheduledTaskJobData } from "./scheduled-tasks/queue";
+import type { ScheduledTaskJobData } from "./scheduled-tasks/tasks";
 import { buildRemovalOptions, QUEUE_NAMES, QUEUE_SETTINGS } from "./config";
 import { createOperationAwareQueue, logQueueErrors } from "./operation-aware-queue";
 import { getBullClient } from "./redis/bullmq";

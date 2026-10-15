@@ -10,11 +10,11 @@ import { RedisContainer } from "@testcontainers/redis";
 import { Queue, Worker } from "bullmq";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
-import type { ScheduledTaskJobData } from "../../src/scheduled-tasks/queue";
+import type { ScheduledTaskJobData } from "../../src/scheduled-tasks/tasks";
 import { REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
 import { getBullConnectionOptions } from "../../src/redis/bullmq";
 import { initializeScheduledJobs } from "../../src/scheduled-tasks/producer";
-import { SCHEDULED_TASKS } from "../../src/scheduled-tasks/queue";
+import { SCHEDULED_TASKS } from "../../src/scheduled-tasks/tasks";
 
 let redis: StartedRedisContainer;
 let queue: Queue<ScheduledTaskJobData>;

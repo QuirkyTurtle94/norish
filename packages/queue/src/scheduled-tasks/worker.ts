@@ -9,7 +9,7 @@ import { refreshIngredientCatalogue } from "@norish/shared-server/ingredients/se
 import { recheckUndecidedMintsOnRungChange } from "@norish/shared-server/ingredients/seed/recheck-mints";
 import { createLogger } from "@norish/shared-server/logger";
 
-import type { ScheduledTaskJobData } from "./queue";
+import type { ScheduledTaskJobData } from "./tasks";
 import { QUEUE_NAMES } from "../config";
 import { createWorker } from "../create-worker";
 import { reportStep } from "../job-steps";

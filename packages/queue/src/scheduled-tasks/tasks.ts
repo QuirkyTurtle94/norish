@@ -1,6 +1,6 @@
 /**
- * Scheduled Tasks - the tasks and their job data. The queue itself is built
- * by the registry.
+ * Scheduled Tasks - the tasks and their job data. Their queue is built by the
+ * registry like every other.
  */
 
 /**

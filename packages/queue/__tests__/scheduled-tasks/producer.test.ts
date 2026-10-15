@@ -8,9 +8,9 @@
 import type { Job, Queue } from "bullmq";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ScheduledTaskJobData } from "@norish/queue/scheduled-tasks/queue";
+import type { ScheduledTaskJobData } from "@norish/queue/scheduled-tasks/tasks";
 import { initializeScheduledJobs } from "@norish/queue/scheduled-tasks/producer";
-import { SCHEDULED_TASKS } from "@norish/queue/scheduled-tasks/queue";
+import { SCHEDULED_TASKS } from "@norish/queue/scheduled-tasks/tasks";
 
 vi.mock("@norish/shared-server/logger", () => ({
   createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
