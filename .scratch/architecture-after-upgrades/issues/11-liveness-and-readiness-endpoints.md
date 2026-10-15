@@ -36,3 +36,6 @@ See `.scratch/architecture-after-upgrades/spec.md`, Health checks.
   - Docs: a "Health checks" table on the Server & runtime page, which the Upgrade note links to.
   - **Still open:** the image boot check (healthy, and still healthy with Redis stopped). The Dockerfile changes again in ticket 12, so it is verified with that image.
 - 2026-10-14. **Image boot check done** on arm64 and amd64 (the final image, with tickets 07 and 13): the healthcheck reports healthy, and stays healthy with Redis stopped while `/api/v1/health/ready` answers 503.
+- 2026-10-15, from the branch review:
+  - **`/api/v1/health` is removed.** The maintainer ruled out keeping compat code in 0.26, so the deprecated endpoint, its `getServiceHealth` and its response schema are gone, and `/health` answers 404. The Upgrade note says to point a probe that called it at live or ready. User story 50 is answered by that note instead of by the endpoint.
+  - **Ready waits on the parser two seconds at most.** It reused the parser's 15-second request timeout, so a hung parser held ready past any probe's timeout, and the app's connectivity probe (5 s) showed Offline: the outage this ticket set out to contain. Live keeps the longer wait, so a parser busy with a big page doesn't get Norish restarted. A test spies the timeout ready passes.

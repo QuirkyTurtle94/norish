@@ -37,130 +37,6 @@
     }
   ],
   "paths": {
-    "/health": {
-      "get": {
-        "operationId": "health",
-        "summary": "Check API health",
-        "description": "Deprecated: use /health/live to decide whether to restart Norish and /health/ready to decide whether to send it traffic. Reports API availability and verifies that the database, Redis and the internal parser service are healthy.",
-        "tags": [
-          "Health"
-        ],
-        "deprecated": true,
-        "responses": {
-          "200": {
-            "description": "The API, database, Redis and parser service are healthy.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "const": "ok"
-                    },
-                    "db": {
-                      "type": "object",
-                      "properties": {
-                        "status": {
-                          "type": "string",
-                          "const": "ok"
-                        }
-                      },
-                      "required": [
-                        "status"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "redis": {
-                      "type": "object",
-                      "properties": {
-                        "status": {
-                          "type": "string",
-                          "const": "ok"
-                        }
-                      },
-                      "required": [
-                        "status"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "versions": {
-                      "type": "object",
-                      "properties": {
-                        "root": {
-                          "type": "string"
-                        },
-                        "apps": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {
-                            "type": "string"
-                          }
-                        },
-                        "packages": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {
-                            "type": "string"
-                          }
-                        },
-                        "scraper": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "root",
-                        "apps",
-                        "packages"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "parser": {
-                      "type": "object",
-                      "properties": {
-                        "status": {
-                          "type": "string",
-                          "const": "ok"
-                        },
-                        "recipeScrapersVersion": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "status"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "required": [
-                    "status",
-                    "db",
-                    "redis",
-                    "versions",
-                    "parser"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error.SERVICE_UNAVAILABLE"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/health/live": {
       "get": {
         "operationId": "healthLive",
@@ -210,7 +86,7 @@
             }
           },
           "503": {
-            "description": "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
+            "description": "The parser service is unhealthy or unreachable",
             "content": {
               "application/json": {
                 "schema": {
@@ -299,7 +175,7 @@
             }
           },
           "503": {
-            "description": "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
+            "description": "The parser service is unhealthy or unreachable",
             "content": {
               "application/json": {
                 "schema": {
@@ -4095,7 +3971,7 @@
           "message": {
             "type": "string",
             "description": "The error message",
-            "example": "The API is up but the database, Redis or the parser service is unhealthy or unreachable"
+            "example": "The parser service is unhealthy or unreachable"
           },
           "code": {
             "type": "string",
@@ -4125,11 +4001,11 @@
           "code"
         ],
         "additionalProperties": false,
-        "title": "The API is up but the database, Redis or the parser service is unhealthy or unreachable error (503)",
+        "title": "The parser service is unhealthy or unreachable error (503)",
         "description": "The error information",
         "example": {
           "code": "SERVICE_UNAVAILABLE",
-          "message": "The API is up but the database, Redis or the parser service is unhealthy or unreachable",
+          "message": "The parser service is unhealthy or unreachable",
           "issues": []
         }
       },

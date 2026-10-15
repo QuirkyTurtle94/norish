@@ -1,6 +1,5 @@
 // @vitest-environment node
 
-import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getOpenApiDocument, handleOpenApiRequest } from "../../src/openapi";
@@ -72,175 +71,17 @@ vi.mock("@norish/auth/auth", () => ({
 }));
 
 describe("openapi health endpoint", () => {
-  beforeEach(() => {
-    process.env.NORISH_VERSION_REPORT_JSON = JSON.stringify({
-      root: "1.2.3",
-      apps: {
-        mobile: "7.8.9",
-        "parser-api": "8.9.10",
-        web: "4.5.6",
-      },
-      packages: {
-        api: "1.0.0",
-        auth: "1.0.0",
-        config: "1.0.0",
-        db: "1.0.0",
-        i18n: "1.0.0",
-        queue: "1.0.0",
-        shared: "1.0.0",
-        "shared-react": "1.0.0",
-        "shared-server": "1.0.0",
-        trpc: "1.0.0",
-        ui: "1.0.0",
-      },
-    });
-    getSessionMock.mockReset();
-    dbExecuteMock.mockReset();
-    dbExecuteMock.mockResolvedValue([]);
-    getDatabaseHealthMock.mockReset();
-    getDatabaseHealthMock.mockImplementation(async () => {
-      try {
-        await dbExecuteMock();
-
-        return {
-          status: "ok",
-        } as const;
-      } catch {
-        return {
-          status: "error",
-        } as const;
-      }
-    });
-    dbInsertMock.mockClear();
-    dbInsertValuesMock.mockClear();
-    getRedisHealthMock.mockReset();
-    getRedisHealthMock.mockResolvedValue({ status: "ok" });
-  });
-
   afterEach(() => {
-    vi.unstubAllGlobals();
-    delete process.env.NORISH_VERSION_REPORT_JSON;
     vi.restoreAllMocks();
   });
 
-  it("returns ok for anonymous callers when the parser is healthy", async () => {
+  it("no longer answers the removed /health", async () => {
     getSessionMock.mockResolvedValue(null);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ status: "ok", recipeScrapersVersion: "15.10.0" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      )
-    );
-
-    const response = await handleOpenApiRequest(new Request("http://localhost/api/v1/health"));
-    const responseJson = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(responseJson).toEqual({
-      status: "ok",
-      db: {
-        status: "ok",
-      },
-      redis: {
-        status: "ok",
-      },
-      versions: {
-        root: "1.2.3",
-        apps: {
-          mobile: "7.8.9",
-          "parser-api": "8.9.10",
-          web: "4.5.6",
-        },
-        packages: {
-          api: "1.0.0",
-          auth: "1.0.0",
-          config: "1.0.0",
-          db: "1.0.0",
-          i18n: "1.0.0",
-          queue: "1.0.0",
-          shared: "1.0.0",
-          "shared-react": "1.0.0",
-          "shared-server": "1.0.0",
-          trpc: "1.0.0",
-          ui: "1.0.0",
-        },
-        scraper: "15.10.0",
-      },
-      parser: {
-        status: "ok",
-        recipeScrapersVersion: "15.10.0",
-      },
-    });
-    expect(fetch).toHaveBeenCalledWith(
-      "http://127.0.0.1:8001/health",
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
-    );
-  });
-
-  it("returns 503 for anonymous callers when the parser is unhealthy", async () => {
-    getSessionMock.mockResolvedValue(null);
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
 
     const response = await handleOpenApiRequest(new Request("http://localhost/api/v1/health"));
 
-    expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toEqual(
-      expect.objectContaining({
-        code: "SERVICE_UNAVAILABLE",
-        message: "Parser service is error",
-      })
-    );
-  });
-
-  it("returns 503 for anonymous callers when the database is unhealthy", async () => {
-    getSessionMock.mockResolvedValue(null);
-    dbExecuteMock.mockRejectedValueOnce(new Error("db down"));
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ status: "ok", recipeScrapersVersion: "15.10.0" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      )
-    );
-
-    const response = await handleOpenApiRequest(new Request("http://localhost/api/v1/health"));
-
-    expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toEqual(
-      expect.objectContaining({
-        code: "SERVICE_UNAVAILABLE",
-        message: "Database is error",
-      })
-    );
-  });
-
-  it("returns 503 for anonymous callers when Redis does not answer its ping", async () => {
-    getSessionMock.mockResolvedValue(null);
-    getRedisHealthMock.mockResolvedValueOnce({ status: "error" });
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ status: "ok", recipeScrapersVersion: "15.10.0" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      )
-    );
-
-    const response = await handleOpenApiRequest(new Request("http://localhost/api/v1/health"));
-
-    expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toEqual(
-      expect.objectContaining({
-        code: "SERVICE_UNAVAILABLE",
-        message: "Redis is error",
-      })
-    );
+    expect(response.status).toBe(404);
+    expect(getOpenApiDocument().paths["/health"]).toBeUndefined();
   });
 
   it("rejects anonymous requests to protected openapi endpoints", async () => {
@@ -263,17 +104,9 @@ describe("openapi health endpoint", () => {
     );
   });
 
-  it("documents health as public while protected endpoints require security", async () => {
+  it("documents the protected endpoints as requiring security", () => {
     const document = getOpenApiDocument();
 
-    expect(document.paths["/health"]?.get).toEqual(
-      expect.objectContaining({
-        tags: ["Health"],
-      })
-    );
-    expect(document.paths["/health"]?.get?.security).toBeUndefined();
-    expect(document.paths["/health"]?.get?.description).toContain("Redis");
-    expect(document.paths["/health"]?.get?.responses["503"]?.description).toContain("Redis");
     expect(document.paths["/recipes/search"]?.post?.security).toEqual([
       { ApiKeyAuth: [] },
       { BearerAuth: [] },
@@ -282,14 +115,6 @@ describe("openapi health endpoint", () => {
       { ApiKeyAuth: [] },
       { BearerAuth: [] },
     ]);
-  });
-
-  it("marks /health deprecated and names the two endpoints that replace it", () => {
-    const operation = getOpenApiDocument().paths["/health"]?.get;
-
-    expect(operation?.deprecated).toBe(true);
-    expect(operation?.description).toContain("/health/live");
-    expect(operation?.description).toContain("/health/ready");
   });
 });
 

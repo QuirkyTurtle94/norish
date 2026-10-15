@@ -37,8 +37,6 @@ openssl rand -base64 32
 | `/api/v1/health/live`  | The server responds and its parser answers                             | Restarting Norish: the image's healthcheck, Kubernetes liveness |
 | `/api/v1/health/ready` | The database and Redis answer; the parser is reported but never counts | Sending traffic: Kubernetes readiness, load balancers           |
 
-`/api/v1/health` still works but is deprecated and will be removed in a later release.
-
 ## Networking & origins
 
 | Variable          | Description                                                | Default |
