@@ -57,7 +57,6 @@ export const test = base.extend<AITestFixtures, AIWorkerFixtures>({
       await ai.start();
       const stack = new ProductionStack({
         project: "ai",
-        port: 3200,
         databaseName: "norish_ai_e2e",
         users: [OWNER, MEMBER],
         environment: {

@@ -185,7 +185,6 @@ export const test = base.extend<Record<never, never>, OfflineWorkerFixtures>({
     async ({ browser }, use) => {
       const stack = new ProductionStack({
         project: "offline",
-        port: 3100,
         databaseName: "norish_e2e",
         users: [USER_A, USER_B],
       });

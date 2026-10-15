@@ -26,7 +26,6 @@ export interface HarnessUser {
 
 interface ProductionStackOptions {
   project: "offline" | "ai" | "realtime";
-  port: number;
   databaseName: string;
   users: readonly [HarnessUser, HarnessUser];
   /**
@@ -65,8 +64,8 @@ function delay(milliseconds: number): Promise<void> {
  * it rather than a kernel-assigned one, because Docker re-assigns ephemeral
  * host ports on a container restart and a fixed binding survives one — which
  * is what lets a scenario restart Redis under a server that keeps its URL.
- * The embedded parser gets one too, so stacks running side by side never
- * share (or kill) each other's parser.
+ * The server and the embedded parser get one too, so stacks running side by
+ * side, or beside a dev server, never share (or kill) each other's ports.
  */
 function freeHostPort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -129,9 +128,8 @@ async function stopAll(
 }
 
 export class ProductionStack {
-  readonly baseURL: string;
   readonly uploadsDir: string;
-  private readonly port: number;
+  private serverPort: number | null = null;
   private readonly runtimeDir: string;
   private parserPort: number | null = null;
   private postgres: StartedPostgreSqlContainer | null = null;
@@ -142,14 +140,25 @@ export class ProductionStack {
   private capturedLogs: string[] = [];
 
   constructor(private readonly options: ProductionStackOptions) {
-    // Every Playwright worker boots its own stack, so each takes the
-    // project's port plus its worker index and a runtime directory of its own.
+    // Every Playwright worker boots its own stack, so each takes a runtime
+    // directory of its own, and a free port once it starts.
     const worker = Number(process.env.TEST_PARALLEL_INDEX ?? 0);
 
-    this.port = options.port + worker;
-    this.baseURL = `http://localhost:${this.port}`;
     this.runtimeDir = path.join(E2E_RUNTIME_DIR, `${options.project}-${worker}`);
     this.uploadsDir = path.join(this.runtimeDir, "uploads");
+  }
+
+  /** Fixed for the stack's life: a restarted server keeps its origin. */
+  get baseURL(): string {
+    return `http://localhost:${this.port}`;
+  }
+
+  private get port(): number {
+    if (this.serverPort === null) {
+      throw new Error(`[${this.options.project}] server port is not allocated`);
+    }
+
+    return this.serverPort;
   }
 
   get databaseUrl(): string {
@@ -210,6 +219,7 @@ export class ProductionStack {
     let phase = "container provisioning";
 
     try {
+      this.serverPort = await freeHostPort();
       const redisHostPort = await freeHostPort();
 
       this.parserPort = await freeHostPort();
