@@ -235,26 +235,6 @@ async function convertToJpeg(
   }
 }
 
-// --- Fetch with timeout ---
-async function fetchWithTimeout(url: string, timeoutMs: number = FETCH_TIMEOUT): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-
-    clearTimeout(timeoutId);
-
-    return response;
-  } catch (e) {
-    clearTimeout(timeoutId);
-    if (e instanceof Error && e.name === "AbortError") {
-      throw new Error(`Request timeout after ${timeoutMs}ms`, { cause: e });
-    }
-    throw e;
-  }
-}
-
 // --- JSON-LD image normalization ---
 export function normalizeJsonLdImages(imageField: any): ImageCandidate[] {
   if (!imageField) return [];
@@ -433,7 +413,7 @@ export async function downloadImage(url: string, recipeId: string): Promise<stri
     throw new Error(`Invalid URL: ${url}`);
   }
 
-  const res = await fetchWithTimeout(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
 
   if (!res.ok || !res.body) {
     throw new Error(`Failed to download image: ${res.status} ${res.statusText}`);
