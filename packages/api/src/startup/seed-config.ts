@@ -28,7 +28,6 @@ import {
   IngredientWordsMapSchema,
   ServerConfigKeys,
   UnitsConfigSchema,
-  UnitsMapSchema,
 } from "@norish/db/zodSchemas/server-config";
 import {
   buildLocaleConfigFromEnv,
@@ -600,40 +599,6 @@ async function syncUnits(): Promise<void> {
       );
       serverLogger.info("Updated units from default file (content changed)");
     }
-
-    return;
-  }
-
-  const legacyWrapped =
-    typeof existing === "object" &&
-    existing !== null &&
-    "units" in existing &&
-    "isOverwritten" in existing
-      ? UnitsMapSchema.safeParse((existing as { units: unknown }).units)
-      : null;
-
-  if (legacyWrapped?.success) {
-    await setConfig(
-      ServerConfigKeys.UNITS,
-      { units: legacyWrapped.data, isOverridden: false },
-      null,
-      false
-    );
-    serverLogger.info("Migrated units config flag from isOverwritten to isOverridden");
-
-    return;
-  }
-
-  const legacy = UnitsMapSchema.safeParse(existing);
-
-  if (legacy.success) {
-    await setConfig(
-      ServerConfigKeys.UNITS,
-      { units: legacy.data, isOverridden: false },
-      null,
-      false
-    );
-    serverLogger.info("Migrated units config to wrapped schema format");
 
     return;
   }
