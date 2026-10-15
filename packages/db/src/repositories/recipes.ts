@@ -7,7 +7,6 @@ import {
   ilike,
   inArray,
   isNull,
-  like,
   lte,
   notInArray,
   or,
@@ -2256,31 +2255,6 @@ export async function listAllRecipeMediaReferences(): Promise<{
     galleryImageUrls: galleryImages.map((row) => row.image),
     videoUrls: videos.map((row) => row.video),
   };
-}
-
-/**
- * Legacy image migration helpers. Used only by the startup gallery image
- * migration (`@norish/api/startup/migrate-gallery-images`).
- */
-export async function listRecipeIdsAndImages(): Promise<{ id: string; image: string }[]> {
-  return await db
-    .select({ id: recipeImages.recipeId, image: recipeImages.image })
-    .from(recipeImages);
-}
-
-export async function listGalleryImagesWithLegacyUrls(): Promise<
-  { id: string; recipeId: string; image: string }[]
-> {
-  return await db
-    .select({ id: recipeImages.id, recipeId: recipeImages.recipeId, image: recipeImages.image })
-    .from(recipeImages)
-    .where(
-      or(like(recipeImages.image, "/recipes/images/%"), like(recipeImages.image, "%/gallery/%"))
-    );
-}
-
-export async function updateGalleryImageUrl(imageId: string, imageUrl: string): Promise<void> {
-  await db.update(recipeImages).set({ image: imageUrl }).where(eq(recipeImages.id, imageId));
 }
 
 /**

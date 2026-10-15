@@ -5,7 +5,6 @@ import { backfillDishColors } from "@norish/api/startup/backfill-dish-color";
 import { backfillIngredientAliases } from "@norish/api/startup/backfill-ingredient-aliases";
 import { createServer } from "@norish/api/startup/http-server";
 import { runStartupMaintenanceCleanup } from "@norish/api/startup/maintenance-cleanup";
-import { migrateGalleryImages } from "@norish/api/startup/migrate-gallery-images";
 import { runMigrations } from "@norish/api/startup/migrations";
 import { recheckUndecidedMintsOnBoot } from "@norish/api/startup/recheck-undecided-mints";
 import { registerApiHandlersForQueue } from "@norish/api/startup/register-queue-api-handlers";
@@ -39,11 +38,6 @@ async function main() {
   await seedServerConfig();
   log.info("-".repeat(50));
 
-  await migrateGalleryImages();
-  log.info("-".repeat(50));
-
-  // After the gallery migration, so every image URL it rewrites is already
-  // in the canonical shape the extractor resolves.
   await backfillDishColors();
   log.info("-".repeat(50));
 
