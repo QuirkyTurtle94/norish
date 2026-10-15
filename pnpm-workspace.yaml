@@ -60,13 +60,11 @@ catalog:
 allowBuilds:
   "@parcel/watcher": false
   "@swc/core": false
-  "@tailwindcss/oxide": true
   cpu-features: false
   esbuild: true
   ffmpeg-static: true
   msgpackr-extract: false
   protobufjs: false
-  sharp: true
   ssh2: false
   workerd: false
 
