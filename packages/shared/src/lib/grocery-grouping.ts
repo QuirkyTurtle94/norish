@@ -1,7 +1,7 @@
 import type { UnitsMap } from "@norish/config/zod/server-config";
 import type { GroceryDto } from "@norish/shared/contracts";
 
-import { parseIngredientWithDefaults } from "./helpers";
+import { parseIngredientWithDefaults, stripBracketed } from "./helpers";
 
 /**
  * Client-side grocery grouping for combining identical ingredients in store view.
@@ -15,10 +15,7 @@ import { parseIngredientWithDefaults } from "./helpers";
 export function normalizeIngredientNameForGrouping(name: string | null): string {
   if (!name) return "";
 
-  return name
-    .replace(/\([^()]*\)/g, " ")
-    .replace(/\[[^[\]]*\]/g, " ")
-    .replace(/\{[^{}]*\}/g, " ")
+  return stripBracketed(name, /\([^()]*\)|\[[^[\]]*\]|\{[^{}]*\}/g)
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
@@ -203,9 +200,7 @@ function getDisplayName(name: string | null): string {
   if (!name) return "Unknown item";
 
   return (
-    name
-      .replace(/\([^()]*\)/g, " ")
-      .replace(/\[[^[\]]*\]/g, " ")
+    stripBracketed(name, /\([^()]*\)|\[[^[\]]*\]/g)
       .replace(/\s+/g, " ")
       .trim() || "Unknown item"
   );

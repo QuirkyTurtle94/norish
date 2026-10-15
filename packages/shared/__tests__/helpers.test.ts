@@ -213,6 +213,10 @@ describe("stripHtmlTags", () => {
     expect(stripHtmlTags("<b>Bold</b> and <i>italic</i>")).toBe("Bold and italic");
   });
 
+  it("keeps a lone < that opens no tag", () => {
+    expect(stripHtmlTags("if a < b <b>bold</b>")).toBe("if a < b bold");
+  });
+
   it("removes nested tags", () => {
     expect(stripHtmlTags("<div><p><span>Nested</span></p></div>")).toBe("Nested");
   });

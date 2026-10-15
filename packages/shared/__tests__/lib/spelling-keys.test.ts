@@ -37,6 +37,8 @@ describe("spelling keys", () => {
     expect(stripPreparation("(2)")).toBe("");
     expect(stripPreparation("butter [optional], softened")).toBe("butter");
     expect(stripPreparation("rice (basmati) [or jasmine (Thai)")).toBe("rice");
+    // Brackets inside brackets go with them, as a single pair would.
+    expect(stripPreparation("onion (red (x) y) chopped")).toBe("onion chopped");
   });
 
   it("strips a social media mention wherever it stands, and nothing that only looks like one", () => {

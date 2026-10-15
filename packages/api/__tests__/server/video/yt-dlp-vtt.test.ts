@@ -21,4 +21,10 @@ describe("parseVttContent", () => {
 
     expect(parseVttContent(vtt)).toBe("Add the flour Salt & pepper, 1 < 2 tbsp");
   });
+
+  it("keeps a lone < in the caption text that opens no tag", () => {
+    const vtt = ["WEBVTT", "", "00:00:00.000 --> 00:00:02.000", "1 < 2 <c>cups</c>"].join("\n");
+
+    expect(parseVttContent(vtt)).toBe("1 < 2 cups");
+  });
 });

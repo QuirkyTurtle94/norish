@@ -151,10 +151,24 @@ describe("normalizeIngredientNameForGrouping", () => {
     expect(normalizeIngredientNameForGrouping("(2)")).toBe("");
   });
 
+  it("leaves out brackets inside brackets too, and keeps a bracket that never closes", () => {
+    expect(normalizeIngredientNameForGrouping("Tomatoes (canned (400 g))")).toBe("tomatoes");
+    expect(normalizeIngredientNameForGrouping("Flour [type 00 (or plain)] sifted")).toBe(
+      "flour sifted"
+    );
+    expect(normalizeIngredientNameForGrouping("Onion (red")).toBe("onion (red");
+  });
+
   it("names a group without the brackets of its first line", () => {
     const [group] = groupsOf([grocery("Tomatoes  (diced) [optional]", 2), grocery("tomatoes", 1)]);
 
     expect(group?.displayName).toBe("Tomatoes");
     expect(group?.sources).toHaveLength(2);
+  });
+
+  it("names a group without nested brackets either", () => {
+    const [group] = groupsOf([grocery("Tomatoes (canned (400 g))", 1)]);
+
+    expect(group?.displayName).toBe("Tomatoes");
   });
 });

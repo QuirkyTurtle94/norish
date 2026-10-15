@@ -12,6 +12,23 @@ import {
   flattenForLibrary,
 } from "@norish/shared/lib/unit-localization";
 
+/**
+ * The text with every bracketed span replaced by a space, brackets inside
+ * brackets included. `innermost` matches a span holding no bracket of its own
+ * kind, so each pass peels one level off; a bracket that never closes stays.
+ */
+// ponytail: one pass per nesting level, fine for names; a depth scanner if long nested text ever comes through
+export function stripBracketed(text: string, innermost: RegExp): string {
+  let previous: string;
+
+  do {
+    previous = text;
+    text = text.replace(innermost, " ");
+  } while (text !== previous);
+
+  return text;
+}
+
 export function stripHtmlTags(input: string): string {
   // 1. Remove HTML tags first (replace with space to preserve word boundaries)
   const withoutTags = input.replace(/<[^<>]*>/g, " ");
