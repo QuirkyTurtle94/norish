@@ -229,4 +229,114 @@ describe("useUnsavedNavigationGuard", () => {
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(onConfirmLeave).not.toHaveBeenCalled();
   });
+
+  describe("leaving through a link in the app", () => {
+    function clickLink(attributes: Record<string, string> = {}, init: MouseEventInit = {}) {
+      const link = document.createElement("a");
+
+      link.href = "/groceries";
+      for (const [name, value] of Object.entries(attributes)) link.setAttribute(name, value);
+      link.append(document.createElement("span"));
+      document.body.append(link);
+
+      const event = new MouseEvent("click", { bubbles: true, cancelable: true, ...init });
+
+      link.firstElementChild!.dispatchEvent(event);
+
+      return event;
+    }
+
+    function guard(hasUnsavedChanges = true) {
+      return renderHook(() =>
+        useUnsavedNavigationGuard({
+          hasUnsavedChanges,
+          confirmationMessage: "Discard changes?",
+          onConfirmLeave: vi.fn(),
+        })
+      );
+    }
+
+    it("asks, and stays when the answer is no", () => {
+      confirmSpy.mockReturnValue(false);
+      guard();
+
+      expect(clickLink().defaultPrevented).toBe(true);
+      expect(confirmSpy).toHaveBeenCalledWith("Discard changes?");
+    });
+
+    it("lets the link through when the answer is yes, without asking again on unload", () => {
+      guard();
+
+      expect(clickLink().defaultPrevented).toBe(false);
+      expect(dispatchBeforeUnload().event.defaultPrevented).toBe(false);
+    });
+
+    it("leaves a link that opens elsewhere alone", () => {
+      guard();
+
+      clickLink({ target: "_blank" });
+      clickLink({ download: "" });
+      clickLink({}, { metaKey: true });
+      clickLink({}, { ctrlKey: true });
+
+      expect(confirmSpy).not.toHaveBeenCalled();
+    });
+
+    it("does not ask without unsaved changes", () => {
+      guard(false);
+
+      expect(clickLink().defaultPrevented).toBe(false);
+      expect(confirmSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("going back or forward in the browser", () => {
+    const navigation = new EventTarget();
+
+    function traverse(navigationType = "traverse", cancelable = true) {
+      const event = Object.assign(new Event("navigate", { cancelable }), { navigationType });
+
+      navigation.dispatchEvent(event);
+
+      return event;
+    }
+
+    beforeEach(() => {
+      vi.stubGlobal("navigation", navigation);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("asks, and stays when the answer is no", () => {
+      confirmSpy.mockReturnValue(false);
+      renderHook(() =>
+        useUnsavedNavigationGuard({
+          hasUnsavedChanges: true,
+          confirmationMessage: "Discard changes?",
+          onConfirmLeave: vi.fn(),
+        })
+      );
+
+      expect(traverse().defaultPrevented).toBe(true);
+      expect(confirmSpy).toHaveBeenCalledWith("Discard changes?");
+    });
+
+    it("goes when the answer is yes, and leaves other navigations alone", () => {
+      renderHook(() =>
+        useUnsavedNavigationGuard({
+          hasUnsavedChanges: true,
+          confirmationMessage: "Discard changes?",
+          onConfirmLeave: vi.fn(),
+        })
+      );
+
+      expect(traverse("push").defaultPrevented).toBe(false);
+      expect(traverse("traverse", false).defaultPrevented).toBe(false);
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(traverse().defaultPrevented).toBe(false);
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 });
