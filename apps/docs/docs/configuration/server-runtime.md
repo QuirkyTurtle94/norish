@@ -55,6 +55,10 @@ Cloudflare that is its [published ranges](https://www.cloudflare.com/ips/). With
 cannot tell visitors apart and everyone shares one rate limit for signing in and session checks.
 Behind a single proxy it is not needed.
 
+Norish tells visitors apart by the `X-Forwarded-For` header your proxy adds, so only the proxy
+should be able to reach Norish's port. A visitor who connects to the port directly can set that
+header themselves and get a sign-in rate limit of their own.
+
 ## Auth rate limiting
 
 | Variable                  | Description                        | Default |
