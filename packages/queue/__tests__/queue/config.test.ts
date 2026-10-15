@@ -3,19 +3,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  allergyDetectionJobOptions,
-  autoCategorizationJobOptions,
-  autoTaggingJobOptions,
   buildRemovalOptions,
-  caldavSyncJobOptions,
-  HANGING_THRESHOLD_MS,
-  imageImportJobOptions,
-  nutritionEstimationJobOptions,
-  pasteImportJobOptions,
-  QUEUE_NAMES,
+  QUEUE_SETTINGS,
   RECIPE_IMPORT_PROCESSING_TIMEOUT_MS,
-  recipeImportJobOptions,
-  scheduledTasksJobOptions,
 } from "@norish/queue/config";
 
 describe("Queue config", () => {
@@ -30,28 +20,23 @@ describe("Queue config", () => {
     expect(removal.removeOnFail).toEqual({ count: 25, age: 2 * 86_400 });
   });
 
-  it("never deletes completed/failed jobs immediately (removeOn*: true)", () => {
-    const allOptions = [
-      recipeImportJobOptions,
-      imageImportJobOptions,
-      pasteImportJobOptions,
-      caldavSyncJobOptions,
-      scheduledTasksJobOptions,
-      nutritionEstimationJobOptions,
-      autoTaggingJobOptions,
-      autoCategorizationJobOptions,
-      allergyDetectionJobOptions,
-    ];
+  it("keeps completed jobs no longer than a queue allows, failed ones as the retention says", () => {
+    const removal = buildRemovalOptions({ keepCompleted: 50, keepFailed: 25, maxAgeDays: 2 }, 3600);
 
-    for (const options of allOptions) {
-      expect(options.removeOnComplete).not.toBe(true);
-      expect(options.removeOnFail).not.toBe(true);
+    expect(removal.removeOnComplete).toEqual({ count: 50, age: 3600 });
+    expect(removal.removeOnFail).toEqual({ count: 25, age: 2 * 86_400 });
+  });
+
+  it("never deletes completed/failed jobs immediately (removeOn*: true)", () => {
+    for (const { jobOptions } of Object.values(QUEUE_SETTINGS)) {
+      expect(jobOptions.removeOnComplete).not.toBe(true);
+      expect(jobOptions.removeOnFail).not.toBe(true);
     }
   });
 
   it("defines a hanging threshold for every queue", () => {
-    for (const name of Object.values(QUEUE_NAMES)) {
-      expect(HANGING_THRESHOLD_MS[name]).toBeGreaterThan(0);
+    for (const { hangingThresholdMs } of Object.values(QUEUE_SETTINGS)) {
+      expect(hangingThresholdMs).toBeGreaterThan(0);
     }
   });
 });

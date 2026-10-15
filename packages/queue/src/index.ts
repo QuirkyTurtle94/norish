@@ -6,15 +6,7 @@
  */
 
 // Config
-export {
-  recipeImportJobOptions,
-  caldavSyncJobOptions,
-  scheduledTasksJobOptions,
-  QUEUE_NAMES,
-  baseWorkerOptions,
-  WORKER_CONCURRENCY,
-  STALLED_INTERVAL,
-} from "./config";
+export { QUEUE_NAMES, baseWorkerOptions } from "./config";
 
 export { createOperationAwareQueue } from "./operation-aware-queue";
 

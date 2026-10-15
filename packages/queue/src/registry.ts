@@ -8,7 +8,7 @@
  * Consumers should import queues from here, not create their own.
  */
 
-import type { DefaultJobOptions, Queue, QueueOptions } from "bullmq";
+import type { Queue, QueueOptions } from "bullmq";
 import { Queue as BullQueue } from "bullmq";
 
 import type { JobRetentionConfig } from "@norish/config/zod/server-config";
@@ -27,28 +27,9 @@ import { DEFAULT_JOB_RETENTION, ServerConfigKeys } from "@norish/config/zod/serv
 import { getConfig } from "@norish/db/repositories/server-config";
 import { createLogger } from "@norish/shared-server/logger";
 
-import type { QueueName, QueueRemovalOptions } from "./config";
+import type { QueueName } from "./config";
 import type { ScheduledTaskJobData } from "./scheduled-tasks/queue";
-import {
-  allergyDetectionJobOptions,
-  autoCategorizationJobOptions,
-  autoTaggingJobOptions,
-  buildRemovalOptions,
-  caldavSyncJobOptions,
-  imageGenerationJobOptions,
-  imageImportJobOptions,
-  ingredientIconsJobOptions,
-  ingredientLinkingJobOptions,
-  ingredientReviewJobOptions,
-  newIngredientsJobOptions,
-  nutritionEstimationJobOptions,
-  pasteImportJobOptions,
-  QUEUE_NAMES,
-  recipeImportJobOptions,
-  recipeProvenanceJobOptions,
-  scheduledTasksJobOptions,
-  storeLookupJobOptions,
-} from "./config";
+import { buildRemovalOptions, QUEUE_NAMES, QUEUE_SETTINGS } from "./config";
 import { createOperationAwareQueue, logQueueErrors } from "./operation-aware-queue";
 import { getBullClient } from "./redis/bullmq";
 
@@ -90,6 +71,30 @@ interface QueueRegistry {
 }
 
 /**
+ * The BullMQ name behind each queue's key. A queue is added here, in the
+ * registry above, and in `QUEUE_SETTINGS`; the registry builds, finds and
+ * closes it from there.
+ */
+const QUEUE_KEYS: Record<keyof QueueRegistry, QueueName> = {
+  recipeImport: QUEUE_NAMES.RECIPE_IMPORT,
+  imageImport: QUEUE_NAMES.IMAGE_IMPORT,
+  pasteImport: QUEUE_NAMES.PASTE_IMPORT,
+  nutritionEstimation: QUEUE_NAMES.NUTRITION_ESTIMATION,
+  autoTagging: QUEUE_NAMES.AUTO_TAGGING,
+  autoCategorization: QUEUE_NAMES.AUTO_CATEGORIZATION,
+  allergyDetection: QUEUE_NAMES.ALLERGY_DETECTION,
+  recipeProvenance: QUEUE_NAMES.RECIPE_PROVENANCE,
+  ingredientLinking: QUEUE_NAMES.INGREDIENT_LINKING,
+  imageGeneration: QUEUE_NAMES.IMAGE_GENERATION,
+  caldavSync: QUEUE_NAMES.CALDAV_SYNC,
+  scheduledTasks: QUEUE_NAMES.SCHEDULED_TASKS,
+  storeLookup: QUEUE_NAMES.STORE_LOOKUP,
+  ingredientReview: QUEUE_NAMES.INGREDIENT_REVIEW,
+  ingredientIcons: QUEUE_NAMES.INGREDIENT_ICONS,
+  newIngredients: QUEUE_NAMES.NEW_INGREDIENTS,
+};
+
+/**
  * How many entries a queue's events stream keeps. Every progress write copies
  * the job's whole step timeline into it, BullMQ keeps 10,000 by default, and
  * nothing reads its history: the job monitor reads job state.
@@ -97,49 +102,22 @@ interface QueueRegistry {
 export const EVENTS_MAX_LEN = 1_000;
 
 /**
- * What every queue is built with: the shared connection, the queue's job
+ * A queue as every queue is built: the shared connection, the queue's job
  * defaults under the administrator's retention, and the capped events stream.
  * A Queue built with other options would rewrite the cap in the queue's
  * metadata, which is why no module builds one but this.
  */
-function queueOptions(jobOptions: DefaultJobOptions, removal: QueueRemovalOptions): QueueOptions {
-  return {
+function buildQueue(name: QueueName, retention: JobRetentionConfig): Queue {
+  const { jobOptions, maxCompletedAgeSeconds, withoutOperationContext } = QUEUE_SETTINGS[name];
+  const options: QueueOptions = {
     connection: getBullClient(),
-    defaultJobOptions: { ...jobOptions, ...removal },
+    defaultJobOptions: { ...jobOptions, ...buildRemovalOptions(retention, maxCompletedAgeSeconds) },
     streams: { events: { maxLen: EVENTS_MAX_LEN } },
   };
-}
 
-/** A queue whose jobs carry the operation context they were enqueued under. */
-function operationAwareQueue<T extends object>(
-  name: QueueName,
-  jobOptions: DefaultJobOptions,
-  removal: QueueRemovalOptions
-): Queue<T> {
-  return createOperationAwareQueue<T>(name, queueOptions(jobOptions, removal));
-}
-
-function plainQueue<T>(
-  name: QueueName,
-  jobOptions: DefaultJobOptions,
-  removal: QueueRemovalOptions
-): Queue<T> {
-  return logQueueErrors(new BullQueue<T>(name, queueOptions(jobOptions, removal)));
-}
-
-/**
- * Completed image imports carry their images as base64, so they are kept an
- * hour at most, whatever the retention says, to bound Redis memory.
- */
-function capImageImportAge(removal: QueueRemovalOptions): QueueRemovalOptions {
-  const { removeOnComplete } = removal;
-
-  if (typeof removeOnComplete !== "object" || !("age" in removeOnComplete)) return removal;
-
-  return {
-    ...removal,
-    removeOnComplete: { ...removeOnComplete, age: Math.min(3600, removeOnComplete.age) },
-  };
+  return withoutOperationContext
+    ? logQueueErrors(new BullQueue(name, options))
+    : createOperationAwareQueue(name, options);
 }
 
 async function loadJobRetention(): Promise<JobRetentionConfig> {
@@ -182,66 +160,9 @@ export async function initializeQueues(): Promise<QueueRegistry> {
     log.info("Initializing queue registry...");
 
     const retention = await loadJobRetention();
-    const removal = buildRemovalOptions(retention);
-
-    const created: QueueRegistry = {
-      recipeImport: operationAwareQueue(QUEUE_NAMES.RECIPE_IMPORT, recipeImportJobOptions, removal),
-      imageImport: operationAwareQueue(
-        QUEUE_NAMES.IMAGE_IMPORT,
-        imageImportJobOptions,
-        capImageImportAge(removal)
-      ),
-      pasteImport: operationAwareQueue(QUEUE_NAMES.PASTE_IMPORT, pasteImportJobOptions, removal),
-      nutritionEstimation: operationAwareQueue(
-        QUEUE_NAMES.NUTRITION_ESTIMATION,
-        nutritionEstimationJobOptions,
-        removal
-      ),
-      autoTagging: operationAwareQueue(QUEUE_NAMES.AUTO_TAGGING, autoTaggingJobOptions, removal),
-      autoCategorization: operationAwareQueue(
-        QUEUE_NAMES.AUTO_CATEGORIZATION,
-        autoCategorizationJobOptions,
-        removal
-      ),
-      allergyDetection: operationAwareQueue(
-        QUEUE_NAMES.ALLERGY_DETECTION,
-        allergyDetectionJobOptions,
-        removal
-      ),
-      recipeProvenance: operationAwareQueue(
-        QUEUE_NAMES.RECIPE_PROVENANCE,
-        recipeProvenanceJobOptions,
-        removal
-      ),
-      ingredientLinking: operationAwareQueue(
-        QUEUE_NAMES.INGREDIENT_LINKING,
-        ingredientLinkingJobOptions,
-        removal
-      ),
-      imageGeneration: operationAwareQueue(
-        QUEUE_NAMES.IMAGE_GENERATION,
-        imageGenerationJobOptions,
-        removal
-      ),
-      caldavSync: operationAwareQueue(QUEUE_NAMES.CALDAV_SYNC, caldavSyncJobOptions, removal),
-      scheduledTasks: plainQueue(QUEUE_NAMES.SCHEDULED_TASKS, scheduledTasksJobOptions, removal),
-      storeLookup: plainQueue(QUEUE_NAMES.STORE_LOOKUP, storeLookupJobOptions, removal),
-      ingredientReview: operationAwareQueue(
-        QUEUE_NAMES.INGREDIENT_REVIEW,
-        ingredientReviewJobOptions,
-        removal
-      ),
-      ingredientIcons: operationAwareQueue(
-        QUEUE_NAMES.INGREDIENT_ICONS,
-        ingredientIconsJobOptions,
-        removal
-      ),
-      newIngredients: operationAwareQueue(
-        QUEUE_NAMES.NEW_INGREDIENTS,
-        newIngredientsJobOptions,
-        removal
-      ),
-    };
+    const created: QueueRegistry = Object.fromEntries(
+      Object.entries(QUEUE_KEYS).map(([key, name]) => [key, buildQueue(name, retention)])
+    ) as Record<keyof QueueRegistry, Queue>;
 
     // A stream grown under the old cap is cut to the new one once, here.
     await Promise.all(
@@ -286,26 +207,11 @@ export function getQueues(): QueueRegistry {
  * Get a single queue by its BullMQ queue name. Throws if not initialized.
  */
 export function getQueueByName(name: QueueName): Queue {
-  const byName: Record<QueueName, Queue> = {
-    [QUEUE_NAMES.RECIPE_IMPORT]: getQueues().recipeImport,
-    [QUEUE_NAMES.IMAGE_IMPORT]: getQueues().imageImport,
-    [QUEUE_NAMES.PASTE_IMPORT]: getQueues().pasteImport,
-    [QUEUE_NAMES.NUTRITION_ESTIMATION]: getQueues().nutritionEstimation,
-    [QUEUE_NAMES.AUTO_TAGGING]: getQueues().autoTagging,
-    [QUEUE_NAMES.AUTO_CATEGORIZATION]: getQueues().autoCategorization,
-    [QUEUE_NAMES.ALLERGY_DETECTION]: getQueues().allergyDetection,
-    [QUEUE_NAMES.RECIPE_PROVENANCE]: getQueues().recipeProvenance,
-    [QUEUE_NAMES.INGREDIENT_LINKING]: getQueues().ingredientLinking,
-    [QUEUE_NAMES.IMAGE_GENERATION]: getQueues().imageGeneration,
-    [QUEUE_NAMES.CALDAV_SYNC]: getQueues().caldavSync,
-    [QUEUE_NAMES.SCHEDULED_TASKS]: getQueues().scheduledTasks,
-    [QUEUE_NAMES.STORE_LOOKUP]: getQueues().storeLookup,
-    [QUEUE_NAMES.INGREDIENT_REVIEW]: getQueues().ingredientReview,
-    [QUEUE_NAMES.INGREDIENT_ICONS]: getQueues().ingredientIcons,
-    [QUEUE_NAMES.NEW_INGREDIENTS]: getQueues().newIngredients,
-  };
+  const queue = Object.values(getQueues()).find((candidate: Queue) => candidate.name === name);
 
-  return byName[name];
+  if (!queue) throw new Error(`No queue is named ${name}`);
+
+  return queue;
 }
 
 /**
@@ -332,24 +238,7 @@ export async function closeAllQueues(): Promise<void> {
 
   log.info("Closing all queues...");
 
-  await Promise.all([
-    registry.recipeImport.close(),
-    registry.imageImport.close(),
-    registry.pasteImport.close(),
-    registry.nutritionEstimation.close(),
-    registry.autoTagging.close(),
-    registry.autoCategorization.close(),
-    registry.allergyDetection.close(),
-    registry.recipeProvenance.close(),
-    registry.ingredientLinking.close(),
-    registry.imageGeneration.close(),
-    registry.caldavSync.close(),
-    registry.scheduledTasks.close(),
-    registry.storeLookup.close(),
-    registry.ingredientReview.close(),
-    registry.ingredientIcons.close(),
-    registry.newIngredients.close(),
-  ]);
+  await Promise.all(Object.values(registry).map((queue: Queue) => queue.close()));
 
   globalForRegistry.queueRegistry = null;
 

@@ -33,238 +33,193 @@ export const baseWorkerOptions: Partial<WorkerOptions> = {
   lockRenewTime: 15_000, // Renew lock every 15 seconds
 };
 
-/**
- * Stalled interval per queue (ms).
- * User-facing imports need quick recovery; background tasks can be slower.
- */
-export const STALLED_INTERVAL = {
-  [QUEUE_NAMES.RECIPE_IMPORT]: 5_000, // 5s - user waiting
-  [QUEUE_NAMES.IMAGE_IMPORT]: 5_000, // 5s - user waiting
-  [QUEUE_NAMES.PASTE_IMPORT]: 5_000, // 5s - user waiting
-  [QUEUE_NAMES.CALDAV_SYNC]: 120_000, // 2 min - background sync
-  [QUEUE_NAMES.SCHEDULED_TASKS]: 3_600_000, // 1 hour - daily cron jobs only
-  [QUEUE_NAMES.NUTRITION_ESTIMATION]: 60_000, // 1 min - background enhancement
-  [QUEUE_NAMES.AUTO_TAGGING]: 60_000, // 1 min - background enhancement
-  [QUEUE_NAMES.AUTO_CATEGORIZATION]: 60_000, // 1 min - background enhancement
-  [QUEUE_NAMES.ALLERGY_DETECTION]: 60_000, // 1 min - background enhancement
-  [QUEUE_NAMES.RECIPE_PROVENANCE]: 60_000, // 1 min - background enhancement
-  [QUEUE_NAMES.INGREDIENT_LINKING]: 60_000, // 1 min - background enhancement
-  [QUEUE_NAMES.IMAGE_GENERATION]: 60_000, // 1 min - background enhancement
-  [QUEUE_NAMES.STORE_LOOKUP]: 60_000, // 1 min - always-on, one visit at a time
-  [QUEUE_NAMES.INGREDIENT_REVIEW]: 60_000, // 1 min - a person asked, but is not waiting
-  [QUEUE_NAMES.INGREDIENT_ICONS]: 60_000, // 1 min - a person asked, but is not waiting
-  [QUEUE_NAMES.NEW_INGREDIENTS]: 60_000, // 1 min - background upkeep
-} as const;
-
-/**
- * Worker concurrency settings per queue.
- */
-export const WORKER_CONCURRENCY = {
-  [QUEUE_NAMES.RECIPE_IMPORT]: 2,
-  [QUEUE_NAMES.IMAGE_IMPORT]: 2,
-  [QUEUE_NAMES.PASTE_IMPORT]: 2,
-  [QUEUE_NAMES.CALDAV_SYNC]: 1,
-  [QUEUE_NAMES.SCHEDULED_TASKS]: 1,
-  [QUEUE_NAMES.NUTRITION_ESTIMATION]: 2,
-  [QUEUE_NAMES.AUTO_TAGGING]: 2,
-  [QUEUE_NAMES.AUTO_CATEGORIZATION]: 2,
-  [QUEUE_NAMES.ALLERGY_DETECTION]: 2,
-  [QUEUE_NAMES.RECIPE_PROVENANCE]: 2,
-  [QUEUE_NAMES.INGREDIENT_LINKING]: 2,
-  // Image APIs are billed per call and rate-limited hard, so a library sweep
-  // must trickle rather than burst: 1, not the 2 the other enrichment
-  // queues run at.
-  [QUEUE_NAMES.IMAGE_GENERATION]: 1,
-  // One visit at a time, paced inside the processor: this is the whole
-  // good-citizen fence in front of somebody else's supermarket. Raising it,
-  // or adding a second queue that races this one at the same shop, undoes it.
-  [QUEUE_NAMES.STORE_LOOKUP]: 1,
-  // One round at a time: a round already asks its foods one after another, and
-  // two rounds over the same flagged foods would ask each twice.
-  [QUEUE_NAMES.INGREDIENT_REVIEW]: 1,
-  // One round at a time, drawing one food after another: image calls are
-  // billed per request and rate-limited hard, as for Generated Images.
-  [QUEUE_NAMES.INGREDIENT_ICONS]: 1,
-  // One save's new foods after another: an icon is an image call, billed per
-  // request and rate-limited hard, as for Draw icons.
-  [QUEUE_NAMES.NEW_INGREDIENTS]: 1,
-} as const;
-
 export const RECIPE_IMPORT_PROCESSING_TIMEOUT_MS = 30 * 60 * 1000;
-
-/**
- * Active jobs running longer than this are flagged as "hanging" in the
- * admin job monitor. Imports have a 30-min hard timeout, so 10 min already
- * signals something is off before BullMQ gives up.
- */
-export const HANGING_THRESHOLD_MS: Record<QueueName, number> = {
-  [QUEUE_NAMES.RECIPE_IMPORT]: 10 * 60_000,
-  [QUEUE_NAMES.IMAGE_IMPORT]: 10 * 60_000,
-  [QUEUE_NAMES.PASTE_IMPORT]: 10 * 60_000,
-  [QUEUE_NAMES.CALDAV_SYNC]: 15 * 60_000,
-  [QUEUE_NAMES.SCHEDULED_TASKS]: 60 * 60_000,
-  [QUEUE_NAMES.NUTRITION_ESTIMATION]: 15 * 60_000,
-  [QUEUE_NAMES.AUTO_TAGGING]: 15 * 60_000,
-  [QUEUE_NAMES.AUTO_CATEGORIZATION]: 15 * 60_000,
-  [QUEUE_NAMES.ALLERGY_DETECTION]: 15 * 60_000,
-  [QUEUE_NAMES.RECIPE_PROVENANCE]: 15 * 60_000,
-  [QUEUE_NAMES.INGREDIENT_LINKING]: 15 * 60_000,
-  [QUEUE_NAMES.IMAGE_GENERATION]: 15 * 60_000,
-  [QUEUE_NAMES.STORE_LOOKUP]: 10 * 60_000,
-  // A round may ask every flagged food in the catalogue, each within its 30 s
-  // budget: a thousand of them, a few at a time, run for well over an hour.
-  [QUEUE_NAMES.INGREDIENT_REVIEW]: 4 * 60 * 60_000,
-  // A round may draw thousands of icons, one at a time.
-  [QUEUE_NAMES.INGREDIENT_ICONS]: 24 * 60 * 60_000,
-  // A save's few new foods, each a name and an icon that may wait out a rate limit.
-  [QUEUE_NAMES.NEW_INGREDIENTS]: 15 * 60_000,
-};
 
 export type QueueRemovalOptions = Pick<DefaultJobOptions, "removeOnComplete" | "removeOnFail">;
 
 /**
  * Build removeOnComplete/removeOnFail options from the admin-configured
- * job retention, the only retention any queue has. Applied to all queues at
- * initialization; jobs keep the options they were enqueued with, so changes
- * require a restart and only affect new jobs.
+ * job retention, the only retention any queue has, with completed jobs kept no
+ * longer than the queue allows. Applied to all queues at initialization; jobs
+ * keep the options they were enqueued with, so changes require a restart and
+ * only affect new jobs.
  */
-export function buildRemovalOptions(retention: JobRetentionConfig): QueueRemovalOptions {
+export function buildRemovalOptions(
+  retention: JobRetentionConfig,
+  maxCompletedAgeSeconds = Infinity
+): QueueRemovalOptions {
   const age = retention.maxAgeDays * 86_400;
 
   return {
-    removeOnComplete: { count: retention.keepCompleted, age },
+    removeOnComplete: {
+      count: retention.keepCompleted,
+      age: Math.min(age, maxCompletedAgeSeconds),
+    },
     removeOnFail: { count: retention.keepFailed, age },
   };
 }
 
-export const recipeImportJobOptions: DefaultJobOptions = {
+/** Three tries, two seconds apart and doubling: 2s, 4s. */
+const RETRIED_TWICE: DefaultJobOptions = {
   attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
-  },
+  backoff: { type: "exponential", delay: 2000 },
 };
 
-export const imageImportJobOptions: DefaultJobOptions = {
-  attempts: 2, // Fewer retries for expensive AI operations
-  backoff: {
-    type: "exponential",
-    delay: 5000, // 5s, 10s
-  },
-};
-
-export const pasteImportJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000,
-  },
-};
-
-export const caldavSyncJobOptions: DefaultJobOptions = {
-  attempts: 10,
-  backoff: {
-    type: "exponential",
-    delay: 60000, // 1m, 2m, 4m, 8m... up to 17h
-  },
-};
-
-export const scheduledTasksJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 5000, // 5s, 10s, 20s
-  },
-};
-
-export const nutritionEstimationJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
-  },
-};
-
-export const autoTaggingJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
-  },
-};
-
-export const autoCategorizationJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
-  },
-};
-
-export const allergyDetectionJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
-  },
-};
-
-export const recipeProvenanceJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
-  },
-};
-
-export const ingredientLinkingJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
-  },
-};
+/** What a queue runs with. */
+export interface QueueSettings {
+  /** Its jobs' defaults; the administrator's retention is added when the queue is built. */
+  jobOptions: DefaultJobOptions;
+  /** How many of its jobs a worker runs at once. */
+  concurrency: number;
+  /** How often (ms) its worker looks for a stalled job. */
+  stalledInterval: number;
+  /** How long (ms) a job runs before the job monitor flags it as hanging. */
+  hangingThresholdMs: number;
+  /** The longest (s) a completed job is kept, whatever the retention says. */
+  maxCompletedAgeSeconds?: number;
+  /** Its jobs do not carry the operation context they were enqueued under. */
+  withoutOperationContext?: true;
+}
 
 /**
- * A shop that is down is down; a lookup that failed is retried once and then
- * left alone, because the grocery it was for is unpriced rather than broken.
+ * Every queue's settings. User-facing imports recover stalled jobs quickly;
+ * background work can wait. Imports are flagged as hanging at 10 min, well
+ * before their 30-min hard timeout.
  */
-export const storeLookupJobOptions: DefaultJobOptions = {
-  attempts: 2,
-  backoff: { type: "exponential", delay: 10_000 },
-};
-
-export const imageGenerationJobOptions: DefaultJobOptions = {
-  attempts: 3,
-  backoff: {
-    type: "exponential",
-    delay: 2000, // 2s, 4s, 8s
+export const QUEUE_SETTINGS: Record<QueueName, QueueSettings> = {
+  [QUEUE_NAMES.RECIPE_IMPORT]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 5_000,
+    hangingThresholdMs: 10 * 60_000,
   },
-};
-
-/**
- * A round of Ask AI over flagged Ingredients. A food's own failure is recorded
- * on its step and never fails the round; a second attempt covers a crash of
- * the round itself, and is safe: a food the first attempt settled is no longer
- * flagged and is skipped, so the retry only finishes what the crash left.
- */
-export const ingredientReviewJobOptions: DefaultJobOptions = {
-  attempts: 2,
-  backoff: { type: "exponential", delay: 5_000 },
-};
-
-/** Upkeep of new foods is best-effort: a food it misses is still the Clean names and Draw icons rounds'. */
-export const newIngredientsJobOptions: DefaultJobOptions = {
-  attempts: 1,
-};
-
-/**
- * A Draw icons round. A food's own failure is recorded on its step and never
- * fails the round; a second attempt covers a crash of the round itself, and
- * is safe: a food the first attempt drew has an icon of its own and is
- * skipped, so the retry only finishes what the crash left.
- */
-export const ingredientIconsJobOptions: DefaultJobOptions = {
-  attempts: 2,
-  backoff: { type: "exponential", delay: 5_000 },
+  [QUEUE_NAMES.IMAGE_IMPORT]: {
+    // Fewer retries for expensive AI operations: 5s, 10s.
+    jobOptions: { attempts: 2, backoff: { type: "exponential", delay: 5000 } },
+    concurrency: 2,
+    stalledInterval: 5_000,
+    hangingThresholdMs: 10 * 60_000,
+    // Completed image imports carry their images as base64, so they are kept
+    // an hour at most, to bound Redis memory.
+    maxCompletedAgeSeconds: 3600,
+  },
+  [QUEUE_NAMES.PASTE_IMPORT]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 5_000,
+    hangingThresholdMs: 10 * 60_000,
+  },
+  [QUEUE_NAMES.CALDAV_SYNC]: {
+    // 1m, 2m, 4m, 8m... up to 17h
+    jobOptions: { attempts: 10, backoff: { type: "exponential", delay: 60000 } },
+    concurrency: 1,
+    stalledInterval: 120_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.SCHEDULED_TASKS]: {
+    // 5s, 10s, 20s
+    jobOptions: { attempts: 3, backoff: { type: "exponential", delay: 5000 } },
+    concurrency: 1,
+    // Daily cron jobs only.
+    stalledInterval: 3_600_000,
+    hangingThresholdMs: 60 * 60_000,
+    withoutOperationContext: true,
+  },
+  [QUEUE_NAMES.NUTRITION_ESTIMATION]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.AUTO_TAGGING]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.AUTO_CATEGORIZATION]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.ALLERGY_DETECTION]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.RECIPE_PROVENANCE]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.INGREDIENT_LINKING]: {
+    jobOptions: RETRIED_TWICE,
+    concurrency: 2,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.IMAGE_GENERATION]: {
+    jobOptions: RETRIED_TWICE,
+    // Image APIs are billed per call and rate-limited hard, so a library sweep
+    // must trickle rather than burst: 1, not the 2 the other enrichment
+    // queues run at.
+    concurrency: 1,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 15 * 60_000,
+  },
+  [QUEUE_NAMES.STORE_LOOKUP]: {
+    // A shop that is down is down; a lookup that failed is retried once and
+    // then left alone, because the grocery it was for is unpriced rather than
+    // broken.
+    jobOptions: { attempts: 2, backoff: { type: "exponential", delay: 10_000 } },
+    // One visit at a time, paced inside the processor: this is the whole
+    // good-citizen fence in front of somebody else's supermarket. Raising it,
+    // or adding a second queue that races this one at the same shop, undoes it.
+    concurrency: 1,
+    stalledInterval: 60_000,
+    hangingThresholdMs: 10 * 60_000,
+    withoutOperationContext: true,
+  },
+  [QUEUE_NAMES.INGREDIENT_REVIEW]: {
+    // A round of Ask AI over flagged Ingredients. A food's own failure is
+    // recorded on its step and never fails the round; a second attempt covers
+    // a crash of the round itself, and is safe: a food the first attempt
+    // settled is no longer flagged and is skipped, so the retry only finishes
+    // what the crash left.
+    jobOptions: { attempts: 2, backoff: { type: "exponential", delay: 5_000 } },
+    // One round at a time: a round already asks its foods one after another,
+    // and two rounds over the same flagged foods would ask each twice.
+    concurrency: 1,
+    stalledInterval: 60_000,
+    // A round may ask every flagged food in the catalogue, each within its
+    // 30 s budget: a thousand of them, a few at a time, run for well over an hour.
+    hangingThresholdMs: 4 * 60 * 60_000,
+  },
+  [QUEUE_NAMES.INGREDIENT_ICONS]: {
+    // A Draw icons round. A food's own failure is recorded on its step and
+    // never fails the round; a second attempt covers a crash of the round
+    // itself, and is safe: a food the first attempt drew has an icon of its
+    // own and is skipped, so the retry only finishes what the crash left.
+    jobOptions: { attempts: 2, backoff: { type: "exponential", delay: 5_000 } },
+    // One round at a time, drawing one food after another: image calls are
+    // billed per request and rate-limited hard, as for Generated Images.
+    concurrency: 1,
+    stalledInterval: 60_000,
+    // A round may draw thousands of icons, one at a time.
+    hangingThresholdMs: 24 * 60 * 60_000,
+  },
+  [QUEUE_NAMES.NEW_INGREDIENTS]: {
+    // Upkeep of new foods is best-effort: a food it misses is still the Clean
+    // names and Draw icons rounds'.
+    jobOptions: { attempts: 1 },
+    // One save's new foods after another: an icon is an image call, billed per
+    // request and rate-limited hard, as for Draw icons.
+    concurrency: 1,
+    stalledInterval: 60_000,
+    // A save's few new foods, each a name and an icon that may wait out a rate limit.
+    hangingThresholdMs: 15 * 60_000,
+  },
 };

@@ -16,7 +16,7 @@ import type {
 } from "@norish/shared/contracts";
 import { JobRetentionConfigSchema, ServerConfigKeys } from "@norish/config/zod/server-config";
 import { setConfig } from "@norish/db/repositories/server-config";
-import { HANGING_THRESHOLD_MS, QUEUE_NAMES } from "@norish/queue/config";
+import { QUEUE_NAMES, QUEUE_SETTINGS } from "@norish/queue/config";
 import { cancelRunningJob, isCancelled } from "@norish/queue/create-worker";
 import { getJobStep, JOB_PIPELINES, readStepProgress } from "@norish/queue/job-steps";
 import { getAllQueueEntries, getQueueByName } from "@norish/queue/registry";
@@ -306,7 +306,7 @@ function toRowDTO(queueName: QueueName, job: Job, bullState: AdminJobState): Adm
   const isHanging =
     state === "active" &&
     processedOn !== null &&
-    now - processedOn > HANGING_THRESHOLD_MS[queueName];
+    now - processedOn > QUEUE_SETTINGS[queueName].hangingThresholdMs;
 
   const failedReason = job.failedReason
     ? job.failedReason.slice(0, FAILED_REASON_PREVIEW_LENGTH)
@@ -540,7 +540,9 @@ const summary = adminProcedure.query(async ({ ctx }): Promise<AdminQueueSummaryD
       ]);
 
       const hangingCount = activeJobs.filter(
-        (job) => job?.processedOn != null && now - job.processedOn > HANGING_THRESHOLD_MS[name]
+        (job) =>
+          job?.processedOn != null &&
+          now - job.processedOn > QUEUE_SETTINGS[name].hangingThresholdMs
       ).length;
 
       return {

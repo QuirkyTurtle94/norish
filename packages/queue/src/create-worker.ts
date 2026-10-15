@@ -26,7 +26,7 @@ import { UnrecoverableError, WaitingError, Worker } from "bullmq";
 import { createLogger } from "@norish/shared-server/logger";
 
 import type { QueueName } from "./queue-names";
-import { baseWorkerOptions, STALLED_INTERVAL, WORKER_CONCURRENCY } from "./config";
+import { baseWorkerOptions, QUEUE_SETTINGS } from "./config";
 import { stopAtNextStepOnceCancelled } from "./job-steps";
 import { createModelLedgerProcessor } from "./model-ledger-processor";
 import { createContextAwareProcessor } from "./queue-operation-context";
@@ -121,8 +121,8 @@ export function createWorker<T>(
     {
       connection: getBullClient(),
       ...baseWorkerOptions,
-      stalledInterval: STALLED_INTERVAL[queueName],
-      concurrency: WORKER_CONCURRENCY[queueName],
+      stalledInterval: QUEUE_SETTINGS[queueName].stalledInterval,
+      concurrency: QUEUE_SETTINGS[queueName].concurrency,
     }
   );
 
