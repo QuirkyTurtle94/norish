@@ -13,7 +13,7 @@ import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 import type { CaldavSyncJobData } from "@norish/queue/contracts/job-types";
 
 import { REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
-import { addCaldavSyncJob } from "../../src/caldav-sync/producer";
+import { addCaldavSyncJob, isCaldavSyncPending } from "../../src/caldav-sync/producer";
 import { closeWorkers, createWorker } from "../../src/create-worker";
 import { QUEUE_NAMES } from "../../src/queue-names";
 import { closeBullConnection, getBullClient } from "../../src/redis/bullmq";
@@ -148,4 +148,22 @@ it("syncs the newer state of a job already waiting behind another item's sync", 
 
   await settled();
   expect(synced).toEqual(["soup:soup", "lasagne:moved twice"]);
+}, 30_000);
+
+it("counts an item's sync as pending while delayed or running, and not once it has run", async () => {
+  const pending = () => isCaldavSyncPending(queue, "https://radicale.example/dav/", "lasagne");
+
+  await addCaldavSyncJob(queue, sync("lasagne", "created"));
+  expect(await pending()).toBe(true);
+
+  startWorker();
+  const running = holdNextSyncOf("lasagne");
+
+  await queue.promoteJobs();
+  await running;
+  expect(await pending()).toBe(true);
+
+  release();
+  await settled();
+  expect(await pending()).toBe(false);
 }, 30_000);

@@ -33,6 +33,21 @@ function caldavDeduplicationId(caldavServerUrl: string, itemId: string): string 
 }
 
 /**
+ * Whether a sync of this item is delayed, waiting or running. BullMQ drops the
+ * deduplication id when the job finishes, after the worker has written the
+ * item's sync row.
+ */
+export async function isCaldavSyncPending(
+  queue: Queue<CaldavSyncJobData>,
+  caldavServerUrl: string,
+  itemId: string
+): Promise<boolean> {
+  return (
+    (await queue.getDeduplicationJobId(caldavDeduplicationId(caldavServerUrl, itemId))) !== null
+  );
+}
+
+/**
  * Add a CalDAV sync job to the queue. A sync still waiting out its delay is
  * replaced by the newer state; one running gets exactly one follow-up, with
  * the last state added while it ran.
