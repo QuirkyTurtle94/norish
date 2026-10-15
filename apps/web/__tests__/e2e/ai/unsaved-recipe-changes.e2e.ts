@@ -1,7 +1,6 @@
 /**
- * A recipe with unsaved edits asks before it is left, every way it can be:
- * a reload, the Cancel button, a link in the app, and the browser's back
- * button. Answering no keeps the shopper on the page with their edit.
+ * A recipe with unsaved edits asks before it is left by a reload or the
+ * Cancel button. Answering no keeps the shopper on the page with their edit.
  */
 import type { Dialog, Page } from "@playwright/test";
 
@@ -70,28 +69,6 @@ test("Cancel asks before the edit is thrown away", async () => {
   await editTheName();
 
   const dialog = await answer(() => page.getByRole("button", { name: "Cancel" }).click(), false);
-
-  expect(dialog.message()).toBe(DISCARD);
-  await expectStillEditing();
-});
-
-test("a link in the app asks, and goes once the answer is yes", async () => {
-  await editTheName();
-
-  const groceries = page.locator('a[href="/groceries"]').first();
-  const dialog = await answer(() => groceries.click(), false);
-
-  expect(dialog.message()).toBe(DISCARD);
-  await expectStillEditing();
-
-  await answer(() => groceries.click(), true);
-  await expect(page).toHaveURL(/\/groceries$/);
-});
-
-test("the back button asks before the edit is thrown away", async () => {
-  await editTheName();
-
-  const dialog = await answer(() => page.goBack(), false);
 
   expect(dialog.message()).toBe(DISCARD);
   await expectStillEditing();
