@@ -17,7 +17,7 @@ Use this file for lightweight repo context.
 
 ## Repo Shape
 
-- `apps/web` - web app and server bundle entry
+- `apps/web` - web app and its custom server, run from source through tsx
 - `apps/mobile` - Expo app, **parked pending a rewrite** and outside the pnpm workspace: install it on its own with `pnpm --dir apps/mobile install --ignore-workspace`, then `pnpm dev:mobile` starts it. No root gate reaches it, and it is expected to break at compile and runtime against the current release
 - `packages/api` - server domain logic
 - `packages/trpc` - tRPC routers and API surface

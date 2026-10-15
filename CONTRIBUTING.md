@@ -67,7 +67,7 @@ pnpm dev
 | `pnpm test:coverage` | Run tests with coverage report                                                                        |
 | `pnpm lint`          | Check for linting errors                                                                              |
 | `pnpm typecheck`     | Type-check every workspace                                                                            |
-| `pnpm format`        | Check formatting with Prettier                                                                        |
+| `pnpm format`        | Format every workspace with Prettier                                                                  |
 | `pnpm format:check`  | Check formatting without changes                                                                      |
 | `pnpm i18n:check`    | Check for missing locale keys                                                                         |
 | `pnpm db:push`       | Push schema changes to database                                                                       |
