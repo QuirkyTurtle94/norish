@@ -78,8 +78,8 @@ export const NorishArchiveRecipeSchema = FullRecipeInsertSchema.omit({
   // recipe.json is stripped here — the receiving instance extracts its own.
   dishColor: true,
 }).extend({
-  // The hero: the recipe's resolved primary image, not the deprecated column
-  // it shares a name with.
+  // The hero: the recipe's primary gallery image, kept in the archive format
+  // (ADR-0022) though recipes no longer store a single image.
   image: z.string().nullable().optional(),
   cuisines: z.array(z.string()).default([]),
   authorName: z.string().nullable().optional(),
