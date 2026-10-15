@@ -37,9 +37,6 @@ vi.mock("bullmq", async (importOriginal) => {
 vi.mock("@norish/db/repositories/store-products", () => ({ clearPendingLink }));
 vi.mock("@norish/queue/redis/bullmq", () => ({ getBullClient: vi.fn() }));
 vi.mock("@norish/queue/store-lookup/lookup", () => lookup);
-const findIngredientFor = vi.hoisted(() => vi.fn());
-
-vi.mock("@norish/shared-server/ingredients/resolver", () => ({ findIngredientFor }));
 
 const STORE = "11111111-1111-4111-8111-111111111111";
 const match = {
@@ -119,23 +116,6 @@ describe("startStoreLookupWorker", () => {
 
   afterEach(async () => {
     await closeWorkers(0);
-  });
-
-  it("answers a question queued before questions named their Ingredient, by its name", async () => {
-    const { ingredientId: _none, ...queuedBeforeTheUpgrade } = match;
-
-    findIngredientFor.mockResolvedValueOnce({
-      aliasId: "alias-kaas",
-      ingredientId: "ingredient-kaas",
-    });
-    lookup.matchGroceryName.mockResolvedValueOnce({ matched: true });
-
-    await captured.processor!(fakeJob(queuedBeforeTheUpgrade));
-
-    expect(findIngredientFor).toHaveBeenCalledWith("kaas");
-    expect(lookup.matchGroceryName).toHaveBeenCalledWith(
-      expect.objectContaining({ storeId: STORE, ingredientId: "ingredient-kaas", name: "kaas" })
-    );
   });
 
   it("reports what a match was told beside its steps", async () => {

@@ -2,7 +2,6 @@ import type { Job } from "bullmq";
 
 import type { StoreLookupJobData } from "@norish/queue/contracts/job-types";
 import { clearPendingLink } from "@norish/db/repositories/store-products";
-import { findIngredientFor } from "@norish/shared-server/ingredients/resolver";
 import { createLogger } from "@norish/shared-server/logger";
 
 import { QUEUE_NAMES } from "../config";
@@ -12,27 +11,9 @@ import { matchGroceryName, refreshProducts } from "./lookup";
 
 const log = createLogger("worker:store-lookup");
 
-/**
- * The Ingredient a match job asks about. A job queued before questions named
- * their Ingredient carries only the grocery's name, whose Ingredient the
- * upgrade has since resolved (ADR-0037); it is looked up by that name.
- */
-async function ingredientAskedAbout(
-  data: Extract<StoreLookupJobData, { kind: "match" }>
-): Promise<string | null> {
-  if (data.ingredientId) return data.ingredientId;
-
-  return (await findIngredientFor(data.name))?.ingredientId ?? null;
-}
-
 async function processStoreLookup(job: Job<StoreLookupJobData>): Promise<void> {
   if (job.data.kind === "match") {
-    const { storeId, name, householdKey } = job.data;
-    const ingredientId = await ingredientAskedAbout(job.data);
-
-    // A name Norish no longer knows has nothing to be filed under; the next
-    // view of the list asks again.
-    if (!ingredientId) return;
+    const { storeId, ingredientId, name, householdKey } = job.data;
 
     await matchGroceryName({
       storeId,
@@ -68,9 +49,7 @@ export async function forgetFailedLookup(
 ): Promise<void> {
   if (job?.data.kind !== "match") return;
   if (!isFinalFailure(job, error)) return;
-  const ingredientId = await ingredientAskedAbout(job.data);
-
-  if (ingredientId) await clearPendingLink(job.data.storeId, ingredientId);
+  await clearPendingLink(job.data.storeId, job.data.ingredientId);
 }
 
 export function startStoreLookupWorker(): void {
