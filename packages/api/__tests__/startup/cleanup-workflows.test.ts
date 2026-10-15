@@ -67,8 +67,8 @@ describe("cleanup workflows", () => {
     recipeId = recipe.id;
     uploadsDir = await fs.mkdtemp(path.join(os.tmpdir(), "norish-cleanup-"));
 
-    (SERVER_CONFIG as any).UPLOADS_DIR = uploadsDir;
-    (SERVER_CONFIG as any).SCHEDULER_CLEANUP_MONTHS = 3;
+    SERVER_CONFIG.UPLOADS_DIR = uploadsDir;
+    SERVER_CONFIG.SCHEDULER_CLEANUP_MONTHS = 3;
 
     await fs.mkdir(path.join(uploadsDir, "recipes"), { recursive: true });
   });
@@ -76,8 +76,8 @@ describe("cleanup workflows", () => {
   afterEach(async () => {
     vi.useRealTimers();
 
-    (SERVER_CONFIG as any).UPLOADS_DIR = originalUploadsDir;
-    (SERVER_CONFIG as any).SCHEDULER_CLEANUP_MONTHS = originalCleanupMonths;
+    SERVER_CONFIG.UPLOADS_DIR = originalUploadsDir;
+    SERVER_CONFIG.SCHEDULER_CLEANUP_MONTHS = originalCleanupMonths;
 
     if (uploadsDir) {
       await fs.rm(uploadsDir, { recursive: true, force: true });
