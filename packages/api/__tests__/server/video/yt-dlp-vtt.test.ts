@@ -28,6 +28,12 @@ describe("parseVttContent", () => {
     expect(parseVttContent(vtt)).toBe("1 < 2 cups");
   });
 
+  it("leaves no tag behind when one is nested in another", () => {
+    const vtt = ["WEBVTT", "", "00:00:00.000 --> 00:00:02.000", "<<b>b>Stir<</b>/b>"].join("\n");
+
+    expect(parseVttContent(vtt)).toBe("Stir");
+  });
+
   it("decodes each entity once, numeric ones included", () => {
     const vtt = [
       "WEBVTT",

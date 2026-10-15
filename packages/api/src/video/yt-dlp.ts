@@ -785,6 +785,19 @@ export async function parseVttFile(filePath: string): Promise<string> {
   return parseVttContent(content);
 }
 
+/** VTT tags removed until none is left, so a nested one (`<<b>b>`) leaves no tag behind. */
+function stripTags(text: string): string {
+  let stripped = text;
+  let previous: string;
+
+  do {
+    previous = stripped;
+    stripped = stripped.replace(/<[^<>]+>/g, "");
+  } while (stripped !== previous);
+
+  return stripped;
+}
+
 /**
  * Parse VTT content string and extract plain text.
  */
@@ -816,7 +829,7 @@ export function parseVttContent(content: string): string {
     // If we're in a cue, this is caption text
     if (inCue) {
       // Remove VTT formatting tags like <c>, </c>, <b>, etc.
-      const cleanText = decode(trimmed.replace(/<[^<>]+>/g, "")) // Remove HTML-like tags
+      const cleanText = decode(stripTags(trimmed))
         .replace(/\u00a0/g, " ") // Non-breaking spaces
         .trim();
 
