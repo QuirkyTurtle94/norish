@@ -787,9 +787,7 @@ export async function downloadCaptions(
 
     // Find the downloaded VTT file (yt-dlp adds language suffix)
     const files = await fs.readdir(outputDir);
-    const captionFile = files.find(
-      (f) => f.startsWith(outputTemplate) && f.endsWith(".vtt")
-    );
+    const captionFile = files.find((f) => f.startsWith(outputTemplate) && f.endsWith(".vtt"));
 
     if (captionFile) {
       const filePath = path.join(outputDir, captionFile);

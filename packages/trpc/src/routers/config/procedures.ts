@@ -5,7 +5,6 @@ import { buildInternalParserApiUrl, SERVER_CONFIG } from "@norish/config/env-con
 import { getDatabaseHealth } from "@norish/db/drizzle";
 import { listCuisines } from "@norish/db/repositories/cuisines";
 import { listAllTagNames, listTagNamesForUsers } from "@norish/db/repositories/tags";
-import { trpcLogger as log } from "@norish/shared-server/logger";
 import {
   getIngredientWords,
   getLocaleConfig,
@@ -16,11 +15,16 @@ import {
   isRegistrationEnabled,
   isTimersEnabled,
 } from "@norish/shared-server/config/server-config-loader";
+import { trpcLogger as log } from "@norish/shared-server/logger";
 import { getRedisHealth } from "@norish/shared-server/redis/client";
 
 import { authedProcedure } from "../../middleware";
 import { publicProcedure, router } from "../../trpc";
-import { liveResponseSchema, parserHealthSchema, readyResponseSchema } from "./config-openapi-types";
+import {
+  liveResponseSchema,
+  parserHealthSchema,
+  readyResponseSchema,
+} from "./config-openapi-types";
 
 /** Ready only reports the parser, so it waits on it no longer than on Redis's ping. */
 const READY_PARSER_TIMEOUT_MS = 2_000;
