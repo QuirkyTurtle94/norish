@@ -39,22 +39,15 @@ export type QueueRemovalOptions = Pick<DefaultJobOptions, "removeOnComplete" | "
 
 /**
  * Build removeOnComplete/removeOnFail options from the admin-configured
- * job retention, the only retention any queue has, with completed jobs kept no
- * longer than the queue allows. Applied to all queues at initialization; jobs
+ * job retention, the only retention any queue has. Applied to all queues at initialization; jobs
  * keep the options they were enqueued with, so changes require a restart and
  * only affect new jobs.
  */
-export function buildRemovalOptions(
-  retention: JobRetentionConfig,
-  maxCompletedAgeSeconds = Infinity
-): QueueRemovalOptions {
+export function buildRemovalOptions(retention: JobRetentionConfig): QueueRemovalOptions {
   const age = retention.maxAgeDays * 86_400;
 
   return {
-    removeOnComplete: {
-      count: retention.keepCompleted,
-      age: Math.min(age, maxCompletedAgeSeconds),
-    },
+    removeOnComplete: { count: retention.keepCompleted, age },
     removeOnFail: { count: retention.keepFailed, age },
   };
 }
@@ -75,8 +68,6 @@ export interface QueueSettings {
   stalledInterval: number;
   /** How long (ms) a job runs before the job monitor flags it as hanging. */
   hangingThresholdMs: number;
-  /** The longest (s) a completed job is kept, whatever the retention says. */
-  maxCompletedAgeSeconds?: number;
   /** Its jobs do not carry the operation context they were enqueued under. */
   withoutOperationContext?: true;
 }
@@ -99,9 +90,6 @@ export const QUEUE_SETTINGS: Record<QueueName, QueueSettings> = {
     concurrency: 2,
     stalledInterval: 5_000,
     hangingThresholdMs: 10 * 60_000,
-    // Completed image imports carry their images as base64, so they are kept
-    // an hour at most, to bound Redis memory.
-    maxCompletedAgeSeconds: 3600,
   },
   [QUEUE_NAMES.PASTE_IMPORT]: {
     jobOptions: RETRIED_TWICE,

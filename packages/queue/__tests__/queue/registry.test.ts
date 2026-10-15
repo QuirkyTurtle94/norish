@@ -126,11 +126,7 @@ describe("each queue's retention", () => {
     for (const { name, queue } of registry.getAllQueueEntries()) {
       const { defaultJobOptions, streams } = (queue as unknown as { opts: QueueOptions }).opts;
 
-      expect(defaultJobOptions?.removeOnComplete, name).toEqual({
-        count: 42,
-        // Completed image imports hold their images, so they are kept an hour at most.
-        age: name === "image-recipe-import" ? 3600 : age,
-      });
+      expect(defaultJobOptions?.removeOnComplete, name).toEqual({ count: 42, age });
       expect(defaultJobOptions?.removeOnFail, name).toEqual({ count: 17, age });
       expect(streams?.events?.maxLen, name).toBe(1_000);
     }

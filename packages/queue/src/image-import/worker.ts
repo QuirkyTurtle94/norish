@@ -105,6 +105,10 @@ export async function processImageImportJob(job: Job<ImageImportJobData>): Promi
   // Vision parsing is a reader, not an inference step: an image import enters
   // the same enrichment flow as every other creation path.
   await announceUsableRecipe(created, { userId, householdKey, householdUserIds });
+
+  // A finished import is kept as long as the retention says, but not its
+  // images: they are base64 in the job data and would sit in Redis with it.
+  await job.updateData({ ...job.data, files: files.map((file) => ({ ...file, data: "" })) });
 }
 
 /**

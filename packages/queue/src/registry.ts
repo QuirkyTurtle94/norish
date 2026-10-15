@@ -108,10 +108,10 @@ export const EVENTS_MAX_LEN = 1_000;
  * metadata, which is why no module builds one but this.
  */
 function buildQueue(name: QueueName, retention: JobRetentionConfig): Queue {
-  const { jobOptions, maxCompletedAgeSeconds, withoutOperationContext } = QUEUE_SETTINGS[name];
+  const { jobOptions, withoutOperationContext } = QUEUE_SETTINGS[name];
   const options: QueueOptions = {
     connection: getBullClient(),
-    defaultJobOptions: { ...jobOptions, ...buildRemovalOptions(retention, maxCompletedAgeSeconds) },
+    defaultJobOptions: { ...jobOptions, ...buildRemovalOptions(retention) },
     streams: { events: { maxLen: EVENTS_MAX_LEN } },
   };
 
