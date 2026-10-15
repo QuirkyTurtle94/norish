@@ -1,8 +1,0 @@
-{
-  "name": "@norish/monorepo",
-  "private": true,
-  "type": "module",
-  "devDependencies": {
-    "typescript": "catalog:"
-  }
-}
