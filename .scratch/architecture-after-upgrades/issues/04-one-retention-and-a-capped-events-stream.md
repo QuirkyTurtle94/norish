@@ -32,3 +32,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Retention.
     - Before: `bull:ingredient-review:events` 680 entries (30 MB), `bull:scheduled-tasks:events` 411, no other streams, and every queue's meta at `opts.maxLenEvents` 10000.
     - After: both streams are unchanged, since both are under the cap, and every queue's meta reads 1000.
     - The 850 MB stream from the September ingredient round is no longer in this copy.
+- 2026-10-15, from the branch review: one entry per queue. `QUEUE_SETTINGS: Record<QueueName, …>` replaces the three per-queue maps and the 16 job-option constants (`maxCompletedAgeSeconds` replaces `capImageImportAge`), and the registry builds, finds and closes queues from one table.

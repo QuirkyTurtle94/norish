@@ -45,3 +45,6 @@ All three producers use BullMQ's deduplication in one `add`, replacing the check
     - `__tests__/queue/caldav-sync-producer.test.ts`, rewritten against Redis with an always-on worker: a burst gives one sync with the last state, an add during a running sync gives exactly one follow-up with the last state, and a job already waiting syncs the newer state.
     - `scheduled-tasks/producer-redis.test.ts`: two boots ask once, and the next boot after the ask has run asks again.
 - 2026-10-14. E2E: the full browser suite passed against a fresh build on 2026-10-14: 181 of 181, no flaky test, the recipe-import and calendar specs among them.
+- 2026-10-15, from the branch review:
+  - **An edit while the first sync is pending joins it.** The listener skipped a move or rename of an item with no sync row, and the row is written only after the first sync succeeds, so the 2-second delay made the edit easy to lose. It now asks BullMQ's deduplication id whether a sync is pending (`isCaldavSyncPending`) before the row; an item with neither is still skipped.
+  - **Image and paste imports deduplicate through BullMQ** like URL imports. `isJobInQueue` is deleted and `generateJobId` is `recipeImportDeduplicationId`; `removeRetainedTerminalJob` stays for enrichment.

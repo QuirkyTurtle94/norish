@@ -54,3 +54,6 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Cancellatio
     - `model-use-ledger.test.ts`: a nested ledger keeps the signal.
     - The review round test, and the router's `cancel` and `cancelled` mapping tests.
   - The browser E2E passed against a production build on 2026-10-14, in a 20-spec batch with the auth-gate, decision-model, calendar, clipboard-import and realtime specs. The admin docs screenshot (`admin-job-cancelled.png`) was captured from the same harness by `.scratch/architecture-after-upgrades/docs-screenshots.e2e.ts`, and the docs site builds.
+- 2026-10-15, from the branch review (the maintainer's calls):
+  - **Cancelled on every queue.** A queue that never calls the AI ran to the end and ended Completed. `createWorker` now fails an administrator-cancelled job as Cancelled even when its last step finished, and `reportStep` stops it before its next step. Shutdown does neither.
+  - **Retry offered for a cancelled job**, in case the cancel was a mistake; a Redis test runs a retried cancelled job to completion. `isCancelled(job)` replaces the string comparison in the admin router.
