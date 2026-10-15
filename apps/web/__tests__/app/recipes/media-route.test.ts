@@ -9,8 +9,16 @@ const statMock = vi.hoisted(() => vi.fn());
 const readFileMock = vi.hoisted(() => vi.fn());
 const getActiveRecipeShareByTokenMock = vi.hoisted(() => vi.fn());
 const readSessionPrincipal = vi.hoisted(() => vi.fn());
+const getRecipeOwnerId = vi.hoisted(() => vi.fn());
+const canAccessResource = vi.hoisted(() => vi.fn());
 
 vi.mock("@norish/auth/session", () => ({ readSessionPrincipal }));
+vi.mock("@norish/auth/permissions", () => ({ canAccessResource }));
+vi.mock("@norish/db", () => ({ isUserServerAdmin: async () => false }));
+vi.mock("@norish/db/repositories/recipes", () => ({ getRecipeOwnerId }));
+vi.mock("@norish/shared-server/cache/household", () => ({
+  getCachedHouseholdForUser: async () => null,
+}));
 
 vi.mock("node:fs/promises", () => ({
   default: {
@@ -82,12 +90,27 @@ describe("a signed-in reader's recipe media", () => {
   beforeEach(() => {
     statMock.mockResolvedValue({ size: 12 });
     readFileMock.mockResolvedValue(Buffer.from("file-bytes"));
+    getRecipeOwnerId.mockResolvedValue("owner-1");
   });
 
-  it("is served with a session", async () => {
+  it("is served, privately cached, to a reader who may open the recipe", async () => {
     readSessionPrincipal.mockResolvedValueOnce({ userId: "user-1", token: "token" });
+    canAccessResource.mockResolvedValueOnce(true);
 
-    expect((await request()).status).toBe(200);
+    const response = await request();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("private, max-age=31536000, immutable");
+  });
+
+  it("is answered like a missing file to a signed-in reader who may not open the recipe", async () => {
+    readSessionPrincipal.mockResolvedValueOnce({ userId: "user-2", token: "token" });
+    canAccessResource.mockResolvedValueOnce(false);
+
+    const response = await request();
+
+    expect(response.status).toBe(404);
+    expect(readFileMock).not.toHaveBeenCalled();
   });
 
   it("is answered like a missing file without one, uncached, reading nothing", async () => {
