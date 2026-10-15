@@ -43,8 +43,10 @@ COPY --parents package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json \
   tooling/tailwind/heroui-theme.css tooling/tailwind/heroui-theme.js \
   tooling/tailwind/postcss-config.js ./
 
+# ffmpeg-static's install script downloads a binary only development uses;
+# the image runs Alpine's ffmpeg.
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-  SKIP_PARSER_API_INSTALL=1 pnpm install --frozen-lockfile
+  SKIP_PARSER_API_INSTALL=1 pnpm install --frozen-lockfile --allow-build '!ffmpeg-static'
 
 ##############################
 # Build stage
@@ -103,8 +105,7 @@ RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   # Build-time packages that reach the production closure through required
   # peers: TypeScript as tRPC's, and Babel, type declarations and Tailwind with
   # them. The server runs through tsx and esbuild, so those two stay.
-  # ffmpeg-static is superseded by the system ffmpeg (apk add ffmpeg below).
-  rm -rf typescript@* @babel+* @types+* tailwindcss@* @tailwindcss+* ffmpeg-static@* \
+  rm -rf typescript@* @babel+* @types+* tailwindcss@* @tailwindcss+* \
   # SWC compiles only during next build.
   @next+swc-* && \
   # Next's ESM build, its docs and its development runtimes: the production
