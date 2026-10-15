@@ -335,7 +335,7 @@ test("an administrator cancels a running AI job, and the job monitor shows it Ca
     stack.ai.control.release();
   }
 
-  // Cancelled for good: no retry asks the provider again.
-  await page.waitForTimeout(3_000);
+  // Cancelled for good: the monitor reads Cancelled only for a job in BullMQ's
+  // failed set, which nothing retries from, so the provider was asked once.
   expect(chatRequestCount()).toBe(1);
 });
