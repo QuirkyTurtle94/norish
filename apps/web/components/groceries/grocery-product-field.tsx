@@ -422,6 +422,22 @@ export function GroceryProductField({
     [showAs]
   );
 
+  /** A row the shopper tapped is theirs, the one the field took for them included. */
+  const takeTapped = useCallback(
+    (row: ProductRow) => {
+      setAutoPicked(null);
+      take(row);
+      onChoice(row.choice);
+    },
+    [onChoice, take]
+  );
+
+  // A tap on the row already picked changes no value, so the ComboBox's
+  // onChange stays silent; that row answers its own tap.
+  const tapRow = (row: ProductRow) => {
+    if (row.key === picked) takeTapped(row);
+  };
+
   // The one row a human would not hesitate over, by the rule the lookup queue
   // applies at the shop. A shopper who typed the product's own name has made
   // the choice already, and offering it back as a row to tap is asking them to
@@ -685,14 +701,10 @@ export function GroceryProductField({
           setTyped(true);
           setTerm(value);
         }}
-        // eslint-disable-next-line sonarjs/deprecation -- onChange misses a tap on the row already picked, which makes an auto-picked row the shopper's own
-        onSelectionChange={(key) => {
+        onChange={(key) => {
           const row = rows.find((candidate) => candidate.key === String(key));
 
-          if (!row) return;
-          setAutoPicked(null);
-          take(row);
-          onChoice(row.choice);
+          if (row) takeTapped(row);
         }}
       >
         <div className="flex items-baseline justify-between gap-3">
@@ -737,6 +749,7 @@ export function GroceryProductField({
                       data-testid="product-option"
                       id={row.key}
                       textValue={row.name}
+                      onPress={() => tapRow(row)}
                     >
                       <RowContent
                         locale={locale}
@@ -758,6 +771,7 @@ export function GroceryProductField({
                       data-testid="product-option"
                       id={row.key}
                       textValue={row.name}
+                      onPress={() => tapRow(row)}
                     >
                       <RowContent
                         locale={locale}

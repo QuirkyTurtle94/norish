@@ -371,6 +371,61 @@ describe("GroceryProductField", () => {
     }
   });
 
+  it("makes the product it took for the grocery's name the shopper's own when they tap it", () => {
+    vi.useFakeTimers();
+    try {
+      const onChoice = vi.fn();
+      const { rerender } = render(
+        <GroceryProductField
+          choice={null}
+          groceryName="Cola B 1 L"
+          linkedProduct={null}
+          store={STORE_B}
+          onChoice={onChoice}
+        />
+      );
+
+      act(() => {
+        field().focus();
+      });
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      expect(field()).toHaveValue("Cola B 1 L");
+
+      // Taking the row closed the list; the shopper opens it again.
+      act(() => {
+        fireEvent.keyDown(field(), { key: "ArrowDown" });
+      });
+
+      const taken = screen
+        .getAllByTestId("product-option")
+        .find((node) => node.textContent?.includes("Cola B 1 L"));
+
+      act(() => {
+        fireEvent.click(taken as HTMLElement);
+      });
+
+      // A tap on the row the field took is the shopper's answer, so a renamed
+      // grocery no longer lets it go.
+      rerender(
+        <GroceryProductField
+          choice={null}
+          groceryName="Cola B 1 L extra"
+          linkedProduct={null}
+          store={STORE_B}
+          onChoice={onChoice}
+        />
+      );
+
+      expect(onChoice).toHaveBeenLastCalledWith(expect.objectContaining({ kind: "candidate" }));
+      expect(field()).toHaveValue("Cola B 1 L");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps a product the shopper tapped when the grocery's name moves on", async () => {
     const onChoice = vi.fn();
     const { rerender } = render(
