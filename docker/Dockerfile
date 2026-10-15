@@ -70,7 +70,9 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=cache,target=/root/.local/share/uv/python \
-  UV_PYTHON_DOWNLOADS=0 uv sync --project /app/apps/parser-api --locked
+  UV_PYTHON_DOWNLOADS=0 uv sync --project /app/apps/parser-api --locked && \
+  # The test suites the parser's packages ship load at no point.
+  find /app/apps/parser-api/.venv/lib -type d -path '*/site-packages/*/tests' -prune -exec rm -rf {} +
 
 # What the parser never loads from the Python it runs on: the shared library
 # (the interpreter is linked statically, so nothing links it), Tk and its
@@ -113,11 +115,11 @@ RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   rm -rf next@*/node_modules/next/dist/esm next@*/node_modules/next/dist/docs && \
   find next@*/node_modules/next -name '*.runtime.dev.js' -delete && \
   # Source maps, type declarations and documentation load at no point, nor do
-  # the test suites packages ship at their root.
+  # the test suites and test helpers packages ship (`ai/test` among them).
   find /app/deploy/node_modules -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' \
   -o -name '*.d.cts' -o -name '*.md' \) -delete && \
-  rm -rf */node_modules/*/test */node_modules/*/tests */node_modules/*/__tests__ \
-  */node_modules/@*/*/test */node_modules/@*/*/tests */node_modules/@*/*/__tests__
+  find /app/deploy/node_modules/.pnpm -type d \( -name test -o -name tests -o -name __tests__ \) \
+  -prune -exec rm -rf {} +
 
 # Then every store folder nothing reaches any more. The walk starts at the
 # deploy's top-level links and follows each package's dependencies, optional
