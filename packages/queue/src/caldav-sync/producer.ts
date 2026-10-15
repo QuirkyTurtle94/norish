@@ -33,6 +33,21 @@ function caldavDeduplicationId(caldavServerUrl: string, itemId: string): string 
 }
 
 /**
+ * A sync of one item: delayed, so a newer one replaces it while it waits out
+ * the delay, and kept as the follow-up of one already running.
+ */
+function followUpOptions(data: CaldavSyncJobData) {
+  return {
+    delay: CALDAV_SYNC_DEBOUNCE_MS,
+    deduplication: {
+      id: caldavDeduplicationId(data.caldavServerUrl, data.itemId),
+      replace: true,
+      keepLastIfActive: true,
+    },
+  };
+}
+
+/**
  * Whether a sync of this item is delayed, waiting or running. BullMQ drops the
  * deduplication id when the job finishes, after the worker has written the
  * item's sync row.
@@ -57,23 +72,22 @@ export async function addCaldavSyncJob(
   data: CaldavSyncJobData
 ): Promise<void> {
   const jobId = randomUUID();
-  const job = await queue.add("sync", data, {
-    jobId,
-    delay: CALDAV_SYNC_DEBOUNCE_MS,
-    deduplication: {
-      id: caldavDeduplicationId(data.caldavServerUrl, data.itemId),
-      replace: true,
-      keepLastIfActive: true,
-    },
-  });
+  const job = await queue.add("sync", data, { jobId, ...followUpOptions(data) });
 
   if (job.id && job.id !== jobId) {
     // Deduplicated onto a job past its delay. A running one keeps this state
     // for its follow-up; one waiting for the worker would sync the older
-    // state, so it is handed this one.
-    // ponytail: not atomic with the add; a job the worker takes in between
-    // syncs the older state. A Lua script would close it if it ever matters.
-    await (await queue.getJob(job.id))?.updateData(data);
+    // state, so it is handed this one. If the worker took it first, with the
+    // older state, adding again now keeps this one as its follow-up; at worst
+    // the item syncs its newest state twice.
+    const queued = await queue.getJob(job.id);
+
+    await queued?.updateData(data);
+
+    if (!(await queued?.isWaiting())) {
+      await queue.add("sync", data, { jobId: randomUUID(), ...followUpOptions(data) });
+    }
+
     log.debug({ jobId: job.id, itemId: data.itemId }, "CalDAV sync merged into a queued one");
 
     return;

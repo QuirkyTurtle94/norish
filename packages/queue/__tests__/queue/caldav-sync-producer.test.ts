@@ -150,6 +150,36 @@ it("syncs the newer state of a job already waiting behind another item's sync", 
   expect(synced).toEqual(["soup:soup", "lasagne:moved twice"]);
 }, 30_000);
 
+it("keeps the newer state when the worker takes the waiting job before it is handed over", async () => {
+  startWorker();
+  const soupRunning = holdNextSyncOf("soup");
+
+  await addCaldavSyncJob(queue, sync("soup", "soup"));
+  await addCaldavSyncJob(queue, sync("lasagne", "moved once"));
+  await soupRunning;
+  await queue.promoteJobs();
+  expect(await queue.getWaitingCount()).toBe(1);
+
+  // The race: between the add and the hand-over, the worker takes the
+  // waiting lasagne job, with the older state.
+  const releaseSoup = release;
+  const lasagneRunning = holdNextSyncOf("lasagne");
+  const getJob = queue.getJob.bind(queue);
+
+  vi.spyOn(queue, "getJob").mockImplementationOnce(async (id) => {
+    releaseSoup();
+    await lasagneRunning;
+
+    return getJob(id);
+  });
+
+  await addCaldavSyncJob(queue, sync("lasagne", "moved twice"));
+  release();
+
+  await settled();
+  expect(synced).toEqual(["soup:soup", "lasagne:moved once", "lasagne:moved twice"]);
+}, 30_000);
+
 it("counts an item's sync as pending while delayed or running, and not once it has run", async () => {
   const pending = () => isCaldavSyncPending(queue, "https://radicale.example/dav/", "lasagne");
 
