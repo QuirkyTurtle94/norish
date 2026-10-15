@@ -36,7 +36,7 @@ const MENTION = /(^|\s)@[\p{L}\p{N}_.]+/gu;
  * either, wherever it stands: "@blueband_nl Finesse" is "Finesse".
  */
 export function stripPreparation(text: string): string {
-  return stripBracketed(text, /\([^()]*\)|\[[^[\]]*\]/g)
+  return stripBracketed(text)
     .replace(/[([].*/, " ")
     .split(",")[0]!
     .replace(MENTION, " ")

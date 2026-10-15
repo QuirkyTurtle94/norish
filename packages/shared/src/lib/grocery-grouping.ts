@@ -15,7 +15,7 @@ import { parseIngredientWithDefaults, stripBracketed } from "./helpers";
 export function normalizeIngredientNameForGrouping(name: string | null): string {
   if (!name) return "";
 
-  return stripBracketed(name, /\([^()]*\)|\[[^[\]]*\]|\{[^{}]*\}/g)
+  return stripBracketed(name, "roundSquareOrCurly")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
@@ -200,7 +200,7 @@ function getDisplayName(name: string | null): string {
   if (!name) return "Unknown item";
 
   return (
-    stripBracketed(name, /\([^()]*\)|\[[^[\]]*\]/g)
+    stripBracketed(name)
       .replace(/\s+/g, " ")
       .trim() || "Unknown item"
   );

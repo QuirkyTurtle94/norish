@@ -1,17 +1,10 @@
 import { z } from "zod";
 
+import { isOnDomain } from "@norish/shared/lib/helpers";
+
 import type { VideoPlatform } from "./types";
 
 const urlSchema = z.url();
-
-/** Whether the URL's host is one of `domains` or a subdomain of one (`instagram.com.example.net` is neither). */
-function isOnDomain(url: string, ...domains: string[]): boolean {
-  const hostname = URL.parse(url)?.hostname.toLowerCase();
-
-  return (
-    !!hostname && domains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`))
-  );
-}
 
 /**
  * Check if URL is from Instagram.

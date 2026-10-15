@@ -12,18 +12,27 @@ import {
   flattenForLibrary,
 } from "@norish/shared/lib/unit-localization";
 
+/** A span holding no bracket of its own kind, per set of bracket kinds stripped. */
+const INNERMOST_BRACKETED = {
+  roundOrSquare: /\([^()]*\)|\[[^[\]]*\]/g,
+  roundSquareOrCurly: /\([^()]*\)|\[[^[\]]*\]|\{[^{}]*\}/g,
+} as const;
+
 /**
- * The text with every bracketed span replaced by a space, brackets inside
- * brackets included. `innermost` matches a span holding no bracket of its own
- * kind, so each pass peels one level off; a bracket that never closes stays.
+ * The text with every bracketed span of `kinds` replaced by a space, brackets
+ * inside brackets included. Each pass peels one level off the innermost
+ * spans; a bracket that never closes stays.
  */
 // ponytail: one pass per nesting level, fine for names; a depth scanner if long nested text ever comes through
-export function stripBracketed(text: string, innermost: RegExp): string {
+export function stripBracketed(
+  text: string,
+  kinds: keyof typeof INNERMOST_BRACKETED = "roundOrSquare"
+): string {
   let previous: string;
 
   do {
     previous = text;
-    text = text.replace(innermost, " ");
+    text = text.replace(INNERMOST_BRACKETED[kinds], " ");
   } while (text !== previous);
 
   return text;
@@ -301,15 +310,19 @@ const VIDEO_PLATFORM_HOSTS = [
  * routed into the video pipeline.
  */
 export function isVideoUrl(str: string): boolean {
-  if (!isUrl(str)) return false;
+  return isUrl(str) && isOnDomain(str, ...VIDEO_PLATFORM_HOSTS);
+}
 
-  try {
-    const hostname = new URL(str).hostname.toLowerCase();
+/** Whether `hostname` is `domain` or a subdomain of it, matched at a dot boundary. */
+export function isHostOnDomain(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`);
+}
 
-    return VIDEO_PLATFORM_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
-  } catch {
-    return false;
-  }
+/** Whether the URL's host is one of `domains` or a subdomain of one (`instagram.com.example.net` is neither). */
+export function isOnDomain(url: string, ...domains: string[]): boolean {
+  const hostname = URL.parse(url)?.hostname.toLowerCase();
+
+  return !!hostname && domains.some((domain) => isHostOnDomain(hostname, domain));
 }
 
 export const toArr = (v: any) => (Array.isArray(v) ? v : []);
@@ -350,6 +363,11 @@ export function dateKey(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+/** The text without its trailing slashes, where they are not part of `//` (a bare `https://` keeps both). */
+export function withoutTrailingSlashes(text: string): string {
+  return text.replace(/(?<!\/)\/+$/, "");
+}
+
 /**
  * Normalize URL for consistent deduplication.
  * Removes trailing slashes, normalizes protocol, and strips tracking params.
@@ -359,7 +377,7 @@ export function normalizeUrl(url: string): string {
     const parsed = new URL(url);
 
     // Remove trailing slash from pathname
-    parsed.pathname = parsed.pathname.replace(/(?<!\/)\/+$/, "");
+    parsed.pathname = withoutTrailingSlashes(parsed.pathname);
 
     // Remove common tracking params
     parsed.searchParams.delete("utm_source");
