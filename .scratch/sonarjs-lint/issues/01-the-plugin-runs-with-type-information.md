@@ -30,10 +30,11 @@ Spec: `.scratch/sonarjs-lint/spec.md`.
 ## Comments
 
 - 2026-10-14 (implemented).
-  - The profile is `tooling/eslint/sonarjs.ts`: three lists generated from SonarJS's rule metadata at the 4.2.2 commit (122 for every file, plus `deprecation`; 8 for JavaScript; 1 for TypeScript). `base.ts` applies it after the existing rules, then the temporary block of 14 rules.
+  - The profile is `tooling/eslint/sonarjs.ts`: three lists generated from SonarJS's rule metadata at the 4.2.2 commit (122 for every file: 121 from Sonar way plus `deprecation`; 8 for JavaScript; 1 for TypeScript). `base.ts` applies it after the existing rules, then the temporary block of 14 rules.
   - The plugin is a CommonJS module. Its default import types as `ESLint.Plugin`, which goes straight into `plugins`; its `recommended` preset is not used, so its `settings.react.version` doesn't leak into the shared settings either.
   - `apps/web/eslint.config.ts` lints `app/sw.ts` against `tsconfig.sw.json` with the project service off for that file.
   - With the block lifted, lint reports exactly the baseline: 210 findings in the 14 rules, no parsing error, nothing from another rule.
   - Lint time, measured on this machine with nothing cached:
     - the whole `pnpm lint` (`turbo run lint --force`): about 11 s before, 40 s after;
     - `apps/web` alone: 3.7 s before, 16.0 s after.
+- 2026-10-15 — The every-file list named `deprecation` twice, alphabetically and appended; the duplicate is gone and the count above is corrected (branch review).
