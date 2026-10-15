@@ -6,12 +6,7 @@
       "env": ["DATABASE_URL", "MASTER_KEY", "AUTH_URL"]
     },
     "build": {
-      "dependsOn": [],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/packages/*/src/**",
-        "$TURBO_ROOT$/tooling/typescript/**"
-      ]
+      "dependsOn": ["topo"]
     }
   }
 }
