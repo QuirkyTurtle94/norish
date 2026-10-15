@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 
+import type { RecipeListContext } from "@norish/db";
 import type { FullRecipeDTO, HouseholdWithUsersNamesDto, User } from "@norish/shared/contracts";
 import type { RecipeShareDto } from "@norish/shared/contracts/dto/recipe-shares";
 import type { OperationId } from "@norish/shared/contracts/realtime/envelope";
@@ -114,6 +115,17 @@ export type AuthedProcedureContext = Omit<Context, "household"> & {
   isServerAdmin: boolean;
   operationId: OperationId | null;
 };
+
+/** The caller, as the repositories scope what a viewer may read and edit. */
+export function viewerOf(
+  ctx: Pick<AuthedProcedureContext, "householdUserIds" | "isServerAdmin"> & { user: { id: string } }
+): RecipeListContext {
+  return {
+    userId: ctx.user.id,
+    householdUserIds: ctx.householdUserIds,
+    isServerAdmin: ctx.isServerAdmin,
+  };
+}
 
 /**
  * Middleware that enforces server admin access.
