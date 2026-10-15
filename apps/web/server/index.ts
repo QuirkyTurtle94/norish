@@ -1,7 +1,6 @@
 import { initCaldavSync } from "@norish/api/caldav/event-listener";
 import { initRecipeEnrichmentListener } from "@norish/api/recipes/enrichment-listener";
 import { applyNutritionSourcesOnBoot } from "@norish/api/startup/apply-nutrition-sources";
-import { backfillIngredientAliases } from "@norish/api/startup/backfill-ingredient-aliases";
 import { createServer } from "@norish/api/startup/http-server";
 import { runStartupMaintenanceCleanup } from "@norish/api/startup/maintenance-cleanup";
 import { runMigrations } from "@norish/api/startup/migrations";
@@ -40,11 +39,6 @@ async function main() {
   // A first boot seeds the catalogue before traffic; later boots leave it to
   // the refresh job, so an unchanged file never holds the server up.
   await seedIngredientCatalogueOnFirstBoot();
-  log.info("-".repeat(50));
-
-  // After the seed, so every existing reference is resolved against the
-  // catalogue's foods, as a new import would be (ADR-0037).
-  await backfillIngredientAliases();
   log.info("-".repeat(50));
 
   // Old flagged mints, looked at again whenever the resolver's rules change.
