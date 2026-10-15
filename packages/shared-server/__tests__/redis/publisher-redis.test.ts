@@ -47,8 +47,19 @@ it("answers a command sent while Redis restarts", async () => {
 
   const read = publisher.get("session");
 
-  // Down for two seconds: several reconnect attempts fail before it is back.
-  await new Promise((resolve) => setTimeout(resolve, 2_000));
+  // Down until several reconnect attempts have failed, then back, well inside
+  // the command's timeout.
+  await new Promise<void>((resolve) => {
+    let attempts = 0;
+    const onReconnecting = () => {
+      if (++attempts < 3) return;
+
+      publisher.off("reconnecting", onReconnecting);
+      resolve();
+    };
+
+    publisher.on("reconnecting", onReconnecting);
+  });
   await proxy.listen();
 
   await expect(read).resolves.toBe("kept");
