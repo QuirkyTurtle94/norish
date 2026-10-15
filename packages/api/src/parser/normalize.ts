@@ -19,16 +19,12 @@ import { normalizeEnrichmentTagNames } from "@norish/shared/lib/recipe-enrichmen
 
 import {
   extractNutrition,
-  getServings,
   parseImages,
   parseIngredients,
   parseMetadata,
   parseSteps,
   parseVideos,
 } from "./parsers";
-
-// Re-export getServings for backward compatibility (used by mela-parser.ts)
-export { getServings };
 
 const log = parserLogger.child({ module: "normalize" });
 

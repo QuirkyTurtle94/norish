@@ -33,12 +33,9 @@ const RecipeShareManagementBaseSchema = RecipeShareSelectSchema.omit({
   tokenHash: true,
 });
 
-// Backward-compatible alias for older linked workspace copies.
-export const RecipeShareManagementSummarySchema = RecipeShareManagementBaseSchema.extend({
+export const RecipeShareSummarySchema = RecipeShareManagementBaseSchema.extend({
   status: RecipeShareStatusSchema,
 });
-
-export const RecipeShareSummarySchema = RecipeShareManagementSummarySchema;
 
 export const RecipeShareInventorySchema = RecipeShareSummarySchema.extend({
   recipeName: z.string(),
