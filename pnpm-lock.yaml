@@ -452,9 +452,6 @@ importers:
       react:
         specifier: 'catalog:'
         version: 19.3.0
-      react-aria:
-        specifier: 3.53.1
-        version: 3.53.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-dom:
         specifier: 'catalog:'
         version: 19.3.0(react@19.3.0)
@@ -621,6 +618,9 @@ importers:
       prettier:
         specifier: 'catalog:'
         version: 3.9.10
+      react-aria:
+        specifier: 3.53.1
+        version: 3.53.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-aria-components:
         specifier: 1.22.1
         version: 1.22.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
