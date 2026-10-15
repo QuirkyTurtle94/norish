@@ -18,7 +18,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ##############################
 FROM base AS builder-base
 
-RUN npm install -g pnpm@12.11.2
+RUN --mount=type=bind,source=package.json,target=/tmp/package.json \
+  npm install -g "$(node -p "require('/tmp/package.json').packageManager")"
 
 # The store lives on a cache mount, so pnpm cannot hard link from it into /app.
 # Named explicitly, pnpm copies from it instead of starting a second store

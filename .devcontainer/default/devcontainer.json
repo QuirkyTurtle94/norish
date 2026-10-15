@@ -34,7 +34,7 @@
     3000,
     8081
   ], // 3000 for web, 8081 for expo
-  "postCreateCommand": "pnpm install",
+  "postCreateCommand": "npm install -g \"$(node -p \"require('./package.json').packageManager\")\" && pnpm install",
   "customizations": {
     "vscode": {
       "extensions": [
