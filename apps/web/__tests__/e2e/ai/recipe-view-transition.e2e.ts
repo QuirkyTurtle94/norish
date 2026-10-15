@@ -43,10 +43,7 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) {
       await page.goto("/");
       const card = page.getByRole("heading", { name, exact: true, level: 3 });
 
-      await expect(async () => {
-        await page.reload();
-        await expect(card).toBeVisible({ timeout: 3_000 });
-      }).toPass({ timeout: 30_000 });
+      await expect(card).toBeVisible();
       await card.click();
 
       await expect(page).toHaveURL(new RegExp(`/recipes/${id}(\\?|$)`));
