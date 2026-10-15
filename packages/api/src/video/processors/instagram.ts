@@ -15,34 +15,21 @@ import type { VideoMetadata, VideoProcessorContext } from "../types";
 import { BaseVideoProcessor } from "../base-processor";
 import { isMediaUnavailable } from "../errors";
 
+/** The page's description meta tag, with either attribute order. */
+const CAPTION_META_PATTERNS = [
+  /<meta\s+(?:name|property)=["'](?:og:description|description)["']\s+content=["']([^"']+)["']/i,
+  /<meta\s+content=["']([^"']+)["']\s+(?:name|property)=["'](?:og:description|description)["']/i,
+];
+
 /**
  * Extract caption/description from Instagram/Facebook page HTML.
  */
 function extractCaptionFromHtml(html: string): string {
-  // Try meta description first
-  const metaMatch = html.match(
-    /<meta\s+(?:name|property)=["'](?:og:description|description)["']\s+content=["']([^"']+)["']/i
-  );
+  for (const pattern of CAPTION_META_PATTERNS) {
+    const content = html.match(pattern)?.[1];
+    const decoded = content ? decode(content) : "";
 
-  if (metaMatch?.[1]) {
-    const decoded = decode(metaMatch[1]);
-
-    if (decoded.length > 50) {
-      return decoded;
-    }
-  }
-
-  // Try alternate meta tag format
-  const altMetaMatch = html.match(
-    /<meta\s+content=["']([^"']+)["']\s+(?:name|property)=["'](?:og:description|description)["']/i
-  );
-
-  if (altMetaMatch?.[1]) {
-    const decoded = decode(altMetaMatch[1]);
-
-    if (decoded.length > 50) {
-      return decoded;
-    }
+    if (decoded.length > 50) return decoded;
   }
 
   return "";
