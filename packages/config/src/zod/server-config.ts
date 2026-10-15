@@ -305,19 +305,6 @@ export const AIProviderSchema = z.enum([
 
 export type AIProvider = z.infer<typeof AIProviderSchema>;
 
-/**
- * Legacy auto-tagging mode. Superseded by the independent `automaticEnrichment.autoTagging`
- * switch plus `tagStrategy`; still accepted on read so stored config migrates in place.
- */
-export const AutoTaggingModeSchema = z.enum([
-  "disabled",
-  "predefined",
-  "predefined_db",
-  "freeform",
-]);
-
-export type AutoTaggingMode = z.infer<typeof AutoTaggingModeSchema>;
-
 /** How auto-tagging picks tag names. Independent of whether auto-tagging runs automatically. */
 export const TagStrategySchema = z.enum(["predefined", "predefined_db", "freeform"]);
 
@@ -408,47 +395,22 @@ export const AIConfigInputSchema = z.object({
   cuisineStrategy: CuisineStrategySchema.optional(),
   automaticEnrichment: AutomaticEnrichmentSchema.partial().optional(),
   automaticIngredients: AutomaticIngredientsSchema.partial().optional(),
-  /** @deprecated Migrated into `automaticEnrichment.autoTagging` + `tagStrategy`. */
-  autoTaggingMode: AutoTaggingModeSchema.optional(),
-  /** @deprecated Migrated into `automaticEnrichment.allergyDetection`. */
-  autoTagAllergies: z.boolean().optional(),
 });
 
 /**
- * The canonical AI configuration contract. Stored config written before the
- * unified enrichment flow still parses: legacy fields migrate without changing
- * effective enabledness, and canonical values always win over legacy ones.
+ * The canonical AI configuration contract: every setting a stored config
+ * leaves out takes its default.
  */
 export const AIConfigSchema = AIConfigInputSchema.transform(
-  ({
-    // eslint-disable-next-line sonarjs/deprecation -- the migration reads the legacy field it replaces
-    autoTaggingMode,
-    // eslint-disable-next-line sonarjs/deprecation -- the migration reads the legacy field it replaces
-    autoTagAllergies,
-    tagStrategy,
-    cuisineStrategy,
-    automaticEnrichment,
-    automaticIngredients,
-    ...rest
-  }) => {
-    const legacyAutoTaggingOn =
-      autoTaggingMode === undefined ? undefined : autoTaggingMode !== "disabled";
-    const legacyStrategy =
-      autoTaggingMode === undefined || autoTaggingMode === "disabled" ? undefined : autoTaggingMode;
-
+  ({ tagStrategy, cuisineStrategy, automaticEnrichment, automaticIngredients, ...rest }) => {
     return {
       ...rest,
-      tagStrategy: tagStrategy ?? legacyStrategy ?? DEFAULT_TAG_STRATEGY,
+      tagStrategy: tagStrategy ?? DEFAULT_TAG_STRATEGY,
       cuisineStrategy: cuisineStrategy ?? DEFAULT_CUISINE_STRATEGY,
       automaticEnrichment: {
-        autoTagging:
-          automaticEnrichment?.autoTagging ??
-          legacyAutoTaggingOn ??
-          DEFAULT_AUTOMATIC_ENRICHMENT.autoTagging,
+        autoTagging: automaticEnrichment?.autoTagging ?? DEFAULT_AUTOMATIC_ENRICHMENT.autoTagging,
         allergyDetection:
-          automaticEnrichment?.allergyDetection ??
-          autoTagAllergies ??
-          DEFAULT_AUTOMATIC_ENRICHMENT.allergyDetection,
+          automaticEnrichment?.allergyDetection ?? DEFAULT_AUTOMATIC_ENRICHMENT.allergyDetection,
         autoCategorization:
           automaticEnrichment?.autoCategorization ??
           DEFAULT_AUTOMATIC_ENRICHMENT.autoCategorization,
