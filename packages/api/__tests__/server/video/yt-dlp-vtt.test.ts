@@ -27,4 +27,15 @@ describe("parseVttContent", () => {
 
     expect(parseVttContent(vtt)).toBe("1 < 2 cups");
   });
+
+  it("decodes each entity once, numeric ones included", () => {
+    const vtt = [
+      "WEBVTT",
+      "",
+      "00:00:00.000 --> 00:00:02.000",
+      "Type &amp;lt; for less than, at the caf&#233; or caf&#xE9;",
+    ].join("\n");
+
+    expect(parseVttContent(vtt)).toBe("Type &lt; for less than, at the café or café");
+  });
 });
