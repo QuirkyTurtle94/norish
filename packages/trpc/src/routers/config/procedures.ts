@@ -27,11 +27,14 @@ import {
   readyResponseSchema,
 } from "./config-openapi-types";
 
+/** Ready only reports the parser, so it waits on it no longer than on Redis's ping. */
+const READY_PARSER_TIMEOUT_MS = 2_000;
+
 /** The internal parser's own health check, which Norish runs as its child process. */
-async function getParserHealth() {
+async function getParserHealth(timeoutMs = SERVER_CONFIG.PARSER_API_TIMEOUT_MS) {
   try {
     const response = await fetch(buildInternalParserApiUrl("/health"), {
-      signal: AbortSignal.timeout(SERVER_CONFIG.PARSER_API_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (!response.ok) {
@@ -316,7 +319,7 @@ export const healthReady = publicProcedure
     const [db, redis, parser] = await Promise.all([
       getDatabaseHealth(),
       getRedisHealth(),
-      getParserHealth(),
+      getParserHealth(READY_PARSER_TIMEOUT_MS),
     ]);
 
     if (db.status !== "ok" || redis.status !== "ok") {

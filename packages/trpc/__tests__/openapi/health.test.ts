@@ -366,6 +366,34 @@ describe("openapi liveness and readiness endpoints", () => {
       });
     });
 
+    it("waits on a parser that never answers no longer than on Redis's ping", async () => {
+      const timeout = vi
+        .spyOn(AbortSignal, "timeout")
+        .mockImplementation(() => AbortSignal.abort(new DOMException("timed out", "TimeoutError")));
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(
+          (_url: string, init: RequestInit) =>
+            new Promise((_resolve, reject) => {
+              const signal = init.signal as AbortSignal;
+
+              if (signal.aborted) reject(signal.reason);
+              signal.addEventListener("abort", () => reject(signal.reason));
+            })
+        )
+      );
+
+      const response = await get("/health/ready");
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual(
+        expect.objectContaining({ parser: { status: "unreachable" } })
+      );
+      expect(timeout).toHaveBeenCalledWith(2_000);
+      timeout.mockRestore();
+    });
+
     it("answers 503 when Postgres is down", async () => {
       parserAnswers(200);
       getDatabaseHealthMock.mockResolvedValue({ status: "error" });
