@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
     "./logger": "./src/logger.ts",
     "./cache/household": "./src/cache/household.ts",
     "./config/server-config-loader": "./src/config/server-config-loader.ts",

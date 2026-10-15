@@ -5,7 +5,7 @@ import { buildInternalParserApiUrl, SERVER_CONFIG } from "@norish/config/env-con
 import { getDatabaseHealth } from "@norish/db/drizzle";
 import { listCuisines } from "@norish/db/repositories/cuisines";
 import { listAllTagNames, listTagNamesForUsers } from "@norish/db/repositories/tags";
-import { trpcLogger as log } from "@norish/shared-server";
+import { trpcLogger as log } from "@norish/shared-server/logger";
 import {
   getIngredientWords,
   getLocaleConfig,
