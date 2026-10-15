@@ -16,8 +16,6 @@ export {
   STALLED_INTERVAL,
 } from "./config";
 
-// Helpers
-export { generateJobId, isJobInQueue } from "./helpers";
 export { createOperationAwareQueue } from "./operation-aware-queue";
 
 // Registry - centralized lifecycle
