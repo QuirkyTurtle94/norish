@@ -118,16 +118,6 @@ async function handleJobFailed(
 
   const { recipeId, userId, householdKey, files } = job.data;
 
-  log.error(
-    {
-      jobId: job.id,
-      recipeId,
-      fileCount: files.length,
-      error: error.message,
-    },
-    "Image import job failed"
-  );
-
   await deleteRecipeImagesDir(recipeId);
 
   // Emit failed event (removes skeleton)

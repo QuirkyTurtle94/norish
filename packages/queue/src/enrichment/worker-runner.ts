@@ -106,25 +106,7 @@ export async function handleEnrichmentJobFailure(
 ): Promise<void> {
   if (!job) return;
 
-  const { recipeId, kind, origin } = job.data;
-  const maxAttempts = job.opts.attempts ?? 3;
-  const isFinal = isFinalFailure(job, error);
-
-  log.error(
-    {
-      jobId: job.id,
-      recipeId,
-      kind,
-      origin,
-      attempt: job.attemptsMade,
-      maxAttempts,
-      isFinalFailure: isFinal,
-      err: error,
-    },
-    "Recipe Enrichment job failed"
-  );
-
-  if (isFinal) {
+  if (isFinalFailure(job, error)) {
     await publishEnrichmentLifecycle(job.data, "failed");
   }
 }

@@ -137,7 +137,6 @@ export async function handleIngredientIconsFailure(
   job: Job<IngredientIconsJobData> | undefined,
   error: Error
 ): Promise<void> {
-  log.error({ jobId: job?.id, err: error }, "A Draw icons round failed");
   if (!job || !isFinalFailure(job, error)) return;
   await announceRound(job, true);
 }

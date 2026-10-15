@@ -247,20 +247,7 @@ async function handleJobFailed(
   if (!job) return;
 
   const { recipeIds, userId, householdKey } = job.data;
-  const maxAttempts = job.opts.attempts ?? 3;
   const isFinal = isFinalFailure(job, error);
-
-  log.error(
-    {
-      jobId: job.id,
-      recipeIds,
-      attempt: job.attemptsMade,
-      maxAttempts,
-      isFinalFailure: isFinal,
-      error: error.message,
-    },
-    "Paste import job failed"
-  );
 
   await Promise.all(recipeIds.map((recipeId) => deleteRecipeImagesDir(recipeId)));
 

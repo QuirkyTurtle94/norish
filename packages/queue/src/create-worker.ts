@@ -134,7 +134,16 @@ export function createWorker<T>(
 
   worker.on("failed", (job, err) => {
     recorded(job?.id);
-    log.error({ err, queueName, jobId: job?.id }, "Job failed");
+    log.error(
+      {
+        err,
+        queueName,
+        jobId: job?.id,
+        attempt: job?.attemptsMade,
+        final: job ? isFinalFailure(job, err) : undefined,
+      },
+      "Job failed"
+    );
     if (!options.onFailed) return;
     Promise.resolve()
       .then(() => options.onFailed?.(job, err))

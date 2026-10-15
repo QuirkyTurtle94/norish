@@ -162,21 +162,7 @@ async function handleJobFailed(
   if (!job) return;
 
   const { url, recipeId, userId, householdKey } = job.data;
-  const maxAttempts = job.opts.attempts ?? 3;
   const isFinal = isFinalFailure(job, error);
-
-  log.error(
-    {
-      jobId: job.id,
-      url,
-      recipeId,
-      attempt: job.attemptsMade,
-      maxAttempts,
-      isFinalFailure: isFinal,
-      error: error.message,
-    },
-    "Recipe import job failed"
-  );
 
   await deleteRecipeImagesDir(recipeId);
 

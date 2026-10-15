@@ -123,23 +123,9 @@ async function handleJobFailed(
   if (!job) return;
 
   const { userId, itemId, itemType, plannedItemId, eventTitle } = job.data;
-  const maxAttempts = job.opts.attempts ?? 10;
   const isFinal = isFinalFailure(job, error);
 
   const errorMessage = truncateErrorMessage(error.message);
-
-  log.error(
-    {
-      jobId: job.id,
-      userId,
-      itemId,
-      attempt: job.attemptsMade,
-      maxAttempts,
-      isFinalFailure: isFinal,
-      error: error.message,
-    },
-    "CalDAV sync job failed"
-  );
 
   // Update database with failure status
   const existingStatus = await getCaldavSyncStatusByItemId(userId, itemId);

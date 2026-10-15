@@ -230,7 +230,6 @@ export async function handleIngredientReviewFailure(
   job: Job<IngredientReviewJobData> | undefined,
   error: Error
 ): Promise<void> {
-  log.error({ jobId: job?.id, err: error }, "A round of Ask AI failed");
   if (!job || !isFinalFailure(job, error)) return;
   await announceRound(job, true);
 }
