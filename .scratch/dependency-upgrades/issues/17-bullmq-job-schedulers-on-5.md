@@ -35,7 +35,7 @@ Move `bullmq` from 5.81.3 to **5.81.5**, the latest 5.x, which also includes a f
 - [x] **Enrichment enqueue** works and the run sequence still increments.
 - [x] **Tests.** The updated tests fail against the old code paths.
 - [x] **Type check.** `pnpm typecheck` passes.
-- [ ] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes.
+- [x] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes (the full suite ran with ticket 18: 173 passed).
 
 ## Comments
 

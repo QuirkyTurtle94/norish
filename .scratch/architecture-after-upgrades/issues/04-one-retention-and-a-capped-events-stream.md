@@ -33,3 +33,4 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Retention.
     - After: both streams are unchanged, since both are under the cap, and every queue's meta reads 1000.
     - The 850 MB stream from the September ingredient round is no longer in this copy.
 - 2026-10-15, from the branch review: one entry per queue. `QUEUE_SETTINGS: Record<QueueName, …>` replaces the three per-queue maps and the 16 job-option constants (`maxCompletedAgeSeconds` replaces `capImageImportAge`), and the registry builds, finds and closes queues from one table.
+- 2026-10-15, the maintainer: image imports take the administrator's retention too, so `maxCompletedAgeSeconds` is gone. A finished image import empties its base64 images from the job data instead, so the retention cannot hold them in Redis. The boot-time trim of the events stream is gone as well: the queue's metadata carries the new cap from boot, and BullMQ cuts the stream to it at the next event.

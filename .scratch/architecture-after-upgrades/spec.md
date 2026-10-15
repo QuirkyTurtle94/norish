@@ -121,7 +121,7 @@ The upgrades landed as version bumps. The code around them still carries workaro
 
 - The workspace installs isolated, pnpm's default: a workspace imports only what it declares, and the image installs the same layout.
 - Production runs the server's source through tsx, as dev does. tsdown, its externals list and `dist-server` are gone, and every package loads its own dependencies.
-- `pnpm deps:cycles` fails when a package's source imports a devDependency, because the image leaves devDependencies out.
+- `pnpm deps:cycles` checks only the workspace import edges. The devDependency guard it briefly grew was removed on 2026-10-15 (the maintainer: a hand-rolled check prone to breaking); the image boot and the pre-release test catch a runtime import of a devDependency.
 - The image ships only what runs: about 275 MB to download.
 
 **The React and Next line.**
@@ -435,7 +435,7 @@ Moved to `.scratch/dependency-upgrades/` on 2026-10-14, where the maintainer cho
     - Ticket 01 writes: "A recipe import or calendar sync that failed and is due to retry now retries as soon as its wait is over. Before, the retry did not run until another import or sync was started, even after a restart." The maintainer will rewrite it.
   - Ticket 13 writes, under Fixes and Improvements: "The Docker image is about 30% smaller to download."
   - Ticket 12 writes, under Upgrade notes: "The image starts the server with `node --import tsx /app/apps/web/server/index.ts`. If you override the container's command, update it."
-  - Upgrade notes: two new health endpoints. `/api/v1/health/live` is for restarts, `/api/v1/health/ready` is for traffic, and the image's healthcheck now calls live. `/api/v1/health` still works but is deprecated and will be removed in a later release. Ticket 11 writes this.
+  - Upgrade notes: two new health endpoints. `/api/v1/health/live` is for restarts, `/api/v1/health/ready` is for traffic, and the image's healthcheck now calls live. `/api/v1/health` is removed; point a probe that called it at live or ready. Ticket 11 writes this.
   - The rest is internal and stays unpublished (ADR-0010).
 - **Docs.** The admin settings page documents cancelling a job, with a screenshot.
 - **Mobile.** Hoisting arrived with the Expo app, which has since left the workspace.

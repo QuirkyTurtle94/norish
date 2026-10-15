@@ -21,7 +21,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, Installs, the server build a
     Check each against Next's `*.nft.json` traces first. Anything a trace lists, or `serverExternalPackages` names, stays a dependency, and so does anything `server/**` imports (ticket 12's import check).
 
   - [x] `pino-pretty` stays a dependency (maintainer's call).
-  - [x] `ffmpeg-static` stays a dependency of packages/api, and its `rm` line stays. `src/video/yt-dlp.ts` falls back to it, so ticket 12's import check rejects it as a devDependency. Production uses the system ffmpeg.
+  - [x] `ffmpeg-static` is a devDependency of packages/api (changed 2026-10-15, see Comments): the image neither downloads nor ships it, and production uses Alpine's ffmpeg.
 - [x] The deploy step removes what the server never loads. Each cut was verified on a repack of 12's image on 2026-10-14; sizes are compressed / unpacked:
 
   | Cut                                                                                                                                                                                                                                                                                                                               | Saves                                     |

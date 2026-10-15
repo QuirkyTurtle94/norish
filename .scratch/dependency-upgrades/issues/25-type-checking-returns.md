@@ -47,12 +47,12 @@ Spec: `.scratch/dependency-upgrades/spec.md`
 
 ## Acceptance criteria
 
-- [ ] **No `noCheck`.** No tsconfig sets `noCheck`, and no `typecheck` script passes `--noCheck`.
-- [ ] **Green.** `pnpm typecheck` passes on a clean checkout (after `pnpm --filter @norish/trpc build`, if the dist is needed).
-- [ ] **CI.** `_node-ci.yml` runs `pnpm typecheck` and fails on errors.
-- [ ] **CalDAV.** The Edit button opens the edit modal, and the modal closes; a test covers it.
-- [ ] **No silencing.** No new `as any`, `@ts-ignore` or `@ts-expect-error`.
-- [ ] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes.
+- [x] **No `noCheck`.** No tsconfig sets `noCheck`, and no `typecheck` script passes `--noCheck`.
+- [x] **Green.** `pnpm typecheck` passes on a clean checkout (after `pnpm --filter @norish/trpc build`, if the dist is needed).
+- [x] **CI.** `_node-ci.yml` runs `pnpm typecheck` and fails on errors.
+- [x] **CalDAV.** The Edit button opens the edit modal, and the modal closes; a test covers it.
+- [x] **No silencing.** No new `as any`, `@ts-ignore` or `@ts-expect-error`.
+- [x] **Gates and E2E.** The repo gates pass, and `pnpm test:e2e` passes (the full suite ran with ticket 18: 173 passed).
 
 ## Comments
 

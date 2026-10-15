@@ -20,7 +20,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Cancellatio
 - [x] A new admin procedure cancels an active job through the worker's `cancelJob(jobId, reason)`. The existing remove action still refuses active jobs.
 - [x] The processor wrapper turns an admin-cancel abort into BullMQ's `UnrecoverableError`, with a reason that records that an administrator stopped the job.
 - [x] Shutdown calls `cancelAllJobs()` with a shutdown reason, before closing the workers. The wrapper answers that abort with `job.moveToWait(token)` and throws BullMQ's `WaitingError`, so the job goes back to waiting without spending an attempt or waiting out a backoff. If Redis is unreachable and `moveToWait` fails, the job stays active and BullMQ's stalled-job check recovers it on the next boot.
-- [x] The job monitor shows a Cancelled state, distinct from failed, and a cancel action on active jobs that reads "Cancelling…" until the job leaves `active`. Copy goes through the message catalogue in every shipped language.
+- [x] The job monitor shows a Cancelled state, distinct from failed, and a cancel action on active jobs that reads "Cancelling…" until the run it was asked for leaves `active` (a retried run offers Cancel again, fixed 2026-10-15). Copy goes through the message catalogue in every shipped language.
 - [x] Real-Redis tests:
   - [x] Admin cancel of an active job ends it failed, with no further attempt and with the administrator's reason.
   - [x] Shutdown cancel puts the job back to waiting with `attemptsMade` unchanged, and a worker started afterwards runs it.
@@ -46,7 +46,7 @@ See `.scratch/architecture-after-upgrades/spec.md`, Background jobs, Cancellatio
   - **The job monitor.** BullMQ keeps a cancelled job as `failed`. The router maps a failed job whose reason is the administrator constant to the new `cancelled` state, with a grey chip and a translated note in the detail.
     - The Cancel job button sits on every active job and reads "Cancelling…" until the 5 s detail refetch sees the job leave `active`.
     - It has no confirmation step, matching Retry; Remove keeps its confirmation.
-    - Cancelled jobs offer no Retry.
+    - Cancelled jobs offer Retry, in case the cancel was a mistake (changed 2026-10-15; see below).
   - **Copy.** Added to all 16 locales. Most locales' job monitor is still in English, so the new keys are English there too; bg, fi and uk, whose monitor is translated, got translations.
   - **Tests.**
     - `create-worker-redis.test.ts`: admin cancel (failed, reason, `attemptsMade` 1, no retry past the backoff, the failure handler sees it as final); cancel of a job not running answers false; a shutdown cancel puts the job back with `attemptsMade` 0, and the next worker runs it. The hanging processor waits on `requestSignal`, so the ledger path is exercised end to end.

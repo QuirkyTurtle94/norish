@@ -35,7 +35,7 @@ Every dependency moves to its newest **stable** release. A line stays behind onl
 9. **Next's and Turborepo's coding-agent checks are on** (ticket 36). A build that stops because the installed Next has an advisory is the signal to upgrade Next. Reversed on 2026-10-14; the sweep had switched them off.
 10. **ESLint 10 replaces the plugins that stop at ESLint 9** (ticket 12): `@eslint-react/eslint-plugin` plus `@stylistic/eslint-plugin` for eslint-plugin-react, `eslint-plugin-jsx-a11y-x` for jsx-a11y. eslint-plugin-import is deleted; it enforces nothing.
 11. **Sign-in never links accounts** (ticket 10): `accountLinking.disableImplicitLinking: true`. `trustedProviders` stays, because it now only governs linking from a signed-in session. A deleted user's sessions are revoked immediately.
-12. **Linking an SSO provider from Settings** is built in 0.26 as its own feature spec, after Better Auth 1.7 lands. It is not part of this branch. The 0.25 release notes already promised it.
+12. **Linking an SSO provider from Settings** is a follow-up after 0.26, as its own feature spec (the maintainer, 2026-10-15). It is not part of this branch or of 0.26.
 13. **The image installs from the lockfile** on pnpm 12, and Node is pinned to an exact tag, bumped by hand with the next sweep (ticket 16).
 14. **BullMQ 6 and Job Schedulers land in the same release** (tickets 17 and 18). On 6.3.14 the existing boot sweep still finds and removes the repeatables 5.x created, so no stepping-stone release is needed. The sweep must stay.
 15. **The lazy-worker suspicion** (ticket 24) is reproduced against real Redis in the BullMQ 6 commit and fixed only if confirmed.
