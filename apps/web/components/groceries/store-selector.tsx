@@ -2,7 +2,7 @@
 
 import type { Key } from "react";
 import { useMemo } from "react";
-import { usePanelPortalContainer } from "@/components/Panel/Panel";
+import { PanelPortal } from "@/components/Panel/Panel";
 import { Label, ListBox, Select } from "@heroui/react";
 
 import type { StoreDto } from "@norish/shared/contracts";
@@ -42,7 +42,6 @@ export function StoreSelector({
     () => [...stores].sort((a, b) => a.sortOrder - b.sortOrder),
     [stores]
   );
-  const portalContainer = usePanelPortalContainer();
 
   // Don't render if no stores and showWhenEmpty is false
   if (sortedStores.length === 0 && !showWhenEmpty) {
@@ -70,32 +69,31 @@ export function StoreSelector({
         <Select.Value className="flex items-center" />
         <Select.Indicator />
       </Select.Trigger>
-      <Select.Popover
-        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
-        UNSTABLE_portalContainer={portalContainer}
-      >
-        <ListBox>
-          <ListBox.Item id="none" textValue={noStoreDescription ?? noStoreLabel}>
-            <span className={noStoreDescription ? "text-muted" : ""}>
-              {noStoreDescription ?? noStoreLabel}
-            </span>
-            <ListBox.ItemIndicator />
-          </ListBox.Item>
-          {sortedStores.map((store) => (
-            <ListBox.Item key={store.id} id={store.id} textValue={store.name}>
-              <div className="flex items-center gap-2" style={storeColorStyle(store.color)}>
-                <span
-                  aria-hidden
-                  className="h-2.5 w-2.5 shrink-0 rounded-full bg-(--store-color)"
-                  data-testid="store-dot"
-                />
-                <span>{store.name}</span>
-              </div>
+      <PanelPortal>
+        <Select.Popover>
+          <ListBox>
+            <ListBox.Item id="none" textValue={noStoreDescription ?? noStoreLabel}>
+              <span className={noStoreDescription ? "text-muted" : ""}>
+                {noStoreDescription ?? noStoreLabel}
+              </span>
               <ListBox.ItemIndicator />
             </ListBox.Item>
-          ))}
-        </ListBox>
-      </Select.Popover>
+            {sortedStores.map((store) => (
+              <ListBox.Item key={store.id} id={store.id} textValue={store.name}>
+                <div className="flex items-center gap-2" style={storeColorStyle(store.color)}>
+                  <span
+                    aria-hidden
+                    className="h-2.5 w-2.5 shrink-0 rounded-full bg-(--store-color)"
+                    data-testid="store-dot"
+                  />
+                  <span>{store.name}</span>
+                </div>
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </PanelPortal>
     </Select>
   );
 }

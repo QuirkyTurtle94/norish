@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTRPC } from "@/app/providers/trpc-provider";
-import { usePanelPortalContainer } from "@/components/Panel/Panel";
+import { PanelPortal } from "@/components/Panel/Panel";
 import { ComboBox, Input, Label, ListBox } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
@@ -36,7 +36,6 @@ export function IngredientPicker({
   const locale = useLocale();
   const trpc = useTRPC();
   // Inside a Panel the options must portal into it, or vaul swallows every tap (#511).
-  const portalContainer = usePanelPortalContainer();
   const [term, setTerm] = useState("");
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
@@ -90,32 +89,31 @@ export function IngredientPicker({
         placeholder={t("pickIngredient")}
         variant="secondary"
       />
-      <ComboBox.Popover
-        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
-        UNSTABLE_portalContainer={portalContainer}
-      >
-        <ListBox
-          renderEmptyState={() => (
-            <p className="text-muted px-3 py-2 text-sm">
-              {term.trim() === ""
-                ? t("pickerHint")
-                : isFetching || search !== term.trim()
-                  ? t("pickerSearching")
-                  : t("pickerEmpty")}
-            </p>
-          )}
-        >
-          {(option: { id: string; name: string }) => (
-            <ListBox.Item
-              data-testid="ingredient-picker-option"
-              id={option.id}
-              textValue={option.name}
-            >
-              {option.name}
-            </ListBox.Item>
-          )}
-        </ListBox>
-      </ComboBox.Popover>
+      <PanelPortal>
+        <ComboBox.Popover>
+          <ListBox
+            renderEmptyState={() => (
+              <p className="text-muted px-3 py-2 text-sm">
+                {term.trim() === ""
+                  ? t("pickerHint")
+                  : isFetching || search !== term.trim()
+                    ? t("pickerSearching")
+                    : t("pickerEmpty")}
+              </p>
+            )}
+          >
+            {(option: { id: string; name: string }) => (
+              <ListBox.Item
+                data-testid="ingredient-picker-option"
+                id={option.id}
+                textValue={option.name}
+              >
+                {option.name}
+              </ListBox.Item>
+            )}
+          </ListBox>
+        </ComboBox.Popover>
+      </PanelPortal>
     </ComboBox>
   );
 }

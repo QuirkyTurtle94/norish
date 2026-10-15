@@ -3,7 +3,7 @@
 import type { ButtonProps } from "@heroui/react";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { createContext, use, useLayoutEffect, useRef, useState } from "react";
-import { usePanelPortalContainer } from "@/components/Panel/Panel";
+import { PanelPortal } from "@/components/Panel/Panel";
 import {
   ArrowPathIcon,
   ArrowRightIcon,
@@ -128,7 +128,6 @@ export function IconActionButton({
 }: IconActionButtonProps) {
   const config = ACTION_CONFIG[action];
   const Icon = icon ?? config.icon;
-  const portalContainer = usePanelPortalContainer();
 
   return (
     <Tooltip delay={0}>
@@ -141,13 +140,11 @@ export function IconActionButton({
       >
         <Icon className="size-4" />
       </Button>
-      <Tooltip.Content
-        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
-        UNSTABLE_portalContainer={portalContainer}
-        placement={tooltipPlacement}
-      >
-        <p>{label}</p>
-      </Tooltip.Content>
+      <PanelPortal>
+        <Tooltip.Content placement={tooltipPlacement}>
+          <p>{label}</p>
+        </Tooltip.Content>
+      </PanelPortal>
     </Tooltip>
   );
 }

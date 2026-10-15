@@ -10,6 +10,7 @@ import React, {
   useState,
 } from "react";
 import { CloseButton } from "@heroui/react";
+import { UNSAFE_PortalProvider } from "react-aria";
 import { twMerge } from "tailwind-merge";
 import { Drawer } from "vaul";
 
@@ -47,23 +48,28 @@ export function usePanel() {
 }
 
 /**
- * The container an overlay opened inside a Panel must portal into.
+ * Portals the overlays inside it into the open Panel.
  *
- * Undefined outside a Panel, which leaves the default `<body>` container in
- * place. Verified in a real browser at a phone-sized viewport: with a Panel
- * open, `<body>` computes `pointer-events: none` and every popover portalled
- * there inherits it — a menu, a select and a date picker alike all render and
- * swallow every tap (#511). Portalling into the panel puts them back under
- * vaul's own `pointer-events: auto`.
+ * Outside a Panel they keep the default `<body>` container. Verified in a real
+ * browser at a phone-sized viewport: with a Panel open, `<body>` computes
+ * `pointer-events: none` and every popover portalled there inherits it — a
+ * menu, a select and a date picker alike all render and swallow every tap
+ * (#511). Portalling into the panel puts them back under vaul's own
+ * `pointer-events: auto`. Wrap popovers only: a full-viewport modal portalled
+ * into the panel would be sized by the drawer's transform.
  *
- * `UNSTABLE_portalContainer` is React Aria's deprecated-but-supported escape
- * hatch. Its replacement, `UNSAFE_PortalProvider`, ships in `react-aria`,
- * which this app does not depend on: React Aria Components only hears the
- * provider from its own copy of `react-aria`, so a direct dependency would have
- * to move in lockstep with it, and one left behind is silently ignored.
+ * React Aria Components only hears this provider from its own copy of
+ * `react-aria`, so this app's `react-aria` must stay on the exact version RAC
+ * pins, or overlays silently go back to `<body>`.
  */
-export function usePanelPortalContainer(): HTMLElement | undefined {
-  return usePanel().portalContainer ?? undefined;
+export function PanelPortal({ children }: { children: ReactNode }) {
+  const { portalContainer } = usePanel();
+
+  return (
+    <UNSAFE_PortalProvider getContainer={portalContainer ? () => portalContainer : undefined}>
+      {children}
+    </UNSAFE_PortalProvider>
+  );
 }
 
 type PanelSectionProps = {

@@ -92,7 +92,7 @@ vi.mock("@/components/Panel/Panel", () => {
   Panel.Body = ({ children }: any) => <div>{children}</div>;
   Panel.Footer = ({ children }: any) => <div>{children}</div>;
 
-  return { default: Panel, usePanelPortalContainer: () => undefined };
+  return { default: Panel, PanelPortal: ({ children }: { children: React.ReactNode }) => children };
 });
 
 const ONION_RAW = { dataset: "ciqual" as const, code: "20034", name: "Onion, raw" };

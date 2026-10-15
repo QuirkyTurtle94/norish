@@ -122,7 +122,7 @@ vi.mock("@/components/Panel/Panel", () => {
   Panel.Body = ({ children }: { children: ReactNode }) => <div>{children}</div>;
   Panel.Footer = ({ children }: { children: ReactNode }) => <div>{children}</div>;
 
-  return { usePanelPortalContainer: () => undefined, default: Panel };
+  return { PanelPortal: ({ children }: { children: React.ReactNode }) => children, default: Panel };
 });
 
 function store(id: string, name: string, searchAddress: string | null): StoreDto {

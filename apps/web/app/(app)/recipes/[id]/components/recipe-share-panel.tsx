@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTRPC } from "@/app/providers/trpc-provider";
-import Panel, { usePanelPortalContainer } from "@/components/Panel/Panel";
+import Panel, { PanelPortal } from "@/components/Panel/Panel";
 import RecipeShareStatusChip from "@/components/recipes/recipe-share-status-chip";
 import { sharedRecipeShareHooks } from "@/hooks/recipes/shared-recipe-hooks";
 import { showSafeErrorToast } from "@/lib/ui/safe-error-toast";
@@ -265,7 +265,6 @@ function ExpirySelect({
   onSelectExpiry: (value: CreateRecipeShareInputDto["expiresIn"]) => void;
 }) {
   const t = useTranslations("recipes.sharePanel");
-  const portalContainer = usePanelPortalContainer();
 
   return (
     <Select
@@ -283,23 +282,22 @@ function ExpirySelect({
         <Select.Value />
         <Select.Indicator />
       </Select.Trigger>
-      <Select.Popover
-        // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
-        UNSTABLE_portalContainer={portalContainer}
-      >
-        <ListBox>
-          {expiryOptions.map((option) => {
-            const label = t(`expiryOptions.${option}`);
+      <PanelPortal>
+        <Select.Popover>
+          <ListBox>
+            {expiryOptions.map((option) => {
+              const label = t(`expiryOptions.${option}`);
 
-            return (
-              <ListBox.Item key={option} id={option} textValue={label}>
-                <Label>{label}</Label>
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            );
-          })}
-        </ListBox>
-      </Select.Popover>
+              return (
+                <ListBox.Item key={option} id={option} textValue={label}>
+                  <Label>{label}</Label>
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              );
+            })}
+          </ListBox>
+        </Select.Popover>
+      </PanelPortal>
     </Select>
   );
 }

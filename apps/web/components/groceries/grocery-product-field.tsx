@@ -6,7 +6,7 @@ import { FIELD_CLASS, FIELD_STYLE } from "@/components/groceries/grocery-field";
 import { GroceryPurchaseAmount } from "@/components/groceries/grocery-purchase-amount";
 import { ProductDetailsPanel } from "@/components/groceries/product-details-panel";
 import { SalePrice } from "@/components/groceries/sale-price";
-import { usePanelPortalContainer } from "@/components/Panel/Panel";
+import { PanelPortal } from "@/components/Panel/Panel";
 import { useShopSearch, useStoreProducts } from "@/hooks/stores";
 import { usePackSizeWords } from "@/hooks/stores/use-pack-size-words";
 import { formatPackSize, formatShelfPrice } from "@/lib/format-price";
@@ -238,7 +238,6 @@ export function GroceryProductField({
   const tPrice = useTranslations("groceries.price");
   const locale = useLocale();
   const packWords = usePackSizeWords();
-  const portalContainer = usePanelPortalContainer();
   const canSearch = Boolean(store.searchAddress);
   const pointsAtShop = Boolean(store.website ?? store.searchAddress);
   const opensWith = linkedProduct?.name ?? "";
@@ -721,55 +720,57 @@ export function GroceryProductField({
           />
           <ComboBox.Trigger />
         </ComboBox.InputGroup>
-        <ComboBox.Popover
-          // eslint-disable-next-line sonarjs/deprecation -- its replacement needs react-aria as a dependency, see usePanelPortalContainer
-          UNSTABLE_portalContainer={portalContainer}
-        >
-          <ListBox renderEmptyState={() => null}>
-            {knownRows.length > 0 && (
-              <ListBox.Section>
-                <Header className="text-muted px-2 py-1 text-xs" data-testid="product-group-known">
-                  {t("knownGroup")}
-                </Header>
-                {knownRows.map((row) => (
-                  <ListBox.Item
-                    key={row.key}
-                    data-testid="product-option"
-                    id={row.key}
-                    textValue={row.name}
+        <PanelPortal>
+          <ComboBox.Popover>
+            <ListBox renderEmptyState={() => null}>
+              {knownRows.length > 0 && (
+                <ListBox.Section>
+                  <Header
+                    className="text-muted px-2 py-1 text-xs"
+                    data-testid="product-group-known"
                   >
-                    <RowContent
-                      locale={locale}
-                      regularPriceLabel={(price) => tPrice("regularPrice", { price })}
-                      row={row}
-                    />
-                  </ListBox.Item>
-                ))}
-              </ListBox.Section>
-            )}
-            {(isSearching || shopRows.length > 0) && (
-              <ListBox.Section>
-                <Header className="text-muted px-2 py-1 text-xs" data-testid="product-group-shop">
-                  {isSearching ? t("searching", { store: store.name }) : t("shopGroup")}
-                </Header>
-                {shopRows.map((row) => (
-                  <ListBox.Item
-                    key={row.key}
-                    data-testid="product-option"
-                    id={row.key}
-                    textValue={row.name}
-                  >
-                    <RowContent
-                      locale={locale}
-                      regularPriceLabel={(price) => tPrice("regularPrice", { price })}
-                      row={row}
-                    />
-                  </ListBox.Item>
-                ))}
-              </ListBox.Section>
-            )}
-          </ListBox>
-        </ComboBox.Popover>
+                    {t("knownGroup")}
+                  </Header>
+                  {knownRows.map((row) => (
+                    <ListBox.Item
+                      key={row.key}
+                      data-testid="product-option"
+                      id={row.key}
+                      textValue={row.name}
+                    >
+                      <RowContent
+                        locale={locale}
+                        regularPriceLabel={(price) => tPrice("regularPrice", { price })}
+                        row={row}
+                      />
+                    </ListBox.Item>
+                  ))}
+                </ListBox.Section>
+              )}
+              {(isSearching || shopRows.length > 0) && (
+                <ListBox.Section>
+                  <Header className="text-muted px-2 py-1 text-xs" data-testid="product-group-shop">
+                    {isSearching ? t("searching", { store: store.name }) : t("shopGroup")}
+                  </Header>
+                  {shopRows.map((row) => (
+                    <ListBox.Item
+                      key={row.key}
+                      data-testid="product-option"
+                      id={row.key}
+                      textValue={row.name}
+                    >
+                      <RowContent
+                        locale={locale}
+                        regularPriceLabel={(price) => tPrice("regularPrice", { price })}
+                        row={row}
+                      />
+                    </ListBox.Item>
+                  ))}
+                </ListBox.Section>
+              )}
+            </ListBox>
+          </ComboBox.Popover>
+        </PanelPortal>
       </ComboBox>
 
       {linkedProduct && !unlinked && (

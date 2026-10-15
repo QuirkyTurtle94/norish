@@ -37,6 +37,7 @@
     "esbuild": "^0.28.2",
     "next": "catalog:",
     "react": "catalog:",
+    "react-aria": "3.53.1",
     "react-dom": "catalog:",
     "server-only": "catalog:",
     "tsx": "catalog:",
