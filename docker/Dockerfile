@@ -100,13 +100,11 @@ RUN pnpm run build && \
 # installs the versions pnpm-lock.yaml records.
 RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   cd /app/deploy/node_modules/.pnpm && \
-  # Build-time packages that reach the production closure through peers:
-  # TypeScript as tRPC's peer, drizzle-kit as better-auth's optional peer, and
-  # Babel, type declarations and Tailwind with them. The server runs through
-  # tsx and esbuild, so those two stay. ffmpeg-static is superseded by the
-  # system ffmpeg (apk add ffmpeg below).
-  rm -rf typescript@* drizzle-kit@* @babel+* @types+* tailwindcss@* @tailwindcss+* \
-  ffmpeg-static@* \
+  # Build-time packages that reach the production closure through required
+  # peers: TypeScript as tRPC's, and Babel, type declarations and Tailwind with
+  # them. The server runs through tsx and esbuild, so those two stay.
+  # ffmpeg-static is superseded by the system ffmpeg (apk add ffmpeg below).
+  rm -rf typescript@* @babel+* @types+* tailwindcss@* @tailwindcss+* ffmpeg-static@* \
   # SWC compiles only during next build.
   @next+swc-* && \
   # Next's ESM build, its docs and its development runtimes: the production
@@ -115,10 +113,53 @@ RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   find next@*/node_modules/next -name '*.runtime.dev.js' -delete && \
   # Source maps, type declarations and documentation load at no point.
   find /app/deploy/node_modules -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' \
-  -o -name '*.d.cts' -o -name '*.md' \) -delete && \
-  # Then every store folder nothing reaches any more: the optional peers pnpm
-  # filled from the workspace, and what only the folders above needed.
-  node /app/docker/prune-deploy.mjs /app/deploy/node_modules
+  -o -name '*.d.cts' -o -name '*.md' \) -delete
+
+# Then every store folder nothing reaches any more. The walk starts at the
+# deploy's top-level links and follows each package's dependencies, optional
+# dependencies and required peers, never an optional peer: pnpm fills one
+# whenever the workspace has it (drizzle-kit for Better Auth, Playwright and
+# the React Compiler for Next), but the package runs without it. A folder
+# removed above counts as absent, so what only it needed goes too.
+RUN node --input-type=module <<'EOF'
+import { existsSync, readdirSync, readFileSync, realpathSync, rmSync } from "node:fs";
+import { join, sep } from "node:path";
+
+const root = "/app/deploy/node_modules";
+const store = join(root, ".pnpm");
+const reached = new Set();
+const visit = (link) => {
+  if (!existsSync(link)) return;
+  const dir = realpathSync(link);
+  if (dir.startsWith(store + sep)) reached.add(dir);
+};
+
+for (const entry of readdirSync(root).filter((name) => !name.startsWith("."))) {
+  const scoped = entry.startsWith("@") ? readdirSync(join(root, entry)) : null;
+  for (const name of scoped ? scoped.map((n) => `${entry}/${n}`) : [entry]) visit(join(root, name));
+}
+
+// A Set iterates what is added while it iterates, so this walks to the end.
+for (const dir of reached) {
+  const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+  const optionalPeer = (name) => manifest.peerDependenciesMeta?.[name]?.optional;
+  // A package's dependencies are linked beside it in its store folder.
+  const siblings = dir.slice(0, dir.lastIndexOf(`${sep}node_modules${sep}`) + "/node_modules".length);
+  for (const name of [
+    ...Object.keys(manifest.dependencies ?? {}),
+    ...Object.keys(manifest.optionalDependencies ?? {}),
+    ...Object.keys(manifest.peerDependencies ?? {}).filter((name) => !optionalPeer(name)),
+  ])
+    visit(join(siblings, name));
+}
+
+const kept = new Set([...reached].map((dir) => dir.slice(store.length + 1).split(sep)[0]));
+const removed = readdirSync(store).filter(
+  (folder) => folder !== "node_modules" && folder !== "lock.yaml" && !kept.has(folder)
+);
+for (const folder of removed) rmSync(join(store, folder), { recursive: true, force: true });
+console.log(`removed ${removed.length} unreached store folders: ${removed.join(" ")}`);
+EOF
 
 # The deployed @norish/* copies are the only copy of the workspace code: their
 # tests, build configs and type output (dist holds declarations only) go, and
