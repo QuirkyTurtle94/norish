@@ -2,8 +2,7 @@
  * The queues, by name. A leaf on purpose: `job-steps.ts` declares each
  * queue's pipeline against them, and `create-worker.ts` wraps every processor
  * with the step reporting's model ledger, so neither may reach the other
- * through this module. `config.ts` re-exports both names so every existing
- * `@norish/queue/config` import still holds.
+ * through this module.
  */
 export const QUEUE_NAMES = {
   RECIPE_IMPORT: "recipe-import",

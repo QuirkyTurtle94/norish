@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { QUEUE_NAMES } from "@norish/queue/config";
+import { QUEUE_NAMES } from "@norish/queue/queue-names";
 import { jobQueueProcedures } from "@norish/trpc/routers/admin/job-queue";
 
 import { setConfig } from "../mocks/server-config";

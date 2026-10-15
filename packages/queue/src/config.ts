@@ -9,14 +9,8 @@ import type { DefaultJobOptions, WorkerOptions } from "bullmq";
 
 import type { JobRetentionConfig } from "@norish/config/zod/server-config";
 
-/**
- * Queue names for all background job queues
- */
 import type { QueueName } from "./queue-names";
 import { QUEUE_NAMES } from "./queue-names";
-
-export { QUEUE_NAMES };
-export type { QueueName };
 
 /**
  * Base worker options shared across all workers.

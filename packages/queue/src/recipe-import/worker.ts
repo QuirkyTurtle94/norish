@@ -20,10 +20,11 @@ import { ErrorWithDetail } from "@norish/shared/lib/error-extensions";
 import { credentialSetsForUrl, rotateCredentialSet } from "@norish/shared/lib/site-auth-tokens";
 import { withTimeout } from "@norish/shared/lib/with-timeout";
 
-import { QUEUE_NAMES, RECIPE_IMPORT_PROCESSING_TIMEOUT_MS } from "../config";
+import { RECIPE_IMPORT_PROCESSING_TIMEOUT_MS } from "../config";
 import { createWorker, isFinalFailure } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { completeStep, reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:recipe-import");
 

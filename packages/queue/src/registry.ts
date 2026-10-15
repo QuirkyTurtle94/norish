@@ -27,10 +27,11 @@ import { DEFAULT_JOB_RETENTION, ServerConfigKeys } from "@norish/config/zod/serv
 import { getConfig } from "@norish/db/repositories/server-config";
 import { createLogger } from "@norish/shared-server/logger";
 
-import type { QueueName } from "./config";
+import type { QueueName } from "./queue-names";
 import type { ScheduledTaskJobData } from "./scheduled-tasks/tasks";
-import { buildRemovalOptions, QUEUE_NAMES, QUEUE_SETTINGS } from "./config";
+import { buildRemovalOptions, QUEUE_SETTINGS } from "./config";
 import { createOperationAwareQueue, logQueueErrors } from "./operation-aware-queue";
+import { QUEUE_NAMES } from "./queue-names";
 import { getBullClient } from "./redis/bullmq";
 
 const log = createLogger("queue:registry");

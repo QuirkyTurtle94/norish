@@ -12,9 +12,9 @@ import type { Queue } from "bullmq";
 import type { RecipeEnrichmentKind } from "@norish/shared/lib/recipe-enrichment";
 import { toEnrichmentLifecycleState } from "@norish/shared/lib/recipe-enrichment";
 
-import type { QueueName } from "../config";
 import type { RecipeEnrichmentJobData } from "../contracts/job-types";
-import { QUEUE_NAMES } from "../config";
+import type { QueueName } from "../queue-names";
+import { QUEUE_NAMES } from "../queue-names";
 
 /** BullMQ job ids cannot contain colons, so kinds are joined with underscores. */
 export function enrichmentJobId(kind: RecipeEnrichmentKind, recipeId: string): string {

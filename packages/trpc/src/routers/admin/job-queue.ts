@@ -2,8 +2,8 @@ import type { Job, Queue } from "bullmq";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import type { QueueName } from "@norish/queue/config";
 import type { JobStepEvent } from "@norish/queue/job-steps";
+import type { QueueName } from "@norish/queue/queue-names";
 import type {
   AdminJobAttemptDTO,
   AdminJobDetailDTO,
@@ -16,9 +16,10 @@ import type {
 } from "@norish/shared/contracts";
 import { JobRetentionConfigSchema, ServerConfigKeys } from "@norish/config/zod/server-config";
 import { setConfig } from "@norish/db/repositories/server-config";
-import { QUEUE_NAMES, QUEUE_SETTINGS } from "@norish/queue/config";
+import { QUEUE_SETTINGS } from "@norish/queue/config";
 import { cancelRunningJob, isCancelled } from "@norish/queue/create-worker";
 import { getJobStep, JOB_PIPELINES, readStepProgress } from "@norish/queue/job-steps";
+import { QUEUE_NAMES } from "@norish/queue/queue-names";
 import { getAllQueueEntries, getQueueByName } from "@norish/queue/registry";
 import { trpcLogger as log } from "@norish/shared-server/logger";
 

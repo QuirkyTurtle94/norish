@@ -4,9 +4,9 @@ import type { StoreLookupJobData } from "@norish/queue/contracts/job-types";
 import { clearPendingLink } from "@norish/db/repositories/store-products";
 import { createLogger } from "@norish/shared-server/logger";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker, isFinalFailure } from "../create-worker";
 import { completeStep, reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 import { matchGroceryName, refreshProducts } from "./lookup";
 
 const log = createLogger("worker:store-lookup");

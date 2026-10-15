@@ -6,7 +6,8 @@
  */
 
 // Config
-export { QUEUE_NAMES, baseWorkerOptions } from "./config";
+export { baseWorkerOptions } from "./config";
+export { QUEUE_NAMES } from "./queue-names";
 
 export { createOperationAwareQueue } from "./operation-aware-queue";
 

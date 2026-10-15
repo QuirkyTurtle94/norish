@@ -33,10 +33,10 @@ import { createLogger } from "@norish/shared-server/logger";
 import { enrichmentWriteMode } from "@norish/shared/lib/recipe-enrichment";
 import { suppliesNutrition } from "@norish/shared/lib/recipe-nutrition";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker } from "../create-worker";
 import { handleEnrichmentJobFailure, runEnrichmentJob } from "../enrichment/worker-runner";
 import { reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:nutrition-estimation");
 

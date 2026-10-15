@@ -12,7 +12,6 @@ import { categorizeRecipe } from "@norish/shared-server/ai/enrichment/auto-categ
 import { createLogger } from "@norish/shared-server/logger";
 import { enrichmentWriteMode } from "@norish/shared/lib/recipe-enrichment";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker } from "../create-worker";
 import {
   handleEnrichmentJobFailure,
@@ -20,6 +19,7 @@ import {
   toRecipeSummary,
 } from "../enrichment/worker-runner";
 import { reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:auto-categorization");
 

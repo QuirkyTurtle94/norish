@@ -24,9 +24,9 @@ import { ingredients } from "@norish/shared-server/realtime/ingredients";
 
 import type { JobStepEvent } from "../job-steps";
 import type { IconStepDetail } from "./progress";
-import { QUEUE_NAMES } from "../config";
 import { createWorker, isFinalFailure } from "../create-worker";
 import { recordCompletedSteps } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 import { ICON_STEP, summarizeIconRound } from "./progress";
 
 const log = createLogger("worker:ingredient-icons");

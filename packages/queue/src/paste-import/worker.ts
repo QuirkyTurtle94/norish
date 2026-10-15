@@ -29,10 +29,10 @@ import { MAX_RECIPE_PASTE_CHARS } from "@norish/shared/contracts/uploads";
 import { FullRecipeInsertSchema } from "@norish/shared/contracts/zod";
 import { hasRecipeNameIngredientsAndSteps } from "@norish/shared/lib/helpers";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker, isFinalFailure } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { completeStep, reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:paste-import");
 

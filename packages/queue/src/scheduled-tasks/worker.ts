@@ -10,9 +10,9 @@ import { recheckUndecidedMintsOnRungChange } from "@norish/shared-server/ingredi
 import { createLogger } from "@norish/shared-server/logger";
 
 import type { ScheduledTaskJobData } from "./tasks";
-import { QUEUE_NAMES } from "../config";
 import { createWorker } from "../create-worker";
 import { reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:scheduled-tasks");
 

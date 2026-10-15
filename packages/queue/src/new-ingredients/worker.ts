@@ -18,9 +18,9 @@ import { drawNewIngredientIcon } from "@norish/shared-server/ingredients/icon-ro
 import { giveNewIngredientItsPlainName } from "@norish/shared-server/ingredients/plain-names";
 import { createLogger } from "@norish/shared-server/logger";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker } from "../create-worker";
 import { reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:new-ingredients");
 

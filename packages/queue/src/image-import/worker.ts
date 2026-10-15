@@ -17,10 +17,10 @@ import { dishColorForImageUrl } from "@norish/shared-server/media/dish-color";
 import { deleteRecipeImagesDir, saveImageBytes } from "@norish/shared-server/media/storage";
 import { recipes } from "@norish/shared-server/realtime/recipes";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker } from "../create-worker";
 import { announceUsableRecipe } from "../enrichment/announce";
 import { reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:image-import");
 

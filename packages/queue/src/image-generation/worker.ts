@@ -21,7 +21,6 @@ import { createLogger } from "@norish/shared-server/logger";
 import { refreshDishColorForRecipe } from "@norish/shared-server/media/dish-color";
 import { storeGeneratedRecipeImage } from "@norish/shared-server/media/generated-image";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker } from "../create-worker";
 import {
   handleEnrichmentJobFailure,
@@ -29,6 +28,7 @@ import {
   toRecipeSummary,
 } from "../enrichment/worker-runner";
 import { reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:image-generation");
 

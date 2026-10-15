@@ -13,9 +13,9 @@ import { requireQueueApiHandler } from "@norish/queue/api-handlers";
 import { createLogger } from "@norish/shared-server/logger";
 import { caldav } from "@norish/shared-server/realtime/caldav";
 
-import { QUEUE_NAMES } from "../config";
 import { createWorker, isFinalFailure } from "../create-worker";
 import { reportStep } from "../job-steps";
+import { QUEUE_NAMES } from "../queue-names";
 
 const log = createLogger("worker:caldav-sync");
 
