@@ -517,6 +517,19 @@ describe("admin job queue procedures", () => {
       expect(result).toEqual({ success: true });
     });
 
+    it("retries a job an administrator cancelled, in case the cancel was a mistake", async () => {
+      const job = createMockJob({
+        failedReason: "Cancelled by an administrator",
+        getState: vi.fn().mockResolvedValue("failed"),
+      });
+
+      registryMock.queues.set(QUEUE_NAMES.RECIPE_IMPORT, createMockQueue([job]));
+
+      await createCaller().retry({ queue: QUEUE_NAMES.RECIPE_IMPORT, jobId: "job-1" });
+
+      expect(job.retry).toHaveBeenCalled();
+    });
+
     it("rejects retrying a non-failed job", async () => {
       const job = createMockJob({ getState: vi.fn().mockResolvedValue("completed") });
 

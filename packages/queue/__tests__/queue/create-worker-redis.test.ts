@@ -17,13 +17,13 @@ import {
 
 import { freezableProxy, REDIS_IMAGE } from "../../../shared-server/__tests__/helpers/redis";
 import {
-  CANCELLED_BY_ADMINISTRATOR,
   cancelRunningJob,
   closeWorkers,
   createWorker,
+  isCancelled,
   isFinalFailure,
 } from "../../src/create-worker";
-import { readStepProgress } from "../../src/job-steps";
+import { readStepProgress, reportStep } from "../../src/job-steps";
 import { QUEUE_NAMES } from "../../src/queue-names";
 import { withJobOperationContext } from "../../src/queue-operation-context";
 import { closeBullConnection, getBullClient } from "../../src/redis/bullmq";
@@ -218,16 +218,95 @@ it("ends a job an administrator cancelled as failed for good, with the administr
   await running;
   expect(cancelRunningJob(QUEUE, job.id!)).toBe(true);
 
+  // A job with attempts left would go to delayed for its retry, never to failed.
   await expect.poll(() => queue.getJobState(job.id!)).toBe("failed");
-  // Well past the backoff a retry would have waited out.
-  await new Promise((resolve) => setTimeout(resolve, 500));
 
   const stored = await queue.getJob(job.id!);
 
-  expect(await queue.getJobState(job.id!)).toBe("failed");
-  expect(stored?.failedReason).toBe(CANCELLED_BY_ADMINISTRATOR);
+  expect(isCancelled(stored!)).toBe(true);
   expect(stored?.attemptsMade).toBe(1);
   expect(finals).toEqual([true]);
+}, 30_000);
+
+it("stops a cancelled job that does not watch its signal at its next step, as Cancelled", async () => {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  let started = () => {};
+  const running = new Promise<void>((resolve) => (started = resolve));
+  const steps: string[] = [];
+
+  createWorker(QUEUE, async (job) => {
+    await reportStep(job, "first");
+    steps.push("first");
+    started();
+    await held;
+    await reportStep(job, "second");
+    steps.push("second");
+  });
+
+  const job = await queue.add("cancel-me", {}, { attempts: 3 });
+
+  await running;
+  expect(cancelRunningJob(QUEUE, job.id!)).toBe(true);
+  release();
+
+  await expect.poll(() => queue.getJobState(job.id!)).toBe("failed");
+  expect(isCancelled((await queue.getJob(job.id!))!)).toBe(true);
+  expect(steps).toEqual(["first"]);
+}, 30_000);
+
+it("ends a cancelled job that finishes the step it was on as Cancelled, not completed", async () => {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  let started = () => {};
+  const running = new Promise<void>((resolve) => (started = resolve));
+
+  createWorker(QUEUE, async () => {
+    started();
+    await held;
+
+    return "done";
+  });
+
+  const job = await queue.add("cancel-me", {});
+
+  await running;
+  expect(cancelRunningJob(QUEUE, job.id!)).toBe(true);
+  release();
+
+  await expect.poll(() => queue.getJobState(job.id!)).toBe("failed");
+  expect(isCancelled((await queue.getJob(job.id!))!)).toBe(true);
+}, 30_000);
+
+it("runs a cancelled job again when an administrator retries it", async () => {
+  let started = () => {};
+  const running = new Promise<void>((resolve) => (started = resolve));
+  let runs = 0;
+
+  createWorker(QUEUE, async () => {
+    runs += 1;
+    if (runs === 1) {
+      started();
+      await aRequestThatHangs();
+    }
+
+    return "ran";
+  });
+
+  const job = await queue.add("cancel-then-retry", {});
+
+  await running;
+  cancelRunningJob(QUEUE, job.id!);
+  await expect.poll(() => queue.getJobState(job.id!)).toBe("failed");
+
+  await (await queue.getJob(job.id!))!.retry();
+
+  await expect.poll(() => queue.getJobState(job.id!)).toBe("completed");
+
+  const stored = await queue.getJob(job.id!);
+
+  expect(stored?.returnvalue).toBe("ran");
+  expect(isCancelled(stored!)).toBe(false);
 }, 30_000);
 
 it("answers a cancel for a job no worker here is running with false", async () => {

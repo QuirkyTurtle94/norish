@@ -12,11 +12,12 @@
  * - passes its processor BullMQ's abort signal as a third parameter, which
  *   BullMQ only creates for a processor that declares three parameters
  *
- * A job stops only where it checks that signal, which in practice is the AI
- * Runtime: every request a job makes is bound to it. A job the signal stopped
- * is answered by who stopped it. An administrator's cancel fails it for good
- * (**Cancelled**); a shutdown puts it back to waiting without spending an
- * attempt, so the next boot runs it first.
+ * A job stops where it checks that signal: the AI Runtime, which binds every
+ * request a job makes to it, and, for an administrator's cancel, the job's
+ * next step report. A job the signal stopped is answered by who stopped it.
+ * An administrator's cancel fails it for good (**Cancelled**), even when it
+ * finished the step it was on; a shutdown puts it back to waiting without
+ * spending an attempt, so the next boot runs it first.
  */
 
 import type { Job, Processor } from "bullmq";
@@ -26,14 +27,15 @@ import { createLogger } from "@norish/shared-server/logger";
 
 import type { QueueName } from "./queue-names";
 import { baseWorkerOptions, STALLED_INTERVAL, WORKER_CONCURRENCY } from "./config";
+import { stopAtNextStepOnceCancelled } from "./job-steps";
 import { createModelLedgerProcessor } from "./model-ledger-processor";
 import { createContextAwareProcessor } from "./queue-operation-context";
 import { getBullClient } from "./redis/bullmq";
 
 const log = createLogger("worker");
 
-/** What a job an administrator cancelled fails with; the job monitor reads it as Cancelled. */
-export const CANCELLED_BY_ADMINISTRATOR = "Cancelled by an administrator";
+/** What a job an administrator cancelled fails with. */
+const CANCELLED_BY_ADMINISTRATOR = "Cancelled by an administrator";
 
 /** The reason shutdown aborts the running jobs with. */
 const SHUTDOWN = "Norish is shutting down";
@@ -73,19 +75,29 @@ export function createWorker<T>(
   const running = new Set<Promise<unknown>>();
   const instrumented = createContextAwareProcessor(createModelLedgerProcessor(processor));
   const settle = async (job: Job<T>, token?: string, signal?: AbortSignal) => {
+    const cancelled = () => signal?.aborted === true && signal.reason !== SHUTDOWN;
+    let result: unknown;
+
+    stopAtNextStepOnceCancelled(job, cancelled);
     try {
-      return await instrumented(job, token, signal);
+      result = await instrumented(job, token, signal);
     } catch (err) {
       if (!signal?.aborted) throw err;
-      if (signal.reason !== SHUTDOWN) throw new UnrecoverableError(CANCELLED_BY_ADMINISTRATOR);
-
-      // With Redis unreachable the job stays active, and the next boot's
-      // stalled-job check puts it back.
-      await job.moveToWait(token).catch((moveErr: unknown) => {
-        log.warn({ err: moveErr, queueName, jobId: job.id }, "Could not put a job back to waiting");
-      });
-      throw new WaitingError();
+      if (signal.reason === SHUTDOWN) {
+        // With Redis unreachable the job stays active, and the next boot's
+        // stalled-job check puts it back.
+        await job.moveToWait(token).catch((moveErr: unknown) => {
+          log.warn(
+            { err: moveErr, queueName, jobId: job.id },
+            "Could not put a job back to waiting"
+          );
+        });
+        throw new WaitingError();
+      }
     }
+    if (cancelled()) throw new UnrecoverableError(CANCELLED_BY_ADMINISTRATOR);
+
+    return result;
   };
   const worker = new Worker<T>(
     queueName,
@@ -126,6 +138,11 @@ export function createWorker<T>(
   workers().set(queueName, { worker: worker as Worker, running });
 
   return worker;
+}
+
+/** Whether a job ended because an administrator cancelled it: BullMQ keeps it as failed. */
+export function isCancelled(job: Pick<Job, "failedReason">): boolean {
+  return job.failedReason === CANCELLED_BY_ADMINISTRATOR;
 }
 
 /**

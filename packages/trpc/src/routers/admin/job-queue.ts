@@ -17,7 +17,7 @@ import type {
 import { JobRetentionConfigSchema, ServerConfigKeys } from "@norish/config/zod/server-config";
 import { setConfig } from "@norish/db/repositories/server-config";
 import { HANGING_THRESHOLD_MS, QUEUE_NAMES } from "@norish/queue/config";
-import { CANCELLED_BY_ADMINISTRATOR, cancelRunningJob } from "@norish/queue/create-worker";
+import { cancelRunningJob, isCancelled } from "@norish/queue/create-worker";
 import { getJobStep, JOB_PIPELINES, readStepProgress } from "@norish/queue/job-steps";
 import { getAllQueueEntries, getQueueByName } from "@norish/queue/registry";
 import { trpcLogger as log } from "@norish/shared-server/logger";
@@ -293,11 +293,7 @@ function deriveModels(progress: unknown): AdminJobModelDTO[] {
 
 function toRowDTO(queueName: QueueName, job: Job, bullState: AdminJobState): AdminJobRowDTO {
   const now = Date.now();
-  // BullMQ keeps a cancelled job as failed; the reason it failed with tells them apart.
-  const state =
-    bullState === "failed" && job.failedReason === CANCELLED_BY_ADMINISTRATOR
-      ? "cancelled"
-      : bullState;
+  const state = bullState === "failed" && isCancelled(job) ? "cancelled" : bullState;
   const processedOn = job.processedOn ?? null;
   const finishedOn = job.finishedOn ?? null;
 
@@ -450,7 +446,7 @@ const detail = adminProcedure
   });
 
 /**
- * Re-run a failed job.
+ * Re-run a failed job, a cancelled one included: BullMQ keeps it as failed.
  */
 const retry = adminProcedure
   .input(z.object({ queue: QueueNameSchema, jobId: z.string().min(1) }))

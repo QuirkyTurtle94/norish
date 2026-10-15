@@ -397,7 +397,7 @@ export default function JobDetailModal({ queue, jobId, onClose }: Props) {
                   </>
                 ) : (
                   <>
-                    {job?.state === "failed" ? (
+                    {job?.state === "failed" || job?.state === "cancelled" ? (
                       <Button isPending={isRetrying} variant="primary" onPress={handleRetry}>
                         <ArrowPathIcon className="h-4 w-4" />
                         {t("actions.retry")}

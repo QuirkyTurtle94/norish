@@ -155,6 +155,18 @@ function isMergeable(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/** For each job a worker here is running, whether an administrator cancelled it. */
+const cancelChecks = new WeakMap<Job, () => boolean>();
+
+/**
+ * Registered by the worker for each job it starts, so the job's next step
+ * report stops it once cancelled: a step boundary is where work that does not
+ * watch its abort signal stops.
+ */
+export function stopAtNextStepOnceCancelled(job: Job, cancelled: () => boolean): void {
+  cancelChecks.set(job, cancelled);
+}
+
 /**
  * Report that the job is entering a new processing step.
  *
@@ -163,9 +175,12 @@ function isMergeable(value: unknown): value is Record<string, unknown> {
  * still name it when the step goes on to fail. `completeStep` merges its own
  * detail on top rather than replacing it.
  *
- * Best-effort: monitoring must never fail the job itself.
+ * Best-effort: monitoring must never fail the job itself. A job an
+ * administrator cancelled stops here instead of entering the step.
  */
 export async function reportStep(job: Job, step: string, detail?: unknown): Promise<void> {
+  if (cancelChecks.get(job)?.()) throw new Error(`Cancelled before ${step}`);
+
   try {
     const now = Date.now();
     const attempts = cloneAttempts(job);
