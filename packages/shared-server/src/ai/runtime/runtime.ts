@@ -1116,8 +1116,8 @@ export async function estimateDecisionInputTokens({
   };
 }
 
-/** How long the admin's Test button waits, whatever the AI timeout is tuned to. */
-const DECISION_TEST_TIMEOUT_MS = 15_000;
+/** How long the admin's Test buttons wait, whatever the AI timeout is tuned to. */
+const TEST_BUTTON_TIMEOUT_MS = 15_000;
 
 /**
  * The admin form's Test button: one trivial Boolean question against the
@@ -1150,7 +1150,7 @@ export async function testDecisionModel(
       state: "test",
       questions: { isTest: { type: "boolean", instructions: "Is this a test?" } },
       settings,
-      timeoutMs: Math.min(aiConfig.timeoutMs, DECISION_TEST_TIMEOUT_MS),
+      timeoutMs: Math.min(aiConfig.timeoutMs, TEST_BUTTON_TIMEOUT_MS),
     });
 
     return { success: true };
@@ -1162,6 +1162,41 @@ export async function testDecisionModel(
 
     if (isCredentialRejection(error)) {
       return { success: false, error: "The Decision Model provider rejected the API key." };
+    }
+
+    return { success: false, error: toAIError(error).message };
+  }
+}
+
+/**
+ * The AI form's Test button for Perplexity, which lists no models to ask
+ * about: one tiny question to its quickest Agent API preset, with the key as
+ * typed, through the provider the real requests use.
+ */
+export async function testPerplexityKey(
+  apiKey: string
+): Promise<{ success: boolean; error?: string }> {
+  const { model } = createModelsFromConfig({
+    provider: "perplexity",
+    model: "fast",
+    apiKey,
+    timeoutMs: TEST_BUTTON_TIMEOUT_MS,
+  });
+
+  try {
+    await generateText({
+      model,
+      prompt: "Hi",
+      maxOutputTokens: 16,
+      abortSignal: AbortSignal.timeout(TEST_BUTTON_TIMEOUT_MS),
+    });
+
+    return { success: true };
+  } catch (error) {
+    aiLogger.warn({ err: error, provider: "perplexity" }, "Perplexity test failed");
+
+    if (isCredentialRejection(error)) {
+      return { success: false, error: "Invalid API key" };
     }
 
     return { success: false, error: toAIError(error).message };
