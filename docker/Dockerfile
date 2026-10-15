@@ -112,9 +112,12 @@ RUN pnpm deploy --filter @norish/web --prod /app/deploy && \
   # server loads the CommonJS build alone.
   rm -rf next@*/node_modules/next/dist/esm next@*/node_modules/next/dist/docs && \
   find next@*/node_modules/next -name '*.runtime.dev.js' -delete && \
-  # Source maps, type declarations and documentation load at no point.
+  # Source maps, type declarations and documentation load at no point, nor do
+  # the test suites packages ship at their root.
   find /app/deploy/node_modules -type f \( -name '*.map' -o -name '*.d.ts' -o -name '*.d.mts' \
-  -o -name '*.d.cts' -o -name '*.md' \) -delete
+  -o -name '*.d.cts' -o -name '*.md' \) -delete && \
+  rm -rf */node_modules/*/test */node_modules/*/tests */node_modules/*/__tests__ \
+  */node_modules/@*/*/test */node_modules/@*/*/tests */node_modules/@*/*/__tests__
 
 # Then every store folder nothing reaches any more. The walk starts at the
 # deploy's top-level links and follows each package's dependencies, optional
@@ -163,16 +166,15 @@ console.log(`removed ${removed.length} unreached store folders: ${removed.join("
 EOF
 
 # The deployed @norish/* copies are the only copy of the workspace code: their
-# tests, build configs and type output (dist holds declarations only) go, and
+# build configs and type output (dist holds declarations only) go, and
 # /app/packages/<dir> keeps just package.json and a src link into the copy, so
 # the data read from packages/<dir>/src (prompts, migrations, the icon set)
 # resolves from /app as before. The links resolve once the deploy sits at
 # /app/node_modules.
 RUN for copy in /app/deploy/node_modules/.pnpm/*/node_modules/@norish/*; do \
   rm -rf "$copy/dist" && \
-  find "$copy" -type d -name '__tests__' -prune -exec rm -rf {} + && \
-  find "$copy" -type f \( -name '*.test.ts' -o -name '*.test.tsx' -o -name 'vitest.config.*' \
-  -o -name 'tsconfig*.json' -o -name 'eslint.config.*' -o -name 'turbo.json' \) -delete; \
+  find "$copy" -type f \( -name 'vitest.config.*' -o -name 'tsconfig*.json' -o -name 'eslint.config.*' \
+  -o -name 'turbo.json' \) -delete; \
   done && \
   for dir in /app/packages/*/; do \
   name=$(node -p "require('${dir}package.json').name") && \

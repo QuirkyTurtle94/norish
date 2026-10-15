@@ -59,3 +59,9 @@ apps/quick-import-extension/**
 
 # Docs — not needed in Docker build
 docs/
+
+# Tests run outside the image build, and none of them ships.
+**/__tests__
+**/tests
+**/*.test.ts
+**/*.test.tsx
