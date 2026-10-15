@@ -36,3 +36,4 @@ The review said the shim misses `AsymmetricMatchersContaining`. That is wrong: i
 - 2026-10-14 — Still blocked: jest-dom `latest` is 7.0.1 and #742 is open. It does not hold the branch's PR; if no release carries #742 by then, the shim ships and this ticket moves to the next release.
 - 2026-10-14 (later) — Checked again while implementing 31–56: jest-dom `latest` is still 7.0.1 and testing-library/jest-dom#742 is still open. As agreed above, the shim ships with 0.26 and this ticket carries over to the next release.
 - 2026-10-14 — Closed by the maintainer. The shim ships with 0.26 and its criteria stay unticked: jest-dom `latest` is still 7.0.1 and #742 is open. When a release carries #742, the three steps above still apply.
+- 2026-10-15 — Listed under the spec's Held lines, so the open criteria have a home after this ticket closes.

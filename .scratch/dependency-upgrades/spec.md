@@ -30,13 +30,13 @@ Every dependency moves to its newest **stable** release. A line stays behind onl
 4. **Node 26** (LTS from 2026-10-28), with undici 8 and `@types/node ^26`. The AI transport takes its fetch and its `Agent` from the same undici (ticket 42), so the next undici or Node major moves on its own.
 5. **Type checking returns first** (ticket 25): the packages, then apps/web, then a `pnpm typecheck` step in CI, before any major bump.
 6. **apps/mobile leaves the pnpm workspace** (ticket 23), and the server drops `expo()` and `@better-auth/expo` while the app is parked.
-7. **Renovate keeps it current** (ticket 07): weekly lockfile maintenance and grouped PRs. No blocking audit gate in CI, because an advisory published overnight would turn every PR red. No image scan.
+7. **No Renovate in this plan** (ticket 07, wontfix): the maintainer took it out on 2026-10-15, so dependencies move in sweeps like this one. No blocking audit gate in CI, because an advisory published overnight would turn every PR red. No image scan.
 8. **No right-sized images in this effort** (ticket 27 dropped). The unused `/_next/image` endpoint is still switched off (`images: { unoptimized: true }`, ticket 26).
 9. **Next's and Turborepo's coding-agent checks are on** (ticket 36). A build that stops because the installed Next has an advisory is the signal to upgrade Next. Reversed on 2026-10-14; the sweep had switched them off.
 10. **ESLint 10 replaces the plugins that stop at ESLint 9** (ticket 12): `@eslint-react/eslint-plugin` plus `@stylistic/eslint-plugin` for eslint-plugin-react, `eslint-plugin-jsx-a11y-x` for jsx-a11y. eslint-plugin-import is deleted; it enforces nothing.
 11. **Sign-in never links accounts** (ticket 10): `accountLinking.disableImplicitLinking: true`. `trustedProviders` stays, because it now only governs linking from a signed-in session. A deleted user's sessions are revoked immediately.
 12. **Linking an SSO provider from Settings** is built in 0.26 as its own feature spec, after Better Auth 1.7 lands. It is not part of this branch. The 0.25 release notes already promised it.
-13. **The image installs from the lockfile** on pnpm 12, and Node is pinned to an exact tag that Renovate bumps (ticket 16).
+13. **The image installs from the lockfile** on pnpm 12, and Node is pinned to an exact tag, bumped by hand with the next sweep (ticket 16).
 14. **BullMQ 6 and Job Schedulers land in the same release** (tickets 17 and 18). On 6.3.14 the existing boot sweep still finds and removes the repeatables 5.x created, so no stepping-stone release is needed. The sweep must stay.
 15. **The lazy-worker suspicion** (ticket 24) is reproduced against real Redis in the BullMQ 6 commit and fixed only if confirmed.
 16. **No manual steps for self-hosters** (carried over from the security plan): migrations run at boot. Stored Perplexity model ids are not mapped: reversed on 2026-10-14, when the maintainer deleted the Sonar mapping (ticket 37); an Upgrade note says to pick a preset. The old OIDC callback URL does not keep working: reversed during ticket 09, where the maintainer ruled out legacy code; an Upgrade note covers it.
@@ -63,7 +63,7 @@ Each step is one commit on `chore/dependency-upgrades`; every commit leaves the 
 14. **05** Perplexity 5 with **29** the AI SDK line.
 15. **20** archiver 8 and dotenv 18. **21** parse-ingredient 3.
 16. **06** and **30** the parser: Python 3.15, uv 0.13 and every Python dependency.
-17. **22** The docs site. **07** Renovate.
+17. **22** The docs site. **07** Renovate (wontfix).
 18. **03** Final audit: high-clean, overrides only for what remains.
 
 ## Inventory
@@ -106,22 +106,23 @@ Versions as of 2026-10-13. Take the newest patch when the work starts.
 
 ## Held lines and what unblocks them
 
-| Line                           | Why it waits                                                                                                                                                                                  | Unblocked when                                |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| TypeScript 7                   | The `typescript` package ships no JS compiler API. typescript-eslint 8.71 requires `<6.1.0`, and Next's build-time check needs the classic API.                                               | typescript-eslint supports TS 7.              |
-| zod-openapi 6                  | trpc-to-openapi 3.3.0, the latest, requires `^5.4.4`.                                                                                                                                         | A trpc-to-openapi release accepts 6.          |
-| `@better-auth/utils` 0.5       | better-auth 1.7.7, core and api-key pin 0.4.2 exactly.                                                                                                                                        | better-auth moves its pin.                    |
-| drizzle-orm 1.0                | Release candidates only (1.0.0-rc.4). 28 `relations()` and 29 `db.query.*` call sites plus drizzle-kit would move.                                                                            | 1.0.0 is stable; then it is its own effort.   |
-| Docusaurus 4                   | Canary only.                                                                                                                                                                                  | A stable 4.0.                                 |
-| Next.js 17                     | Not released, not even as a canary. 16.4 warns that Cache Components become the default in the next major, and Norish's root layout reads the database, headers and cookies outside Suspense. | 17 ships. Run a Cache Components spike first. |
-| Expo SDK 57, React Native 0.87 | apps/mobile is parked.                                                                                                                                                                        | The mobile rewrite.                           |
+| Line                           | Why it waits                                                                                                                                                                                  | Unblocked when                                  |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| TypeScript 7                   | The `typescript` package ships no JS compiler API. typescript-eslint 8.71 requires `<6.1.0`, and Next's build-time check needs the classic API.                                               | typescript-eslint supports TS 7.                |
+| zod-openapi 6                  | trpc-to-openapi 3.3.0, the latest, requires `^5.4.4`.                                                                                                                                         | A trpc-to-openapi release accepts 6.            |
+| `@better-auth/utils` 0.5       | better-auth 1.7.7, core and api-key pin 0.4.2 exactly.                                                                                                                                        | better-auth moves its pin.                      |
+| drizzle-orm 1.0                | Release candidates only (1.0.0-rc.4). 28 `relations()` and 29 `db.query.*` call sites plus drizzle-kit would move.                                                                            | 1.0.0 is stable; then it is its own effort.     |
+| Docusaurus 4                   | Canary only.                                                                                                                                                                                  | A stable 4.0.                                   |
+| Next.js 17                     | Not released, not even as a canary. 16.4 warns that Cache Components become the default in the next major, and Norish's root layout reads the database, headers and cookies outside Suspense. | 17 ships. Run a Cache Components spike first.   |
+| jest-dom's Vitest 5 types      | jest-dom 7.0.1 still augments Vitest 4's `Assertion<T>`; a local shim declares the matchers until then (ticket 32).                                                                           | A release carries testing-library/jest-dom#742. |
+| Expo SDK 57, React Native 0.87 | apps/mobile is parked.                                                                                                                                                                        | The mobile rewrite.                             |
 
 ## Testing Decisions
 
 - **Every commit passes** the `CONTRIBUTING.md` gates (`pnpm lint`, `pnpm test:run`, `pnpm i18n:check`, `pnpm build`), plus `pnpm typecheck` once ticket 25 lands, and `pnpm deps:cycles` and `pnpm format:check`, which CI runs and the local gates don't.
 - **E2E** (`pnpm test:e2e`) runs on every commit that touches runtime code. It runs against the prebuilt `dist-server`, so rebuild first.
 - **Image changes** are verified by building the image and booting it against Postgres and Redis: the health check, an upload (including HEIC), a URL import through the parser and a video import.
-- **Boot migrations** (job schedulers) get a test against real Redis that runs them twice from pre-upgrade state.
+- **Boot migrations** (job schedulers) get a test against real Redis that runs them twice. The maintainer waived starting it from 5.x repeatables on 2026-10-13: it starts from Job Schedulers, and the boot sweep that clears legacy repeatables was checked by reading the BullMQ 5 and 6 tarballs instead (tickets 17 and 18).
 - **Auth changes** run the auth E2E specs and an OIDC end-to-end check, including the legacy callback URL.
 
 ## Release notes
@@ -132,10 +133,10 @@ The Target Version's notes (`apps/docs/docs/release-notes/0.26.0-beta.md`) get:
 - **Upgrade notes:**
   - Node 26 for installs that run outside Docker (15);
   - the queue upgrade is one-way, so back up Redis before upgrading if you might roll back (18);
-  - the identity provider must be reachable when Norish starts, ID tokens must be RS- or ES-signed, and sign-out no longer ends the IdP session (09);
-  - stored Perplexity model choices are mapped to the new model names (05);
+  - ID tokens must be RS- or ES-signed, and sign-out no longer ends the IdP session (09); an identity provider that is down when Norish starts no longer needs a restart once it is back (reversed during 09);
+  - a stored Sonar model no longer works, so pick a Perplexity preset after updating (05; reversed from "mapped" by 37);
   - the OIDC callback URL moves to `/api/auth/callback/oidc` (09);
-  - signing in no longer links accounts; link a provider from Settings (10).
+  - signing in no longer links accounts (10). Linking a provider from Settings is a later feature, so the notes don't mention it yet.
 
 The toolchain tickets are internal and stay unpublished (ADR-0010).
 
