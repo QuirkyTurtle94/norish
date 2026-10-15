@@ -15,6 +15,8 @@ Use this file for lightweight repo context.
 - `apps/mobile`: Expo SDK 56, Expo Router, React Native 0.85, React 19, HeroUI Native v1 (`heroui-native`), Uniwind, Tailwind CSS v4 theme tokens, TanStack Query
 - tRPC, PostgreSQL + Drizzle, Redis + BullMQ, Better Auth
 
+This Next.js has breaking changes from your training data: read the relevant guide in `apps/web/node_modules/next/dist/docs/` before writing Next code. Landing sets `agentRules: false`, so `next dev` writes no app-level AGENTS.md.
+
 ## Repo Shape
 
 - `apps/web` - web app and its custom server, run from source through tsx
