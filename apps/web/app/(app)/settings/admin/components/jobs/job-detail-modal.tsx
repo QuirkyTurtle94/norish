@@ -197,8 +197,11 @@ export default function JobDetailModal({ queue, jobId, onClose }: Props) {
   const tokensUsed = job ? totalTokens(job.models) : null;
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  // The job a cancel was asked for: it reads "Cancelling…" until it leaves active.
-  const [cancelling, setCancelling] = useState<string | null>(null);
+  // The run a cancel was asked for, by its start: it reads "Cancelling…" until
+  // that run leaves active, so a retried run offers Cancel again.
+  const [cancelling, setCancelling] = useState<number | null>(null);
+  const isCancelling =
+    cancelling !== null && job?.state === "active" && job.processedOn === cancelling;
 
   const close = () => {
     setConfirmAction(null);
@@ -208,10 +211,10 @@ export default function JobDetailModal({ queue, jobId, onClose }: Props) {
   };
 
   const handleCancel = async () => {
-    if (!queue || !jobId) return;
+    if (!queue || !jobId || !job) return;
 
     setActionError(null);
-    setCancelling(jobId);
+    setCancelling(job.processedOn);
     const result = await cancelJob(queue, jobId);
 
     if (!result.success) {
@@ -404,13 +407,9 @@ export default function JobDetailModal({ queue, jobId, onClose }: Props) {
                       </Button>
                     ) : null}
                     {job?.state === "active" ? (
-                      <Button
-                        isPending={cancelling === job.id}
-                        variant="danger-soft"
-                        onPress={handleCancel}
-                      >
-                        {cancelling === job.id ? null : <StopCircleIcon className="h-4 w-4" />}
-                        {cancelling === job.id ? t("actions.cancelling") : t("actions.cancel")}
+                      <Button isPending={isCancelling} variant="danger-soft" onPress={handleCancel}>
+                        {isCancelling ? null : <StopCircleIcon className="h-4 w-4" />}
+                        {isCancelling ? t("actions.cancelling") : t("actions.cancel")}
                       </Button>
                     ) : null}
                     {job && !job.isRepeat && job.state !== "active" ? (
