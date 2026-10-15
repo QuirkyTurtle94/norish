@@ -69,4 +69,4 @@ Opening a job shows details for debugging purposes.
 
 ![A cancelled job in the job monitor](/img/screenshots/admin-job-cancelled.png)
 
-A running job can be stopped from its details with **Cancel job**. An AI request the job is waiting on stops at once; other work finishes its current step first, and the button reads **Cancelling…** until then. The job then shows as **Cancelled** and is not retried.
+A running job can be stopped from its details with **Cancel job**. An AI request the job is waiting on stops at once; other work finishes its current step first, and the button reads **Cancelling…** until then. The job then shows as **Cancelled** and is not retried on its own; **Retry** runs it again if it was cancelled by mistake.
