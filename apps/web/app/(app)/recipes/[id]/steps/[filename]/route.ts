@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { refuseWithoutSession } from "@/lib/auth/media-session";
+import { refuseUnlessViewer } from "@/lib/auth/media-session";
 import { serveRecipeStepMedia } from "@/lib/recipe-media";
+
+import { getRecipeOwnerId } from "@norish/db/repositories/recipes";
 
 export const runtime = "nodejs";
 
@@ -10,10 +12,6 @@ export async function GET(
   req: Request,
   { params }: RouteContext<"/recipes/[id]/steps/[filename]">
 ) {
-  const refused = await refuseWithoutSession(req);
-
-  if (refused) return refused;
-
   const { id, filename } = await params;
 
   // Validate id (should be a UUID)
@@ -21,5 +19,9 @@ export async function GET(
     return NextResponse.json({ error: "Invalid recipe ID" }, { status: 400 });
   }
 
-  return serveRecipeStepMedia(id, filename, "public, max-age=31536000, immutable");
+  const refused = await refuseUnlessViewer(req, () => getRecipeOwnerId(id));
+
+  if (refused) return refused;
+
+  return serveRecipeStepMedia(id, filename, "private, max-age=31536000, immutable");
 }
