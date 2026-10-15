@@ -17,6 +17,11 @@ import { MediaUnavailableError } from "./errors";
 
 const execFileAsync = promisify(execFile);
 
+/** A file name no other download picks, under `prefix`. */
+function uniqueName(prefix: string): string {
+  return `${prefix}-${Date.now()}-${randomUUID()}`;
+}
+
 // Resolve ffmpeg path at runtime
 // In production (Docker), uses system ffmpeg from Alpine packages
 // In development, uses ffmpeg-static npm package
@@ -461,7 +466,7 @@ export async function buildAuthArgs(
       );
     }
 
-    cookieFilePath = path.join(os.tmpdir(), `norish-cookies-${Date.now()}-${randomUUID()}.txt`);
+    cookieFilePath = path.join(os.tmpdir(), `${uniqueName("norish-cookies")}.txt`);
     await fs.writeFile(cookieFilePath, lines.join("\n"), "utf-8");
     args.push("--cookies", cookieFilePath);
   }
@@ -626,9 +631,7 @@ export async function downloadVideoAudio(
   await ensureYtDlpBinary();
   await fs.mkdir(outputDir, { recursive: true });
 
-  const timestamp = Date.now();
-  const randomId = randomUUID();
-  const outputBase = `audio-${timestamp}-${randomId}`;
+  const outputBase = uniqueName("audio");
   const outputFiles = TRANSCRIPTION_AUDIO_FALLBACKS.map(({ format }) =>
     path.join(outputDir, `${outputBase}.${format}`)
   );
@@ -756,9 +759,7 @@ export async function downloadCaptions(
   await ensureYtDlpBinary();
   await fs.mkdir(outputDir, { recursive: true });
 
-  const timestamp = Date.now();
-  const randomId = randomUUID();
-  const outputTemplate = `caption-${timestamp}-${randomId}`;
+  const outputTemplate = uniqueName("caption");
 
   const auth = tokens?.length ? await buildAuthArgs(tokens, url) : null;
 
@@ -787,7 +788,7 @@ export async function downloadCaptions(
     // Find the downloaded VTT file (yt-dlp adds language suffix)
     const files = await fs.readdir(outputDir);
     const captionFile = files.find(
-      (f) => f.startsWith(`caption-${timestamp}-${randomId}`) && f.endsWith(".vtt")
+      (f) => f.startsWith(outputTemplate) && f.endsWith(".vtt")
     );
 
     if (captionFile) {
@@ -884,10 +885,9 @@ export async function downloadVideo(
   await ensureYtDlpBinary();
   await fs.mkdir(outputDir, { recursive: true });
 
-  const timestamp = Date.now();
-  const randomId = randomUUID();
+  const basePattern = uniqueName("video");
   // Use a template that yt-dlp will fill in with the actual extension
-  const outputTemplate = `video-${timestamp}-${randomId}.%(ext)s`;
+  const outputTemplate = `${basePattern}.%(ext)s`;
 
   const auth = tokens?.length ? await buildAuthArgs(tokens, url) : null;
 
@@ -917,7 +917,6 @@ export async function downloadVideo(
     await execYtDlp(url, args, outputDir);
 
     // Find the actual output file (yt-dlp fills in the extension)
-    const basePattern = `video-${timestamp}-${randomId}`;
     const files = await fs.readdir(outputDir);
     const downloadedFile = files.find((f) => f.startsWith(basePattern));
 
