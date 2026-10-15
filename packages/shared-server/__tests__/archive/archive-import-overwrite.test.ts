@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // @vitest-environment node
 
@@ -110,6 +110,14 @@ vi.mock("@norish/shared-server/archive/paprika-parser", () => ({
   parsePaprikaRecipeToDTO: mockParsePaprikaRecipeToDTO,
 }));
 
+let parser: typeof import("@norish/shared-server/archive/parser");
+
+// Loaded once, in a hook: the parser's import graph is heavy, and loaded
+// inside a test it spent that test's 5 s budget on a busy machine.
+beforeAll(async () => {
+  parser = await import("@norish/shared-server/archive/parser");
+});
+
 describe("archive importer overwrite behavior", () => {
   beforeEach(() => {
     mockParseMelaArchive.mockResolvedValue([{ id: "raw-1" }]);
@@ -170,8 +178,7 @@ describe("archive importer overwrite behavior", () => {
     zip.file("recipe.melarecipe", JSON.stringify({ title: "Updated Soup" }));
     const zipBytes = Buffer.from(await zip.generateAsync({ type: "uint8array" }));
 
-    const { importArchive } = await import("@norish/shared-server/archive/parser");
-    const result = await importArchive("user-1", ["user-1"], zipBytes);
+    const result = await parser.importArchive("user-1", ["user-1"], zipBytes);
 
     expect(mockUpdateRecipeWithRefs).toHaveBeenCalledWith(
       "existing-recipe-id",
@@ -204,9 +211,7 @@ describe("archive importer overwrite behavior", () => {
     zip.file("recipe.melarecipe", JSON.stringify({ title: "Updated Soup" }));
     const zipBytes = Buffer.from(await zip.generateAsync({ type: "uint8array" }));
 
-    const { importArchive } = await import("@norish/shared-server/archive/parser");
-
-    await importArchive("user-1", ["user-1"], zipBytes);
+    await parser.importArchive("user-1", ["user-1"], zipBytes);
 
     const parserRecipeId = mockParseMelaRecipeToDTO.mock.calls[0]?.[1];
 
@@ -235,9 +240,7 @@ describe("archive importer overwrite behavior", () => {
     zip.file("recipe.paprikarecipe", "dummy");
     const zipBytes = Buffer.from(await zip.generateAsync({ type: "uint8array" }));
 
-    const { importArchive } = await import("@norish/shared-server/archive/parser");
-
-    await importArchive("user-1", ["user-1"], zipBytes);
+    await parser.importArchive("user-1", ["user-1"], zipBytes);
 
     expect(mockRateRecipe).toHaveBeenCalledWith("user-1", "new-recipe-id", 5);
   });
@@ -259,9 +262,7 @@ describe("archive importer overwrite behavior", () => {
     zip.file("recipe.paprikarecipe", "dummy");
     const zipBytes = Buffer.from(await zip.generateAsync({ type: "uint8array" }));
 
-    const { importArchive } = await import("@norish/shared-server/archive/parser");
-
-    await importArchive("user-1", ["user-1"], zipBytes);
+    await parser.importArchive("user-1", ["user-1"], zipBytes);
 
     expect(mockRateRecipe).not.toHaveBeenCalled();
   });
