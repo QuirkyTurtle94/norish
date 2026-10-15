@@ -86,7 +86,6 @@ beforeAll(async () => {
 
 describe("the archive import loop", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     mockFindExistingRecipe.mockResolvedValue(null);
     mockCreateRecipeWithRefs.mockImplementation(async (recipeId: string) => ({
       status: "inserted",

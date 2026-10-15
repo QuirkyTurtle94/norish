@@ -140,7 +140,6 @@ async function importBlocks(blocks: string[]) {
 
 describe("Recipe Keeper import", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     mockFindExistingRecipe.mockResolvedValue(null);
     mockCreateResolvedRecipe.mockImplementation(async (recipeId: string) => ({
       status: "inserted",

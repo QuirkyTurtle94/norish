@@ -163,7 +163,6 @@ async function importFiles(files: Record<string, string>) {
 
 describe("Mealie import", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     mockFindExistingRecipe.mockResolvedValue(null);
     mockCreateResolvedRecipe.mockImplementation(async (recipeId: string) => ({
       status: "inserted",
