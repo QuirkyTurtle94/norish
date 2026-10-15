@@ -102,21 +102,20 @@ export function useUserMutations(): UserMutationsResult {
     return { success: false, error: String(error) };
   };
 
+  // A profile change answers with the user as it now is.
+  const settleUser = <T extends { success: boolean; user?: User }>(pending: Promise<T>) =>
+    pending
+      .then((result) => {
+        if (result.success && result.user) mergeUser(result.user);
+
+        return result;
+      })
+      .catch(failed);
+
   return {
     // Profile updates
     updateName: (name) =>
-      mutateUpdateNameAsync({
-        name,
-        version: getCurrentUserVersion(),
-      })
-        .then((result) => {
-          if (result.success && result.user) {
-            mergeUser(result.user);
-          }
-
-          return result;
-        })
-        .catch(failed),
+      settleUser(mutateUpdateNameAsync({ name, version: getCurrentUserVersion() })),
 
     uploadAvatar: (file) => {
       const formData = new FormData();
@@ -124,27 +123,10 @@ export function useUserMutations(): UserMutationsResult {
       formData.append("file", file);
       formData.append("version", String(getCurrentUserVersion()));
 
-      return mutateUploadAvatarAsync(formData)
-        .then((result) => {
-          if (result.success && result.user) {
-            mergeUser(result.user);
-          }
-
-          return result;
-        })
-        .catch(failed);
+      return settleUser(mutateUploadAvatarAsync(formData));
     },
 
-    deleteAvatar: () =>
-      mutateDeleteAvatarAsync({ version: getCurrentUserVersion() })
-        .then((result) => {
-          if (result.success && result.user) {
-            mergeUser(result.user);
-          }
-
-          return result;
-        })
-        .catch(failed),
+    deleteAvatar: () => settleUser(mutateDeleteAvatarAsync({ version: getCurrentUserVersion() })),
 
     deleteAccount: () =>
       mutateDeleteAccountAsync().catch((error: unknown) => ({
