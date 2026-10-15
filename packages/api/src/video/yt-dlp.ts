@@ -325,34 +325,6 @@ async function downloadYtDlpBinary(targetPath: string, version: string): Promise
   }
 }
 
-/**
- * Whether the binary already on disk is a zipapp we would no longer download.
- *
- * Development checkouts made before Norish picked platform builds hold the
- * zipapp, and `ensureYtDlpBinary` never looks at a file that exists — so
- * without this those checkouts keep the Python dependency, and the machines
- * broken by it stay broken, forever. A zipapp is a script: it opens `#!`.
- */
-async function isSupersededZipapp(): Promise<boolean> {
-  if (hostYtDlpAsset() === ZIPAPP_ASSET) return false;
-
-  try {
-    const handle = await fs.open(ytDlpPath, "r");
-
-    try {
-      const { buffer, bytesRead } = await handle.read(Buffer.alloc(2), 0, 2, 0);
-
-      return bytesRead === 2 && buffer.toString("latin1") === "#!";
-    } finally {
-      await handle.close();
-    }
-  } catch (err) {
-    log.debug({ err, ytDlpPath }, "Could not read the binary's first bytes");
-
-    return false;
-  }
-}
-
 export async function ensureYtDlpBinary(): Promise<void> {
   log.debug({ ytDlpPath }, "Checking for binary");
   await fs.mkdir(path.dirname(ytDlpPath), { recursive: true });
@@ -363,23 +335,16 @@ export async function ensureYtDlpBinary(): Promise<void> {
     .catch(() => false);
 
   if (present) {
-    // An image ships whatever it was built with; only development ever
-    // replaces a binary it already has.
-    if (process.env.NODE_ENV === "production" || !(await isSupersededZipapp())) {
-      log.debug({ ytDlpPath }, "Binary found");
+    log.debug({ ytDlpPath }, "Binary found");
 
-      return; // Binary exists, we're good
-    }
+    return;
+  }
 
-    log.info({ ytDlpPath }, "Replacing the Python zipapp with this platform's yt-dlp build");
-  } else {
-    // Binary doesn't exist
-    log.error({ ytDlpPath }, "Binary NOT found");
-    if (process.env.NODE_ENV === "production") {
-      throw new Error(
-        `yt-dlp binary not found at ${ytDlpPath}. It should be pre-downloaded during Docker build.`
-      );
-    }
+  log.error({ ytDlpPath }, "Binary NOT found");
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      `yt-dlp binary not found at ${ytDlpPath}. It should be pre-downloaded during Docker build.`
+    );
   }
 
   try {
