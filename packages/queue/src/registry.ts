@@ -164,15 +164,6 @@ export async function initializeQueues(): Promise<QueueRegistry> {
       Object.entries(QUEUE_KEYS).map(([key, name]) => [key, buildQueue(name, retention)])
     ) as Record<keyof QueueRegistry, Queue>;
 
-    // A stream grown under the old cap is cut to the new one once, here.
-    await Promise.all(
-      Object.values(created).map((queue) =>
-        queue.trimEvents(EVENTS_MAX_LEN).catch((err: unknown) => {
-          log.warn({ err, queueName: queue.name }, "Could not trim a queue's events stream");
-        })
-      )
-    );
-
     globalForRegistry.queueRegistry = created;
 
     log.info({ retention }, "Queue registry initialized");

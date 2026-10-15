@@ -2,7 +2,7 @@
 /**
  * A queue's events stream against a real Redis. Every progress write appends
  * the job's whole progress to it and nothing reads it back, so it is capped,
- * and a stream grown under BullMQ's default cap of 10,000 is cut at boot.
+ * and a stream grown under BullMQ's default cap of 10,000 is cut by its next event.
  * Redis trims a stream approximately, a whole node of entries (100 by
  * default) at a time, so "at the cap" means within one node of it.
  */
@@ -47,7 +47,7 @@ afterAll(async () => {
   await container?.stop();
 });
 
-it("cuts a stream grown under BullMQ's default cap down to the cap at boot", async () => {
+it("cuts a stream grown under BullMQ's default cap down to the cap at its next event", async () => {
   // Before the upgrade: the queue under BullMQ's default of 10,000 events.
   const before = new Queue(QUEUE_NAMES.RECIPE_IMPORT, {
     connection: getBullConnectionOptions(config.url),
@@ -59,6 +59,17 @@ it("cuts a stream grown under BullMQ's default cap down to the cap at boot", asy
   expect(await redis.xlen(EVENTS)).toBeGreaterThan(2 * EVENTS_MAX_LEN);
 
   await initializeQueues();
+  // Booting writes the new cap to the queue's metadata; the next event trims to it.
+  await expect
+    .poll(() => redis.hget(`bull:${QUEUE_NAMES.RECIPE_IMPORT}:meta`, "opts.maxLenEvents"))
+    .toBe(String(EVENTS_MAX_LEN));
+  await getQueues().recipeImport.add("import", {
+    url: "https://example.com/recipe",
+    recipeId: "recipe-0",
+    userId: "user-1",
+    householdKey: "household-1",
+    householdUserIds: null,
+  });
 
   expect(await redis.xlen(EVENTS)).toBeLessThanOrEqual(EVENTS_MAX_LEN + STREAM_NODE);
 }, 60_000);

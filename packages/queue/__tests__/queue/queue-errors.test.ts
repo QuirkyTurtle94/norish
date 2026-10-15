@@ -16,8 +16,6 @@ vi.mock("bullmq", async (importOriginal) => ({
     constructor(readonly name: string) {
       super();
     }
-
-    trimEvents = async () => 0;
   },
 }));
 
