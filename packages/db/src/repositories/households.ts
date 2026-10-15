@@ -17,6 +17,7 @@ import {
   HouseholdUserSelectBaseSchema,
   HouseholdWithUsersNamesSchema,
 } from "@norish/shared/contracts/zod/household";
+import { viewerAndHouseholdIds } from "@norish/shared/lib/household";
 
 import type { MutationOutcome } from "./mutation-outcomes";
 import { appliedOutcome, staleOutcome } from "./mutation-outcomes";
@@ -132,9 +133,11 @@ export async function getHouseholdForUser(
  */
 export async function getHouseholdMemberIds(userId: string): Promise<string[]> {
   const household = await getHouseholdForUser(userId);
-  const memberIds = Array.from(new Set([userId, ...(household?.users.map((u) => u.id) ?? [])]));
 
-  return memberIds;
+  return viewerAndHouseholdIds({
+    userId,
+    householdUserIds: household?.users.map((u) => u.id) ?? null,
+  });
 }
 
 export async function addUserToHousehold(input: HouseholdUserInsertDto): Promise<HouseholdUserDto> {
