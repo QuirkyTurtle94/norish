@@ -19,7 +19,6 @@ import type {
   IngredientPermissionPolicy,
   IngredientWordsMap,
   PromptsConfig,
-  PromptsConfigInput,
   RecipePermissionPolicy,
   RecurrenceConfig,
   ServerConfigKey,
@@ -84,7 +83,7 @@ interface AdminSettingsContextValue {
     config: ImageGenerationConfig
   ) => Promise<{ success: boolean; error?: string }>;
   updateDecisionConfig: (config: DecisionConfig) => Promise<{ success: boolean; error?: string }>;
-  updatePrompts: (config: PromptsConfigInput) => Promise<{ success: boolean; error?: string }>;
+  updatePrompts: (config: PromptsConfig) => Promise<{ success: boolean; error?: string }>;
   updateTimerKeywords: (
     config: TimerKeywordsInput
   ) => Promise<{ success: boolean; error?: string }>;
@@ -265,7 +264,7 @@ export function AdminSettingsProvider({ children }: { children: ReactNode }) {
   );
 
   const updatePromptsConfig = useCallback(
-    async (config: PromptsConfigInput) => {
+    async (config: PromptsConfig) => {
       return mutations.updatePrompts(config);
     },
     [mutations]

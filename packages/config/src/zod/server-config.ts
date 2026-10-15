@@ -132,10 +132,6 @@ export type TimerKeywordsInput = z.infer<typeof TimerKeywordsInputSchema>;
  * default. Defaults live in the shipped prompt files and are merged in at
  * read time, so a new release's prompts reach every deployment that never
  * customized them.
- *
- * `isOverridden` is the pre-0.20 row-level flag. It froze all prompts after
- * any save; rows still carrying it are pruned to real overrides at boot, and
- * it is never written again.
  */
 export const PromptsConfigSchema = z.object({
   recipeExtraction: z.string().optional(),
@@ -152,16 +148,12 @@ export const PromptsConfigSchema = z.object({
   imageGenerationStyle: z.string().optional(),
   ingredientIconStyle: z.string().optional(),
   ingredientPlainName: z.string().optional(),
-  isOverridden: z.boolean().optional(),
 });
 
 export type PromptsConfig = z.infer<typeof PromptsConfigSchema>;
 
-export const PromptsConfigInputSchema = PromptsConfigSchema.omit({ isOverridden: true });
-export type PromptsConfigInput = z.infer<typeof PromptsConfigInputSchema>;
-
 /** One text per prompt, nothing missing: the shape of shipped defaults and of the merged admin view. */
-export type PromptValues = Required<PromptsConfigInput>;
+export type PromptValues = Required<PromptsConfig>;
 
 // ============================================================================
 // i18n Locale Configuration Schema

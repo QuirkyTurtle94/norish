@@ -5,7 +5,7 @@ import { ArrowPathIcon } from "@heroicons/react/16/solid";
 import { Button, Description, Label, Spinner, TextArea, TextField } from "@heroui/react";
 import { useTranslations } from "next-intl";
 
-import type { PromptsConfigInput } from "@norish/config/zod/server-config";
+import type { PromptsConfig } from "@norish/config/zod/server-config";
 import { ServerConfigKeys } from "@norish/config/zod/server-config";
 
 import { useAdminSettingsContext } from "../context";
@@ -30,7 +30,7 @@ const PROMPT_FIELDS = [
   { key: "imageGenerationStyle", rows: 4 },
   { key: "ingredientIconStyle", rows: 4 },
   { key: "ingredientPlainName", rows: 8 },
-] as const satisfies readonly { key: keyof PromptsConfigInput; rows: number }[];
+] as const satisfies readonly { key: keyof PromptsConfig; rows: number }[];
 
 type PromptKey = (typeof PROMPT_FIELDS)[number]["key"];
 

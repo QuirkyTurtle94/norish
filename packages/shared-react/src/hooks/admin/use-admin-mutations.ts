@@ -8,7 +8,7 @@ import type {
   DecisionConfig,
   ImageGenerationConfig,
   IngredientPermissionPolicy,
-  PromptsConfigInput,
+  PromptsConfig,
   RecipePermissionPolicy,
   ServerConfigKey,
   TimerKeywordsInput,
@@ -45,7 +45,7 @@ export type AdminMutationsResult = {
   updateUnits: (json: string) => Promise<{ success: boolean; error?: string }>;
   updateIngredientWords: (json: string) => Promise<{ success: boolean; error?: string }>;
   updateRecurrenceConfig: (json: string) => Promise<{ success: boolean; error?: string }>;
-  updatePrompts: (config: PromptsConfigInput) => Promise<{ success: boolean; error?: string }>;
+  updatePrompts: (config: PromptsConfig) => Promise<{ success: boolean; error?: string }>;
   updateTimerKeywords: (
     config: TimerKeywordsInput
   ) => Promise<{ success: boolean; error?: string }>;
