@@ -24,6 +24,8 @@ Two releases.
 
 **The encrypted-email adapter must return the real email.** `createEncryptedEmailAdapter` (`packages/auth/src/auth.ts`) maps email lookups to `emailHmac` but hands Better Auth the encrypted row, so Better Auth's "provider email equals account email" check never matches and an OAuth sign-in never marks a user verified. Decrypting the row it returns fixes that: a user who linked Google is marked verified at their next Google sign-in, after which OIDC auto-links as before.
 
+**0.26 stops auto-linking altogether** (noted 2026-10-15). Better Auth 1.7's `disableImplicitLinking` is on, so no sign-in links accounts, verified or not (`.scratch/dependency-upgrades/` ticket 10). Adding a provider will be linking it from a signed-in session in Settings, a later feature of its own.
+
 **The image stays on Node 22 in 0.25.0.** `node:22-alpine3.24`, `.nvmrc` 22.23.3. Node 26 (LTS from 2026-10-28, supported to April 2029) is 0.26.0's.
 
 **"Latest" in 0.26.0 stops at real blockers only.** TypeScript 7, ESLint 10 and zod-openapi 6 were held for peer ranges (see the August sweep); each comes along if its blocker has moved, else stays held with the reason written in its ticket.

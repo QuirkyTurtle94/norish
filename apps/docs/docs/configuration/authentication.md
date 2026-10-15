@@ -31,9 +31,8 @@ host with your `AUTH_URL`):
 
 ## Linking accounts
 
-Signing in never links accounts. Signing in with a provider whose email already belongs to
-another account is refused with "This email is already in use." To sign in with a second provider,
-link it to your account from **Settings**.
+Norish never links accounts on its own. Signing in with a provider whose email already belongs to
+another account is refused with "This email is already in use."
 
 ## Password auth
 
