@@ -42,6 +42,11 @@ export function parseHumanDurationToMinutes(s?: string | null): number | undefin
   return Number.isFinite(total) && total > 0 ? total : undefined;
 }
 
+/** An archive recipe's one picture as its gallery, or an empty gallery. */
+export function galleryOf(image: string | null | undefined) {
+  return image ? [{ image, order: 0 }] : [];
+}
+
 /** Minutes added up, or undefined when none of them is known. */
 export function sumMinutes(...minutes: Array<number | undefined>): number | undefined {
   const known = minutes.filter((value): value is number => value !== undefined);
@@ -258,7 +263,7 @@ export async function buildRecipeDTO(input: RecipeParseInput): Promise<FullRecip
   const dto: FullRecipeInsertDTO = {
     name: name.trim(),
     url: url || undefined,
-    images: image ? [{ image, order: 0 }] : [],
+    images: galleryOf(image),
     description: description || undefined,
     servings: servings,
     systemUsed: systemUsed,
