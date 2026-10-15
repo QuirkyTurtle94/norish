@@ -36,37 +36,11 @@ ENV UV_LINK_MODE=copy \
 ##############################
 FROM builder-base AS deps
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps/landing/package.json ./apps/landing/package.json
-COPY apps/web/package.json ./apps/web/package.json
-COPY apps/parser-api/package.json ./apps/parser-api/package.json
-COPY apps/parser-api/pyproject.toml ./apps/parser-api/pyproject.toml
-COPY apps/parser-api/uv.lock ./apps/parser-api/uv.lock
-
-# packages/*
-COPY packages/api/package.json ./packages/api/package.json
-COPY packages/auth/package.json ./packages/auth/package.json
-COPY packages/config/package.json ./packages/config/package.json
-COPY packages/db/package.json ./packages/db/package.json
-COPY packages/db-schema/package.json ./packages/db-schema/package.json
-COPY packages/i18n/package.json ./packages/i18n/package.json
-COPY packages/queue/package.json ./packages/queue/package.json
-COPY packages/shared/package.json ./packages/shared/package.json
-COPY packages/shared-react/package.json ./packages/shared-react/package.json
-COPY packages/shared-server/package.json ./packages/shared-server/package.json
-COPY packages/trpc/package.json ./packages/trpc/package.json
-COPY packages/ui/package.json ./packages/ui/package.json
-
-# tooling/*
-COPY tooling/eslint/package.json ./tooling/eslint/package.json
-COPY tooling/ingredient-icons/package.json ./tooling/ingredient-icons/package.json
-COPY tooling/nutrition/package.json ./tooling/nutrition/package.json
-COPY tooling/prettier/package.json ./tooling/prettier/package.json
-COPY tooling/tailwind/package.json ./tooling/tailwind/package.json
-COPY tooling/tailwind/heroui-theme.css ./tooling/tailwind/heroui-theme.css
-COPY tooling/tailwind/heroui-theme.js ./tooling/tailwind/heroui-theme.js
-COPY tooling/tailwind/postcss-config.js ./tooling/tailwind/postcss-config.js
-COPY tooling/typescript/package.json ./tooling/typescript/package.json
+# Every workspace manifest, wherever it sits: a new workspace needs no line here.
+COPY --parents package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json \
+  apps/*/package.json packages/*/package.json tooling/*/package.json \
+  tooling/tailwind/heroui-theme.css tooling/tailwind/heroui-theme.js \
+  tooling/tailwind/postcss-config.js ./
 
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
   SKIP_PARSER_API_INSTALL=1 pnpm install --frozen-lockfile
