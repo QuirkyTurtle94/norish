@@ -39,7 +39,6 @@ const everyFile = [
   "cookie-no-httponly",
   "cors",
   "csrf",
-  "deprecation",
   "disabled-auto-escaping",
   "disabled-resource-integrity",
   "disabled-timeout",
