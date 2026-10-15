@@ -33,7 +33,7 @@ import {
   hasSubstantiveNutrition,
 } from "@norish/shared/lib/recipe-enrichment";
 
-import type { RecipeEnrichmentJobData } from "../contracts/job-types";
+import type { RecipeEnrichmentJobData, RecipeEnrichmentJobInput } from "../contracts/job-types";
 import { ENRICHMENT_QUEUE_NAMES } from "./identity";
 import { addEnrichmentJob } from "./producer";
 
@@ -114,7 +114,7 @@ export async function enrichRecipe(
       return { kind, status: "skipped", reason: eligibility.reason };
     }
 
-    const data: RecipeEnrichmentJobData = {
+    const data: RecipeEnrichmentJobInput = {
       recipeId: recipe.id,
       kind,
       userId: context.userId,

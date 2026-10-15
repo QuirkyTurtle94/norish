@@ -87,10 +87,10 @@ export type AddPasteImportJobResult =
  */
 export interface RecipeEnrichmentJobData {
   recipeId: string;
-  /** Unique per accepted enrollment; optional only for retained jobs created before this field existed. */
-  runId?: string;
-  /** Redis-allocated ordering token; optional only for retained jobs created before this field existed. */
-  runSequence?: number;
+  /** Unique per accepted enrollment. */
+  runId: string;
+  /** Redis-allocated ordering token. */
+  runSequence: number;
   kind: RecipeEnrichmentKind;
   userId: string;
   householdKey: string;
@@ -105,6 +105,9 @@ export interface RecipeEnrichmentJobData {
    */
   replaceExisting?: boolean;
 }
+
+/** An enrollment as it is asked for; the producer gives it its run identity. */
+export type RecipeEnrichmentJobInput = Omit<RecipeEnrichmentJobData, "runId" | "runSequence">;
 
 /**
  * One job of the always-on `storeLookup` queue. A match job answers "what does

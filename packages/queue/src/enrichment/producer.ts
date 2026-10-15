@@ -16,7 +16,7 @@ import type {
 } from "@norish/shared/lib/recipe-enrichment";
 import { createLogger } from "@norish/shared-server/logger";
 
-import type { RecipeEnrichmentJobData } from "../contracts/job-types";
+import type { RecipeEnrichmentJobData, RecipeEnrichmentJobInput } from "../contracts/job-types";
 import { removeRetainedTerminalJob } from "../helpers";
 import { getBullClient } from "../redis/bullmq";
 import { publishEnrichmentLifecycle } from "./announce";
@@ -37,7 +37,7 @@ const log = createLogger("queue:enrichment");
  */
 export async function addEnrichmentJob(
   queue: Queue<RecipeEnrichmentJobData>,
-  data: RecipeEnrichmentJobData
+  data: RecipeEnrichmentJobInput
 ): Promise<RecipeEnrichmentEnrollment> {
   const { kind, recipeId } = data;
   const jobId = enrichmentJobId(kind, recipeId);
@@ -67,11 +67,11 @@ export async function addEnrichmentJob(
   }
 
   const runSequence = await getBullClient().incr(queue.toKey("enrichment-run-sequence"));
-  const runData = { ...data, runId: data.runId ?? randomUUID(), runSequence };
+  const runData: RecipeEnrichmentJobData = { ...data, runId: randomUUID(), runSequence };
   const job = await queue.add(ENRICHMENT_JOB_NAMES[kind], runData, { jobId });
   const storedRun = await queue.getJob(jobId);
 
-  if (storedRun?.data?.runId && storedRun.data.runId !== runData.runId) {
+  if (storedRun && storedRun.data.runId !== runData.runId) {
     // Another producer won the deterministic-id race between our preflight
     // read and BullMQ's atomic add. That run is real; ours is not, so do not
     // publish a phantom run identity or tell a manual caller it started.

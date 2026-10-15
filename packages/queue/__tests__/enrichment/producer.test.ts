@@ -1,7 +1,10 @@
 import type { Queue } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { RecipeEnrichmentJobData } from "@norish/queue/contracts/job-types";
+import type {
+  RecipeEnrichmentJobData,
+  RecipeEnrichmentJobInput,
+} from "@norish/queue/contracts/job-types";
 
 vi.mock("@norish/shared-server/logger", () => ({
   createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
@@ -33,7 +36,7 @@ const queue = {
   toKey,
 } as unknown as Queue<RecipeEnrichmentJobData>;
 
-function job(data: Partial<RecipeEnrichmentJobData> = {}): RecipeEnrichmentJobData {
+function job(data: Partial<RecipeEnrichmentJobInput> = {}): RecipeEnrichmentJobInput {
   return {
     recipeId: "recipe-1",
     kind: "auto-tagging",
@@ -179,7 +182,8 @@ describe("addEnrichmentJob", () => {
   it.each(["completed", "failed"])(
     "lets a manual rerun replace a retained %s job, so history cannot block it",
     async (state) => {
-      getJob.mockResolvedValue(retained(state));
+      // Read before the add, then removed: the read after the add finds no other run.
+      getJob.mockResolvedValueOnce(retained(state)).mockResolvedValueOnce(retained(state));
 
       const result = await addEnrichmentJob(queue, job({ origin: "manual" }));
 
@@ -208,7 +212,7 @@ describe("addEnrichmentJob", () => {
     async (state) => {
       // Without this the sweep would be swallowed as a duplicate for exactly
       // the recipes that ran recently enough to still have a retained job.
-      getJob.mockResolvedValue(retained(state));
+      getJob.mockResolvedValueOnce(retained(state)).mockResolvedValueOnce(retained(state));
 
       const result = await addEnrichmentJob(
         queue,
