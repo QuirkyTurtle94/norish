@@ -57,7 +57,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN --mount=type=cache,target=/root/.local/share/uv/python \
-  UV_PYTHON_DOWNLOADS=1 uv python install 3.15
+  UV_PYTHON_DOWNLOADS=1 uv python install
 
 # Only the root node_modules comes over from the deps stage, and the repo copy
 # leaves out every other node_modules: this install recreates the nested ones
@@ -67,7 +67,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 RUN --mount=type=cache,target=/root/.cache/uv \
   --mount=type=cache,target=/root/.local/share/uv/python \
-  UV_PYTHON_DOWNLOADS=0 uv sync --project /app/apps/parser-api --locked --python 3.15
+  UV_PYTHON_DOWNLOADS=0 uv sync --project /app/apps/parser-api --locked
 
 # What the parser never loads from the Python it runs on: the shared library
 # (the interpreter is linked statically, so nothing links it), Tk and its
