@@ -111,7 +111,9 @@ describe("PasswordCard", () => {
     auth.listAccounts.mockResolvedValue({ data: [{ providerId: "oidc" }], error: null });
     const view = mount();
     await waitFor(() =>
-      expect(view.client.getQueryState(["auth", "accounts", "password-user"])?.status).toBe("success")
+      expect(view.client.getQueryState(["auth", "accounts", "password-user"])?.status).toBe(
+        "success"
+      )
     );
     await waitFor(() => expect(view.container).toBeEmptyDOMElement());
     expect(auth.changePassword).not.toHaveBeenCalled();
