@@ -26,20 +26,26 @@ for (const revoke of [true, false]) {
       const next = page.getByLabel("New password", { exact: true });
       const confirmation = page.getByLabel("Confirm new password", { exact: true });
       const submit = page.getByRole("button", { name: "Change password", exact: true });
+      const form = page.locator("form").filter({ has: current });
 
       await current.fill(user.password);
       await next.fill("replacement-password-123");
       await confirmation.fill("different-password-123");
       await submit.click();
-      await expect(page.getByRole("alert")).toHaveText("The new passwords do not match.");
+      await expect(form.getByRole("alert")).toHaveText("The new passwords do not match.");
       await confirmation.fill("replacement-password-123");
       await current.fill("incorrect-password");
       await submit.click();
-      await expect(page.getByRole("alert")).toHaveText("The current password is incorrect.");
+      await expect(form.getByRole("alert")).toHaveText("The current password is incorrect.");
       await current.fill(user.password);
-      if (!revoke) await page.getByRole("switch", { name: "Sign out other sessions" }).click();
+      if (!revoke) {
+        await form.getByText("Sign out other sessions", { exact: true }).click();
+        await expect(
+          form.getByRole("switch", { name: "Sign out other sessions" })
+        ).not.toBeChecked();
+      }
       await submit.click();
-      await expect(page.getByRole("status")).toHaveText("Password changed.");
+      await expect(form.getByRole("status")).toHaveText("Password changed.");
       await expect(current).toHaveValue("");
       await expect(next).toHaveValue("");
       await expect(confirmation).toHaveValue("");
