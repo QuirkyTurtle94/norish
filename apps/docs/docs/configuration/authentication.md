@@ -32,6 +32,22 @@ Email and password sign-in is on when no other provider is set up.
 | ----------------------- | ------------------------------- | ------- |
 | `PASSWORD_AUTH_ENABLED` | Enable email and password login | Auto    |
 
+### Change your password
+
+For an account with email/password credentials, open **Settings => Account =>
+Change password**. Enter your current password, then enter and confirm a new
+password of 8–128 characters.
+
+![Change password form](/img/screenshots/change-password.png)
+
+**Sign out other sessions** is enabled by default. Leave it enabled to require
+your other devices to sign in again; the current session stays signed in.
+After submitting, a confirmation appears and the password fields are cleared.
+
+This form changes a password you already know; it is not a forgotten-password
+reset. SSO-only accounts do not see it: change those passwords with your identity
+provider instead.
+
 ## OIDC
 
 Works with any OpenID Connect provider, like Authentik, Pocket ID or Keycloak.

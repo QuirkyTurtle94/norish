@@ -11,6 +11,21 @@
     "ingredients": "Ingrédients"
   },
   "user": {
+    "password": {
+      "title": "Modifier le mot de passe",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "confirm": "Confirmer le nouveau mot de passe",
+      "length": "Utilisez 8 à 128 caractères.",
+      "revoke": "Déconnecter les autres sessions",
+      "revokeHint": "Les autres appareils devront se reconnecter.",
+      "mismatch": "Les nouveaux mots de passe ne correspondent pas.",
+      "incorrectPassword": "Le mot de passe actuel est incorrect.",
+      "error": "Impossible de modifier le mot de passe. Réessayez.",
+      "success": "Mot de passe modifié.",
+      "loadError": "Impossible de charger les paramètres du mot de passe.",
+      "retry": "Réessayer"
+    },
     "profile": {
       "title": "Profil",
       "nameLabel": "Nom",

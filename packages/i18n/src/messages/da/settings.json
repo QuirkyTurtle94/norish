@@ -11,6 +11,21 @@
     "ingredients": "Ingredienser"
   },
   "user": {
+    "password": {
+      "title": "Skift adgangskode",
+      "current": "Nuværende adgangskode",
+      "new": "Ny adgangskode",
+      "confirm": "Bekræft ny adgangskode",
+      "length": "Brug 8–128 tegn.",
+      "revoke": "Log andre sessioner ud",
+      "revokeHint": "Andre enheder skal logge ind igen.",
+      "mismatch": "De nye adgangskoder stemmer ikke overens.",
+      "incorrectPassword": "Den nuværende adgangskode er forkert.",
+      "error": "Adgangskoden kunne ikke ændres. Prøv igen.",
+      "success": "Adgangskoden er ændret.",
+      "loadError": "Adgangskodeindstillingerne kunne ikke indlæses.",
+      "retry": "Prøv igen"
+    },
     "profile": {
       "title": "Profil",
       "nameLabel": "Navn",

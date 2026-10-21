@@ -11,6 +11,21 @@
     "ingredients": "Składniki"
   },
   "user": {
+    "password": {
+      "title": "Zmień hasło",
+      "current": "Obecne hasło",
+      "new": "Nowe hasło",
+      "confirm": "Potwierdź nowe hasło",
+      "length": "Użyj od 8 do 128 znaków.",
+      "revoke": "Wyloguj inne sesje",
+      "revokeHint": "Na innych urządzeniach trzeba będzie zalogować się ponownie.",
+      "mismatch": "Nowe hasła nie są zgodne.",
+      "incorrectPassword": "Obecne hasło jest nieprawidłowe.",
+      "error": "Nie udało się zmienić hasła. Spróbuj ponownie.",
+      "success": "Hasło zmienione.",
+      "loadError": "Nie udało się wczytać ustawień hasła.",
+      "retry": "Spróbuj ponownie"
+    },
     "profile": {
       "title": "Profil",
       "nameLabel": "Imię i nazwisko",

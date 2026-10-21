@@ -11,6 +11,21 @@
     "ingredients": "Ainesosat"
   },
   "user": {
+    "password": {
+      "title": "Vaihda salasana",
+      "current": "Nykyinen salasana",
+      "new": "Uusi salasana",
+      "confirm": "Vahvista uusi salasana",
+      "length": "Käytä 8–128 merkkiä.",
+      "revoke": "Kirjaa muut istunnot ulos",
+      "revokeHint": "Muilla laitteilla on kirjauduttava uudelleen sisään.",
+      "mismatch": "Uudet salasanat eivät täsmää.",
+      "incorrectPassword": "Nykyinen salasana on väärä.",
+      "error": "Salasanaa ei voitu vaihtaa. Yritä uudelleen.",
+      "success": "Salasana vaihdettu.",
+      "loadError": "Salasana-asetuksia ei voitu ladata.",
+      "retry": "Yritä uudelleen"
+    },
     "profile": {
       "title": "Profiili",
       "nameLabel": "Nimi",

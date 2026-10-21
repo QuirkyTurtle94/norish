@@ -11,6 +11,21 @@
     "ingredients": "Ingredientes"
   },
   "user": {
+    "password": {
+      "title": "Alterar senha",
+      "current": "Senha atual",
+      "new": "Nova senha",
+      "confirm": "Confirmar nova senha",
+      "length": "Use de 8 a 128 caracteres.",
+      "revoke": "Encerrar outras sessões",
+      "revokeHint": "Os outros dispositivos precisarão entrar novamente.",
+      "mismatch": "As novas senhas não coincidem.",
+      "incorrectPassword": "A senha atual está incorreta.",
+      "error": "Não foi possível alterar a senha. Tente novamente.",
+      "success": "Senha alterada.",
+      "loadError": "Não foi possível carregar as configurações de senha.",
+      "retry": "Tentar novamente"
+    },
     "profile": {
       "title": "Perfil",
       "nameLabel": "Nome",

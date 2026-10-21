@@ -11,6 +11,21 @@
     "ingredients": "Ingredients"
   },
   "user": {
+    "password": {
+      "title": "Change password",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "length": "Use 8–128 characters.",
+      "revoke": "Sign out other sessions",
+      "revokeHint": "Other devices will need to sign in again.",
+      "mismatch": "The new passwords do not match.",
+      "incorrectPassword": "The current password is incorrect.",
+      "error": "Could not change your password. Please try again.",
+      "success": "Password changed.",
+      "loadError": "Could not load password settings.",
+      "retry": "Try again"
+    },
     "profile": {
       "title": "Profile",
       "nameLabel": "Name",

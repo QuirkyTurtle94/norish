@@ -11,6 +11,21 @@
     "ingredients": "Ingrediënten"
   },
   "user": {
+    "password": {
+      "title": "Wachtwoord wijzigen",
+      "current": "Huidig wachtwoord",
+      "new": "Nieuw wachtwoord",
+      "confirm": "Bevestig nieuw wachtwoord",
+      "length": "Gebruik 8–128 tekens.",
+      "revoke": "Andere sessies afmelden",
+      "revokeHint": "Op andere apparaten moet je opnieuw inloggen.",
+      "mismatch": "De nieuwe wachtwoorden komen niet overeen.",
+      "incorrectPassword": "Het huidige wachtwoord is onjuist.",
+      "error": "Wachtwoord wijzigen mislukt. Probeer het opnieuw.",
+      "success": "Wachtwoord gewijzigd.",
+      "loadError": "Wachtwoordinstellingen konden niet worden geladen.",
+      "retry": "Opnieuw proberen"
+    },
     "profile": {
       "title": "Profiel",
       "nameLabel": "Naam",

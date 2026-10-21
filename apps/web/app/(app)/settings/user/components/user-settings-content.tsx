@@ -6,6 +6,7 @@ import ApiTokenCard from "./api-token-card";
 import ArchiveExportCard from "./archive-export-card";
 import ArchiveImportCard from "./archive-import-card";
 import DangerZoneCard from "./danger-zone-card";
+import PasswordCard from "./password-card";
 import PreferencesCard from "./preferences-card";
 import ProfileCard from "./profile-card";
 import ShareLinksCard from "./share-links-card";
@@ -15,6 +16,7 @@ function UserSettingsContent() {
   return (
     <div className="flex w-full flex-col gap-6">
       <ProfileCard />
+      <PasswordCard />
       <PreferencesCard />
       <AllergiesCard />
       <ApiTokenCard />

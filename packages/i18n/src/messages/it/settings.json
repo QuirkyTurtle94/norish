@@ -11,6 +11,21 @@
     "ingredients": "Ingredienti"
   },
   "user": {
+    "password": {
+      "title": "Cambia password",
+      "current": "Password attuale",
+      "new": "Nuova password",
+      "confirm": "Conferma nuova password",
+      "length": "Usa da 8 a 128 caratteri.",
+      "revoke": "Disconnetti le altre sessioni",
+      "revokeHint": "Gli altri dispositivi dovranno accedere di nuovo.",
+      "mismatch": "Le nuove password non corrispondono.",
+      "incorrectPassword": "La password attuale non è corretta.",
+      "error": "Impossibile cambiare la password. Riprova.",
+      "success": "Password cambiata.",
+      "loadError": "Impossibile caricare le impostazioni della password.",
+      "retry": "Riprova"
+    },
     "profile": {
       "title": "Profilo",
       "nameLabel": "Nome",

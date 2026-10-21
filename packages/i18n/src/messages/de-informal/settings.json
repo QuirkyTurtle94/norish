@@ -11,6 +11,21 @@
     "ingredients": "Zutaten"
   },
   "user": {
+    "password": {
+      "title": "Passwort ändern",
+      "current": "Aktuelles Passwort",
+      "new": "Neues Passwort",
+      "confirm": "Neues Passwort bestätigen",
+      "length": "Verwende 8–128 Zeichen.",
+      "revoke": "Andere Sitzungen abmelden",
+      "revokeHint": "Auf anderen Geräten musst du dich erneut anmelden.",
+      "mismatch": "Die neuen Passwörter stimmen nicht überein.",
+      "incorrectPassword": "Das aktuelle Passwort ist falsch.",
+      "error": "Das Passwort konnte nicht geändert werden. Bitte versuche es erneut.",
+      "success": "Passwort geändert.",
+      "loadError": "Die Passworteinstellungen konnten nicht geladen werden.",
+      "retry": "Erneut versuchen"
+    },
     "profile": {
       "title": "Profil",
       "nameLabel": "Name",

@@ -11,6 +11,21 @@
     "ingredients": "Ingredienser"
   },
   "user": {
+    "password": {
+      "title": "Endre passord",
+      "current": "Nåværende passord",
+      "new": "Nytt passord",
+      "confirm": "Bekreft nytt passord",
+      "length": "Bruk 8–128 tegn.",
+      "revoke": "Logg ut andre økter",
+      "revokeHint": "Andre enheter må logge inn på nytt.",
+      "mismatch": "De nye passordene er ikke like.",
+      "incorrectPassword": "Nåværende passord er feil.",
+      "error": "Kunne ikke endre passordet. Prøv igjen.",
+      "success": "Passordet er endret.",
+      "loadError": "Kunne ikke laste passordinnstillingene.",
+      "retry": "Prøv igjen"
+    },
     "profile": {
       "title": "Profil",
       "nameLabel": "Navn",
