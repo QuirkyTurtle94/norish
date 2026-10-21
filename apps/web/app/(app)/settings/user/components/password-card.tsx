@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { SettingsCard } from "@/app/(app)/settings/components/settings-card";
+import { useUserSettingsContext } from "@/app/(app)/settings/user/context";
 import UiSwitch from "@/components/shared/ui-switch";
 import { authClient } from "@/lib/auth/client";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
 import { Button, Input, Label, TextField } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-
-import { useUserSettingsContext } from "../context";
 
 export default function PasswordCard() {
   const t = useTranslations("settings.user.password");
